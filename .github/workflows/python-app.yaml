@@ -2,29 +2,34 @@ name: Python application
 
 on:
   push:
-    branches: [ feat/project-setup ]
+    branches:
+      - feat/project-setup  # Ensure the workflow is only triggered on this branch
   pull_request:
-    branches: [ feat/project-setup ]
+    branches:
+      - feat/project-setup
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.7
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python 3.13.5
       uses: actions/setup-python@v2
       with:
-        python-version: 3.13.5
+        python-version: 3.13.5 # Make sure this matches the Python version you're using
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
+    - name: Check flake8 version
+      run: flake8 --version  # Ensure flake8 is installed properly
+
     - name: Lint with flake8
       run: |
-        # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 . --count --max-complexity=10 --max-line-length=127 --statistics
