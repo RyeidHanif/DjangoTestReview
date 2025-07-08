@@ -42,3 +42,8 @@ jobs:
       uses: isort/isort-action@v1
       with:
         requirements-files: "requirements.txt"  
+
+    - name: Format with Black
+      uses: actions/checkout@v4
+      with: 
+        requirements-files: "requirements.txt"
