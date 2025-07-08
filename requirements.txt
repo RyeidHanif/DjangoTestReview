@@ -2,3 +2,4 @@ pillow
 django
 crispy_bootstrap5
 django-crispy-forms
+flake8
