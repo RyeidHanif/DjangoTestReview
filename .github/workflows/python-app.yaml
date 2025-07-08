@@ -9,10 +9,19 @@ on:
       - feat/project-setup
 
 jobs:
-  build:
+  format:
     runs-on: ubuntu-latest
 
     steps:
+    - uses: actions/checkout@v2
+    - name: Format code with black
+      run: |
+          pip install black
+          black .
+    - name: Sort imports with isort
+      run: |
+          pip install isort
+          isort .
 
     - name: Checkout code
       uses: actions/checkout@v2  
@@ -29,26 +38,14 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
   
-    - name: Check flake8 version
-      run: flake8 --version
-
 
     - name: Lint with flake8
       run: |
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         flake8 . --count --max-complexity=10 --max-line-length=127 --statistics
 
-    - name: Run isort
-      uses: isort/isort-action@v1
-      with:
-        requirements-files: "requirements.txt"  
+
       
     - name: black configurations
       run: |
         black . --exclude=".env"
-
-
-    - name: Format with Black
-      uses: actions/checkout@v4
-      with: 
-        requirements-files: "requirements.txt"
