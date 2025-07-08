@@ -42,6 +42,11 @@ jobs:
       uses: isort/isort-action@v1
       with:
         requirements-files: "requirements.txt"  
+      
+    - name: black configurations
+      run: |
+        black . --exclude=".env"
+
 
     - name: Format with Black
       uses: actions/checkout@v4
