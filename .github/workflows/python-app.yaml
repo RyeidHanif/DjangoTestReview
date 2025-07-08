@@ -4,9 +4,7 @@ on:
   push:
     branches:
       - feat/project-setup  
-  pull_request:
-    branches:
-      - feat/project-setup
+
 
 jobs:
   format:
@@ -24,8 +22,8 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip install black isort flake8  # Ensure black, isort, and flake8 are installed
+        pip install -r requirements.txt
+        pip install black isort flake8  
 
     - name: Format code with black
       run: |

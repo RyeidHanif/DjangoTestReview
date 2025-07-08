@@ -5,7 +5,6 @@ from .forms import SignUpForm
 # Create your views here.
 
 
-
 def signup(request):
 
     if request.method == "POST":
@@ -13,8 +12,6 @@ def signup(request):
         if suform.is_valid():
             suform.save()
             return redirect("login")
-    
-    suform = SignUpForm()
-    return render(request , "accounts/signup.html", {"form": suform})
 
-    
+    suform = SignUpForm()
+    return render(request, "accounts/signup.html", {"form": suform})
