@@ -214,3 +214,5 @@ __marimo__/
 **/__pycache__/
 **/migrations/__pycache__/
 accounts/migrations/__pycache__
+
+.DS_Store
