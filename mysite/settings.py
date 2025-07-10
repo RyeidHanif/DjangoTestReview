@@ -48,6 +48,11 @@ INSTALLED_APPS = [
     "main",
     "crispy_forms",
     "crispy_bootstrap5",
+    "customer",
+    "provider",
+    "api",
+   
+
 ]
 
 MIDDLEWARE = [
@@ -137,7 +142,7 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-LOGIN_REDIRECT_URL = "/dashboard/"
+LOGIN_REDIRECT_URL = "/redirectiondashboard/"
 LOGOUT_REDIRECT_URL = "/"
 
 CRISPY_TEMPLATE_PACK = "bootstrap5"

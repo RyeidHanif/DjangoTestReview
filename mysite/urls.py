@@ -23,4 +23,6 @@ urlpatterns = [
     path("", include("django.contrib.auth.urls")),  # django's default login and logout
     path("", include("main.urls")),
     path("", include("accounts.urls")),
+    path("", include("customer.urls")),
+    path("", include("provider.urls"))
 ]

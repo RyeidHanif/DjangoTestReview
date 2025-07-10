@@ -4,20 +4,43 @@ from django.shortcuts import redirect, render
 
 from .forms import ProviderForm
 from .models import CustomerProfile, ProviderProfile
+from django.contrib import messages
 
 # Create your views here.
 
 
 def home(request):
+    '''
+    display the homepage
+    '''
     return render(request, "main/home.html")
 
 
-@login_required(login_url="/login/")
-def dashboard(request):
-    return render(request, "main/dashboard.html")
+@login_required(login_url = "/login/")
+def redirectiondashboard(request):
+    user = request.user 
+    if hasattr(user, 'customerprofile' ) and hasattr(user , 'providerprofile'):
+        return render(request , "main/redirectdashboard.html")
+    elif hasattr(user , "customerprofile"):
+        return redirect("customerdashboard")
+    elif hasattr(user , "providerprofile"):
+        return redirect("providerdashboard")
+    messages.error(request , "you do not have a profile , please create one ")
+    
+    return redirect("signup")
+    
 
 
 def profile_creation(request, n):
+    '''
+    profile creation system which uses the provider form and parameter n to divide choices 
+
+    user id and phone number are use from the session and then deleted 
+    n is used to differentiate between users who want to be both and those 
+    who want to be a provider 
+    if n is given as "both" , then a customer profile for that user is also created 
+    the user is then redirected to the login page 
+    '''
     user_id = request.session.get("temp_user_id")
     phone = request.session.get("temp_phone")
     if not user_id:
