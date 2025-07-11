@@ -12,21 +12,20 @@ def providerdashboard(request):
         if request.POST.get("test"):
             service = get_calendar_service(request.user)
             event = {
-                    'summary': 'Math Class',
+                    'summary': 'Chemiistry Class',
                     'location': 'Online',
-                    'description': 'learn p3 math.',
+                    'description': 'learn p3 chem.',
                     'start': {
-                        'dateTime': '2025-07-10T17:25:00+05:00',
+                        'dateTime': '2025-07-11T10:04:00+05:00',
                         'timeZone': 'Asia/Karachi',
                     },
                     'end': {
-                        'dateTime': '2025-07-10T18:00:00+05:00',
+                        'dateTime': '2025-07-11T10:30:00+05:00',
                         'timeZone': 'Asia/Karachi',
                     },
                     
                     
                     'attendees': [
-                        {'email': 'sameeramin.com@gmail.com'},
                         {'email': 'uhanifu@gmail.com'},
                     ],
                     'reminders': {
@@ -34,11 +33,12 @@ def providerdashboard(request):
                         'overrides': [
                         {'method': 'email', 'minutes': 24 * 60},
                         {'method': 'email', 'minutes': 10},
+                        {'method': 'popup', 'minutes': 10},
                         ],
                     },
                     }
             try:
-                event = service.events().insert(calendarId='primary', body=event).execute()
+                event = service.events().insert(calendarId='primary', body=event , sendUpdates = 'all').execute()
             except Exception as e :
                 messages.warning(request , "error occured")
                 return redirect("providerdashboard")

@@ -1,0 +1,25 @@
+{% extends 'main/base.html' %}
+
+{% block title %} Customer Dashboard {% endblock %}
+
+
+{% block content %}
+<h1>Here You can find all the service providers according to categories </h1>
+{% for category in categories %}
+   <h2>{{category}}</h2>
+   {% for provider in providers %}
+   {% if provider.service_category == category %}
+   <h4> | name : {{provider.user.username}}  | service name: {{provider.service_name}} | pricing model : {{provider.pricing_model}} | duration : {{provider.duration}} </h4>
+   <form method="post" action="#" class="form-group">
+    {% csrf_token %}
+    <button class="btn btn-success" type="submit" name="bookappointment" value="{{provider.user.id}}">Book Appointment</button>
+    </form>
+
+   {% endif %}
+   {% endfor %}
+
+{% endfor %}
+
+
+
+{% endblock %}
