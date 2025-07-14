@@ -10,6 +10,7 @@ from django.utils.timezone import (get_current_timezone, localdate, localtime,
 
 from main.models import Appointment, ProviderProfile
 from main.utils import get_calendar_service
+from django.core.mail import EmailMessage
 
 
 def get_available_slots(provider, slot_range):
@@ -110,7 +111,8 @@ def create_calendar_appointment(start_date, end_date, summary, attendee_email):
 
 def check_appointment_exists(customer, provider):
     appointment = Appointment.objects.filter(customer=customer , provider=provider).first()
-    if appointment and ( appointment.status not in ["completed", "rejected"]): 
+    if appointment and ( appointment.status not in ["completed", "rejected", "cancelled"]): 
         return False
     else :
         return True
+

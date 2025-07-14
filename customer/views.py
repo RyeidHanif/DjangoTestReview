@@ -39,6 +39,7 @@ def viewproviders(request):
         print(f"The current provider  at the end of viewproviders function is {ProviderProfile.objects.get(id=request.POST.get("bookappointment")).user.username}")
         messages.info(request, "You are being redirected to the service providers schedule")
         return redirect("schedule", providerID = request.POST.get("bookappointment"))
+
     return render(request, "customer/viewproviders.html", {"providers": providers , "categories" : categories})
 
 
@@ -84,6 +85,10 @@ def addappointment(request , providerUserID):
     provider = ProviderProfile.objects.get(user=provider_user)
     start_datetime = datetime.fromisoformat(timeslot[0])
     end_datetime = datetime.fromisoformat(timeslot[1])
+    if provider.pricing_model == "hourly":
+        total_price = (int(provider.duration)/60) * (provider.rate)
+    else : 
+        total_price = provider.rate
     print(f"The current provider is {provider_user.username}")
     customer= request.user
     if not check_appointment_exists(customer , provider_user):
@@ -92,8 +97,7 @@ def addappointment(request , providerUserID):
 
     if request.method == "POST":
         if request.POST.get("confirm"):
-            newappointment = Appointment(provider=provider_user , customer = request.user , date_start = start_datetime , date_end = end_datetime)
-    
+            newappointment = Appointment(provider=provider_user , customer = request.user , date_start = start_datetime , date_end = end_datetime , total_price = total_price)
             summary = f"Appointment with {newappointment.customer.username } "
             attendee_email = newappointment.customer.email
             event = create_calendar_appointment(timeslot[0], timeslot[1],summary, attendee_email)
@@ -107,11 +111,6 @@ def addappointment(request , providerUserID):
             return redirect("customerdashboard")
         
         elif request.POST.get("cancel"):
-            cancel_appointment = Appointment.objects.filter(provider=provider_user , customer = request.user , date_start = start_datetime , date_end = end_datetime ).first()
-            service = get_calendar_service(cancel_appointment.provider)
-            service.events().delete(calendarId = 'primary', eventId = cancel_appointment.event_id).execute()
-            cancel_appointment.delete()
-    
             messages.success(request, "Appointment cancelled successfully ")
             return redirect("customerdashboard")
     
