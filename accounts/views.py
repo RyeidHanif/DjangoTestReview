@@ -137,10 +137,13 @@ def userprofile(request):
 def modifyprofile(request):
     provider_profile = ProviderProfile.objects.filter(user=request.user).first()
     if request.method == "POST":
-        form = ProviderForm(request.POST)
+        form = ProviderForm(request.POST, instance=provider_profile)
         if form.is_valid():
             form.save()
-            messages.success("Details changed successfully ")
+          
+
+            
+            messages.success(request,"Details changed successfully ")
             return redirect("userprofile")
         else:
             messages.warning(request, form.errors)
@@ -149,4 +152,4 @@ def modifyprofile(request):
 
         form = ProviderForm(instance=provider_profile)
     
-    return render(request, "modifyprofile.html", {"form": form })
+    return render(request, "accounts/modifyprofile.html", {"form": form })
