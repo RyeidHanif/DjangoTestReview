@@ -32,7 +32,8 @@
             <h4>Ending time : {{my_provider.end_time}}</h4>
             <form class="form-group" method="POST" action="#">
                 {% csrf_token %}
-                <button class="btn btn-dark" type="submit">Change Details </button>
+                <button class="btn btn-dark" type="submit" name="modifyprofile" value="modifyprofile">Change Details </button>
+                <button class="btn btn-danger" type="submit" name="deleteaccount" value="deleteaccount">Delete Account </button>
             </form>
 
  

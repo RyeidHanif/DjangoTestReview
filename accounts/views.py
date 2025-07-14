@@ -10,6 +10,7 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from .forms import SetPasswordForm
 from django.contrib.auth.decorators import login_required
 from main.forms import ProviderForm
+from django.contrib.auth import logout
 
 from main.models import CustomerProfile, ProviderProfile
 
@@ -127,7 +128,11 @@ def userprofile(request):
     my_provider_profile = ProviderProfile.objects.filter(user=me).first()
     my_customer_profile = CustomerProfile.objects.filter(user=me).first()
     if request.method == "POST":
-        return redirect("modifyprofile")
+        if request.POST.get("modifyprofile"):
+            return redirect("modifyprofile")
+        if request.POST.get("deleteaccount"):
+            messages.warning(request , "All your data will be lost . Are you sure you wish to delete your account ? ")
+            return redirect("deleteaccount")
         
     return render(request , "accounts/userprofile.html" ,{"me": me , "my_provider": my_provider_profile, "my_customer": my_customer_profile})
 
@@ -153,3 +158,15 @@ def modifyprofile(request):
         form = ProviderForm(instance=provider_profile)
     
     return render(request, "accounts/modifyprofile.html", {"form": form })
+
+
+
+@login_required(login_url="/login/")
+def deleteaccount(request):
+    if request.method == "POST":
+        request.user.delete()
+
+        logout(request)
+        messages.info(request , " Account deleted successfully ")
+        return redirect('home')
+    return render(request, "accounts/deleteaccount.html")
