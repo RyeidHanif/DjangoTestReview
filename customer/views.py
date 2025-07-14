@@ -1,15 +1,19 @@
-from django.shortcuts import render , redirect
-from django.contrib.auth.decorators import login_required
-from main.models import ProviderProfile,Appointment
-from django.contrib.auth.models import User
+from datetime import datetime, time, timedelta
+
 from django.contrib import messages
-from datetime import datetime , time , timedelta
-from django.utils.timezone import get_current_timezone , make_aware , localtime , localdate
-from main.utils import get_calendar_service
+from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.models import Permission, User
 from django.http import HttpResponse
-from .utils import get_available_slots, create_calendar_appointment, check_appointment_exists
-from django.contrib.auth.decorators import permission_required
-from django.contrib.auth.models import Permission
+from django.shortcuts import redirect, render
+from django.utils.timezone import (get_current_timezone, localdate, localtime,
+                                   make_aware)
+
+from main.models import Appointment, ProviderProfile
+from main.utils import get_calendar_service
+
+from .utils import (check_appointment_exists, create_calendar_appointment,
+                    get_available_slots)
+
 # Create your views here.
 
 @login_required(login_url="/login/")
@@ -19,6 +23,8 @@ def customerdashboard(request):
             return redirect("viewproviders")
         if request.POST.get("viewappointments"):
             return redirect("viewappointments")
+        if request.POST.get("myprofile"):
+            return redirect("userprofile")
     return render(request , "customer/customerdashboard.html")
 
 

@@ -1,13 +1,16 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from main.models import ProviderProfile
-from django.contrib.auth.models import User
-from django.contrib import messages
 from datetime import datetime, time, timedelta
-from django.utils.timezone import get_current_timezone, make_aware, localtime, localdate
-from main.utils import get_calendar_service
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.http import HttpResponse
-from main.models import Appointment
+from django.shortcuts import redirect, render
+from django.utils.timezone import (get_current_timezone, localdate, localtime,
+                                   make_aware)
+
+from main.models import Appointment, ProviderProfile
+from main.utils import get_calendar_service
+
 
 def get_available_slots(provider, slot_range):
     service = get_calendar_service(provider)
