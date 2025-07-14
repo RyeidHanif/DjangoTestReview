@@ -9,7 +9,7 @@ class ProviderForm(forms.ModelForm):
     '''
     class Meta:
         model = ProviderProfile
-        fields = ["service_category", "service_name", "pricing_model", "duration_mins", "start_time", "end_time"]
+        fields = ["service_category", "service_name", "pricing_model", "duration_mins", "start_time", "end_time" , "rate"]
         widgets = {
             'start_time': forms.TimeInput(attrs={'type': 'time'}),
             'end_time': forms.TimeInput(attrs={'type': 'time'}),

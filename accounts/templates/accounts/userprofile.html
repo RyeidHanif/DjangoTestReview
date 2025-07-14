@@ -30,6 +30,7 @@
             <h4>Pricing Model : {{my_provider.pricing_model}}</h4>
             <h4>Starting Time : {{my_provider.start_time}}</h4>
             <h4>Ending time : {{my_provider.end_time}}</h4>
+            <h4> My Rate : {{my_provider.rate}} </h4>
             <form class="form-group" method="POST" action="#">
                 {% csrf_token %}
                 <button class="btn btn-dark" type="submit" name="modifyprofile" value="modifyprofile">Change Details </button>

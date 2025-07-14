@@ -17,6 +17,7 @@ STATUS_CHOICES = [
     ("accepted", "Accepted"),
     ("rejected", "Rejected"),
     ("completed", "Completed"),
+    ("cancelled", "Cancelled"),
 ]
 
 default_start = datetime.time(9 , 0 ,0 )
@@ -41,6 +42,7 @@ class ProviderProfile(models.Model):
     google_calendar_connected = models.BooleanField(default=False)
     start_time = models.TimeField(default=default_start)
     end_time = models.TimeField(default = default_end)
+    rate = models.FloatField(default=0)
 
     def __str__(self):
         return f"provider profile of user {self.user.username}"
@@ -72,6 +74,8 @@ class Appointment(models.Model):
     date_added = models.DateTimeField(auto_now_add=True)
     status = models.CharField(choices=STATUS_CHOICES, max_length=12, default="pending")
     event_id = models.TextField(blank=True , null = True)
+    total_price = models.FloatField(default=0)
+
 
 
 class AnalyticsApi(models.Model):
