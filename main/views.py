@@ -1,16 +1,15 @@
+import os
+
+from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Permission, User
 from django.shortcuts import redirect, render
+from google.auth.transport.requests import Request
+from google_auth_oauthlib.flow import Flow
 
 from .forms import ProviderForm
 from .models import CustomerProfile, ProviderProfile
-from django.contrib import messages
-from google_auth_oauthlib.flow import Flow
-from django.conf import settings 
-from google.auth.transport.requests import Request
-import os
-from django.contrib.auth.models import Permission
-
 
 # Create your views here.
 
@@ -34,7 +33,7 @@ def redirectiondashboard(request):
         return redirect("connect_to_calendar")
     messages.error(request , "you do not have a profile , please create one ")
     
-    return redirect("signup")
+    return redirect("profile_creation")
     
 
 
@@ -59,7 +58,7 @@ def profile_creation(request, n):
             user = User.objects.get(id=user_id)
 
             if ProviderProfile.objects.filter(user=user).exists():
-                return redirect("providerdashboard")
+                return redirect("redirectiondashboard")
 
             profile = provider_form.save(commit=False)
             profile.user = user

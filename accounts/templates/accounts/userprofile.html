@@ -1,0 +1,47 @@
+{% extends 'main/base.html' %}
+
+{% block title %} My Profile {% endblock %}
+
+
+
+{% block content %}
+
+<div class="container-fluid">
+    <div class="justify-content-center align-items-center">
+        <div class="text-align-center">
+            <h1>Your Details are As Follows </h1>
+            <h3> Name : {{me.username}}</h3>
+            <h3> Name : {{me.email}}</h3>
+            <a href="{% url  'password_change' %}">Change password </a>
+
+            {% if my_customer != None %}
+            <h3> This is your Customer Profile </h3>
+            <h4> Phone number : {{my_customer.phone_number}}</h4>
+
+            {% endif %}
+            
+
+            {% if my_provider != None  %}
+            <h3>This is Your Provider Profile</h3>
+            <h4>Phone number : {{my_provider.phone_number}}</h4>
+            <h4>Service Name  : {{my_provider.service_name}}</h4>
+            <h4>Service Category  : {{my_provider.service_category}}</h4>
+            <h4>Duration  : {{my_provider.duration_mins}} mins</h4>
+            <h4>Pricing Model : {{my_provider.pricing_model}}</h4>
+            <h4>Starting Time : {{my_provider.start_time}}</h4>
+            <h4>Ending time : {{my_provider.end_time}}</h4>
+            <form class="form-group" method="POST" action="#">
+                {% csrf_token %}
+                <button class="btn btn-dark" type="submit">Change Details </button>
+            </form>
+
+ 
+            {%endif%}
+        </div>
+    </div>
+</div>
+
+
+
+
+{% endblock %}

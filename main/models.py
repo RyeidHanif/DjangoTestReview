@@ -1,9 +1,9 @@
 # Create your models here.
+import datetime
 import uuid
 
 from django.contrib.auth.models import User
 from django.db import models
-import datetime
 
 SERVICE_CHOICES = [
     ("doctor", "Doctor"),

@@ -1,11 +1,12 @@
 # extra utility functions needed for e.g refrehsing tokens ,getting calender service 
-from .models import ProviderProfile 
-from googleapiclient.discovery import build 
-from google.oauth2.credentials import Credentials
-from django.utils.timezone import now 
 import json
-from google.auth.transport.requests import Request
 
+from django.utils.timezone import now
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+
+from .models import ProviderProfile
 
 with open("credentials.json", "r") as f:
     data = json.load(f)
