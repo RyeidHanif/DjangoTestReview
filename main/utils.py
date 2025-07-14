@@ -6,6 +6,7 @@ from django.utils.timezone import now
 import json
 from google.auth.transport.requests import Request
 
+
 with open("credentials.json", "r") as f:
     data = json.load(f)
 
@@ -37,3 +38,5 @@ def get_calendar_service(user):
         profile.save()
     
     return build('calendar', 'v3', credentials = creds)
+
+

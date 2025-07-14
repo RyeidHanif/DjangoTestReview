@@ -9,6 +9,7 @@ from google_auth_oauthlib.flow import Flow
 from django.conf import settings 
 from google.auth.transport.requests import Request
 import os
+from django.contrib.auth.models import Permission
 
 
 # Create your views here.
@@ -58,7 +59,7 @@ def profile_creation(request, n):
             user = User.objects.get(id=user_id)
 
             if ProviderProfile.objects.filter(user=user).exists():
-                return redirect("login")
+                return redirect("providerdashboard")
 
             profile = provider_form.save(commit=False)
             profile.user = user
@@ -69,7 +70,7 @@ def profile_creation(request, n):
             del request.session["temp_phone"]
             if n == "both":
                 CustomerProfile.objects.create(user=user, phone_number=phone)
-            return redirect("login")
+            return redirect("redirectiondashboard")
 
     provider_form = ProviderForm()
     return render(request, "main/profile_creation.html", {"form": provider_form})

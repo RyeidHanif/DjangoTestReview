@@ -1,0 +1,24 @@
+{% extends 'main/base.html' %}
+
+{% block title %}View My Appointments  {% endblock %}
+
+
+{% block content %}
+
+
+<div class="justify-content-center">
+    <h1> Here Are All your appointments </h1>
+    {% for appointment in appointments %}
+    <h3>You Have an Appointment with {{appointment.provider.username}} . Current Status is {{appointment.status}} </h3>
+    <h4>{{ appointment.date_start|date:"l, d F Y" }} — from {{ appointment.date_start|time:"h:i A" }} to {{ appointment.date_end|time:"h:i A" }}</h4>
+    <form class ="form-group" method="POST" action="#">
+        {% csrf_token %}
+        <button class="btn btn-dark" type="submit" name="reschedule" value="{{appointment.id}}">Reschedule</button>
+        <button class="btn btn-danger" type="submit" name="cancel" value="{{appointment.id}}">Cancel</button>
+    </form>
+</div>
+
+{% endfor %}
+
+
+{% endblock %}

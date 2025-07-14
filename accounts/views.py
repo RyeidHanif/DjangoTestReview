@@ -3,6 +3,7 @@ from django.shortcuts import redirect, render
 from main.models import CustomerProfile, ProviderProfile
 
 from .forms import SignUpForm
+from django.contrib.auth import login
 
 # Create your views here.
 
@@ -28,11 +29,10 @@ def signup(request):
             user = suform.save()
             choice = suform.cleaned_data["profile_choice"]
             phone_number = suform.cleaned_data["phone_number"]
+
             if choice == "customer":
-                if ProviderProfile.objects.filter(user=user).exists():
-                    return redirect("login")
                 CustomerProfile.objects.create(user=user, phone_number=phone_number)
-                return redirect("login")
+                return redirect("customerdashboard")
             elif choice == "provider" or choice == "both":
                 request.session["temp_user_id"] = user.id
                 request.session["temp_phone"] = suform.cleaned_data["phone_number"]

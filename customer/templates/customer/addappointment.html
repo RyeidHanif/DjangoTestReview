@@ -5,9 +5,18 @@
 
 {% block content %}
 
-<h1> Here is you adding an appointment </h1>
-<h3> Starting time is : {{timeslot_start}} </h3>
-<h3> Ending time is : {{timeslot_end}} </h3>
-
+<div class="container md-5 ">
+    <div class="justify-content-center align-items-center ">
+        <div class="text-center">
+            <h1>Your Appointment has been sent to the provider for confirmation  for the following Time Slot </h1>
+            <h3>{{ start|date:"l, d F Y" }} — from {{ start|time:"h:i A" }} to {{ end|time:"h:i A" }}</h3>
+            <form class="form-group" method="POST" action="#">
+                {% csrf_token %}
+                <button class="btn btn-primary" type="submit" name="confirm" value="confirm">Confirm </button>
+                <button class="btn btn-danger" type="submit" name="cancel" value="cancel">Cancel</button>
+            </form>
+        </div>
+    </div>
+</div>
 
 {% endblock %}

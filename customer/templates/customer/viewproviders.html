@@ -12,7 +12,7 @@
    <h4> | name : {{provider.user.username}}  | service name: {{provider.service_name}} | pricing model : {{provider.pricing_model}} | duration : {{provider.duration}} </h4>
    <form method="post" action="#" class="form-group">
     {% csrf_token %}
-    <button class="btn btn-success" type="submit" name="bookappointment" value="{{provider.user.id}}">Book Appointment</button>
+    <button class="btn btn-success" type="submit" name="bookappointment" value="{{provider.id}}">Book Appointment</button>
     </form>
 
    {% endif %}
