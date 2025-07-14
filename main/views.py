@@ -15,38 +15,37 @@ from .models import CustomerProfile, ProviderProfile
 
 
 def home(request):
-    '''
+    """
     display the homepage
-    '''
+    """
     return render(request, "main/home.html")
 
 
-@login_required(login_url = "/login/")
+@login_required(login_url="/login/")
 def redirectiondashboard(request):
-    '''temporary dashboard to redirect  different users to their respective places '''
-    user = request.user 
-    if hasattr(user, 'customerprofile' ) and hasattr(user , 'providerprofile'):
-        return render(request , "main/redirectdashboard.html")
-    elif hasattr(user , "customerprofile"):
+    """temporary dashboard to redirect  different users to their respective places"""
+    user = request.user
+    if hasattr(user, "customerprofile") and hasattr(user, "providerprofile"):
+        return render(request, "main/redirectdashboard.html")
+    elif hasattr(user, "customerprofile"):
         return redirect("customerdashboard")
-    elif hasattr(user , "providerprofile"):
+    elif hasattr(user, "providerprofile"):
         return redirect("connect_to_calendar")
-    messages.error(request , "you do not have a profile , please create one ")
-    
+    messages.error(request, "you do not have a profile , please create one ")
+
     return redirect("profile_creation")
-    
 
 
 def profile_creation(request, n):
-    '''
-    profile creation system which uses the provider form and parameter n to divide choices 
+    """
+    profile creation system which uses the provider form and parameter n to divide choices
 
-    user id and phone number are use from the session and then deleted 
-    n is used to differentiate between users who want to be both and those 
-    who want to be a provider 
-    if n is given as "both" , then a customer profile for that user is also created 
-    the user is then redirected to the login page 
-    '''
+    user id and phone number are use from the session and then deleted
+    n is used to differentiate between users who want to be both and those
+    who want to be a provider
+    if n is given as "both" , then a customer profile for that user is also created
+    the user is then redirected to the login page
+    """
     user_id = request.session.get("temp_user_id")
     phone = request.session.get("temp_phone")
     if not user_id:
@@ -75,64 +74,67 @@ def profile_creation(request, n):
     return render(request, "main/profile_creation.html", {"form": provider_form})
 
 
-
 @login_required(login_url="/login/")
 def connect_to_calendar(request):
-    '''Displays the page to allow the user to connect to their google calendar'''
+    """Displays the page to allow the user to connect to their google calendar"""
     user = request.user
     profile = ProviderProfile.objects.get(user=user)
-    if profile.google_calendar_connected :
+    if profile.google_calendar_connected:
         messages.info(request, "you are connected to calendar")
         return redirect("providerdashboard")
-    else :
+    else:
         if request.method == "POST":
             return redirect("connect_google")
-        
-        return render(request ,"main/connect_to_calendar.html")
-    
+
+        return render(request, "main/connect_to_calendar.html")
+
 
 def connect_google(request):
-    '''Creates the authorization url which the user is redirected to to allow for the connection '''
+    """Creates the authorization url which the user is redirected to to allow for the connection"""
 
-    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1" # tell google that no https , using http
+    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = (
+        "1"  # tell google that no https , using http
+    )
 
-    flow = Flow.from_client_secrets_file( # load google auth clint credentials
-        'credentials.json',
-        scopes = ["https://www.googleapis.com/auth/calendar"],
-        redirect_uri = "http://127.0.0.1:8000/google/oauth2callback/"
+    flow = Flow.from_client_secrets_file(  # load google auth clint credentials
+        "credentials.json",
+        scopes=["https://www.googleapis.com/auth/calendar"],
+        redirect_uri="http://127.0.0.1:8000/google/oauth2callback/",
     )
     auth_url, _ = flow.authorization_url(
-        access_type = 'offline', # need it even when user is offline 
-        include_granted_scopes = 'true', # all scopes ,rw 
-        prompt = 'consent' # ask for the consent every time
+        access_type="offline",  # need it even when user is offline
+        include_granted_scopes="true",  # all scopes ,rw
+        prompt="consent",  # ask for the consent every time
     )
     return redirect(auth_url)
 
 
 def oauth2callback(request):
-    '''authenticates the user ,stores credentials and redirects to dashboard 
+    """authenticates the user ,stores credentials and redirects to dashboard
 
-    google authentication client credentials are loaded from the credentials.json file 
+    google authentication client credentials are loaded from the credentials.json file
     stored in the BASE directory .
-    Scopes allotted are full permissions and the redirect uri matches that in 
+    Scopes allotted are full permissions and the redirect uri matches that in
     the google oauth credential settings to allow google to redirect the user back here
-    the authorization code sent by google is exchanged for access and refresh tokens 
+    the authorization code sent by google is exchanged for access and refresh tokens
     which are then stored in the ProvideProfile model columns to be used later
-    '''
-    flow = Flow.from_client_secrets_file( # load google auth client credentils
-        'credentials.json',
-        scopes = ["https://www.googleapis.com/auth/calendar"],
-        redirect_uri = "http://127.0.0.1:8000/google/oauth2callback/"
+    """
+    flow = Flow.from_client_secrets_file(  # load google auth client credentils
+        "credentials.json",
+        scopes=["https://www.googleapis.com/auth/calendar"],
+        redirect_uri="http://127.0.0.1:8000/google/oauth2callback/",
     )
 
-    flow.fetch_token(authorization_response = request.build_absolute_uri()) # exchange the auth code for tokens 
+    flow.fetch_token(
+        authorization_response=request.build_absolute_uri()
+    )  # exchange the auth code for tokens
 
-    creds = flow.credentials # credentials object which contains the tokens and expiry 
+    creds = flow.credentials  # credentials object which contains the tokens and expiry
     profile = ProviderProfile.objects.get(user=request.user)
     profile.google_access_token = creds.token
     profile.google_refresh_token = creds.refresh_token
     profile.google_token_expiry = creds.expiry
-    profile.google_calendar_connected = True 
+    profile.google_calendar_connected = True
     profile.save()
     messages.success(request, "Your Google Calendar is successfully connected!")
     return redirect("providerdashboard")

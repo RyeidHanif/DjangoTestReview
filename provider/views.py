@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+
 # Create your views here.
 from django.shortcuts import redirect, render
 
@@ -11,5 +12,5 @@ def providerdashboard(request):
     if request.method == "POST":
         if request.POST.get("myprofile"):
             return redirect("userprofile")
-           
-    return render(request , "provider/providerdashboard.html")
+
+    return render(request, "provider/providerdashboard.html")

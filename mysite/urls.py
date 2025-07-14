@@ -24,5 +24,5 @@ urlpatterns = [
     path("", include("main.urls")),
     path("", include("accounts.urls")),
     path("", include("customer.urls")),
-    path("", include("provider.urls"))
+    path("", include("provider.urls")),
 ]

@@ -3,14 +3,13 @@ from datetime import datetime, time, timedelta
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.core.mail import EmailMessage
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
-from django.utils.timezone import (get_current_timezone, localdate, localtime,
-                                   make_aware)
+from django.utils.timezone import get_current_timezone, localdate, localtime, make_aware
 
 from main.models import Appointment, ProviderProfile
 from main.utils import get_calendar_service
-from django.core.mail import EmailMessage
 
 
 def get_available_slots(provider, slot_range):
@@ -81,7 +80,7 @@ def get_available_slots(provider, slot_range):
 
 def create_calendar_appointment(start_date, end_date, summary, attendee_email):
     event = {
-        "summary": summary ,
+        "summary": summary,
         "location": "My Office ",
         "description": "Appointment",
         "start": {
@@ -108,11 +107,13 @@ def create_calendar_appointment(start_date, end_date, summary, attendee_email):
     return event
 
 
-
 def check_appointment_exists(customer, provider):
-    appointment = Appointment.objects.filter(customer=customer , provider=provider).first()
-    if appointment and ( appointment.status not in ["completed", "rejected", "cancelled"]): 
+    appointment = Appointment.objects.filter(
+        customer=customer, provider=provider
+    ).first()
+    if appointment and (
+        appointment.status not in ["completed", "rejected", "cancelled"]
+    ):
         return False
-    else :
+    else:
         return True
-

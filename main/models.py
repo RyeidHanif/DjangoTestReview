@@ -20,14 +20,16 @@ STATUS_CHOICES = [
     ("cancelled", "Cancelled"),
 ]
 
-default_start = datetime.time(9 , 0 ,0 )
-default_end = datetime.time(17, 0,0)
+default_start = datetime.time(9, 0, 0)
+default_end = datetime.time(17, 0, 0)
+
 
 class ProviderProfile(models.Model):
-    '''
-    provider profile model to get the user's service data and add google calendar tokens 
+    """
+    provider profile model to get the user's service data and add google calendar tokens
 
-    '''
+    """
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone_number = models.CharField(max_length=13)
     service_category = models.CharField(choices=SERVICE_CHOICES)
@@ -38,10 +40,10 @@ class ProviderProfile(models.Model):
     duration_mins = models.IntegerField()
     google_access_token = models.TextField(blank=True, null=True)
     google_refresh_token = models.TextField(blank=True, null=True)
-    google_token_expiry = models.DateTimeField(blank=True , null = True)
+    google_token_expiry = models.DateTimeField(blank=True, null=True)
     google_calendar_connected = models.BooleanField(default=False)
     start_time = models.TimeField(default=default_start)
-    end_time = models.TimeField(default = default_end)
+    end_time = models.TimeField(default=default_end)
     rate = models.FloatField(default=0)
 
     def __str__(self):
@@ -49,9 +51,10 @@ class ProviderProfile(models.Model):
 
 
 class CustomerProfile(models.Model):
-    '''
-    model to get user data if they want to be a customer 
-    '''
+    """
+    model to get user data if they want to be a customer
+    """
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone_number = models.CharField(max_length=13)
 
@@ -60,9 +63,10 @@ class CustomerProfile(models.Model):
 
 
 class Appointment(models.Model):
-    '''
-    model to add data regarding appointments 
-    '''
+    """
+    model to add data regarding appointments
+    """
+
     provider = models.ForeignKey(
         User, related_name="provider_appointments", on_delete=models.CASCADE
     )
@@ -73,15 +77,15 @@ class Appointment(models.Model):
     date_end = models.DateTimeField()
     date_added = models.DateTimeField(auto_now_add=True)
     status = models.CharField(choices=STATUS_CHOICES, max_length=12, default="pending")
-    event_id = models.TextField(blank=True , null = True)
+    event_id = models.TextField(blank=True, null=True)
     total_price = models.FloatField(default=0)
 
 
-
 class AnalyticsApi(models.Model):
-    '''
+    """
     JWT authentication for API for each user to get their data as JSON
-    '''
-    user = models.OneToOneField(User, on_delete = models.CASCADE)
-    access_token = models.TextField( blank= True , null = True)
-    refresh_token = models.TextField(blank = True , null = True)
+    """
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    access_token = models.TextField(blank=True, null=True)
+    refresh_token = models.TextField(blank=True, null=True)
