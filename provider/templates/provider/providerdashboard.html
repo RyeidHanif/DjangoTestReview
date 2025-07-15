@@ -13,10 +13,11 @@
         <h3> what would you like to do today </h3>
         <form action="#" method = "POST" class = "form-group">
             {% csrf_token %}
-            <button class="btn btn-secondary" type="submit" name="viewmyappointments">View my appointmnets</button>
-            <button class="btn btn-secondary" type="submit" name="viewpendingappointments">view Pending appointments</button>
+            <button class="btn btn-secondary" type="submit" name="viewmyappointments" value = "viewmyappointments">View my appointmnets</button>
+            <button class="btn btn-secondary" type="submit" name="viewpendingappointments" value = "viewpendingappointments">View Pending appointments</button>
             <button class="btn btn-secondary" type="submit" name="myprofile" value="myprofile">My profile </button>
-            <button class="btn btn-secondary" type="submit" name="test" value="test">Test</button>
+            <button class="btn btn-success" type="submit" name="viewanalytics" value="viewanalytics">Analytics</button>
+            <button class="btn btn-dark" type="submit" name="myavailability" value="myavailability"> My Availability </button>
            
         </form>
     </div>
