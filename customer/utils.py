@@ -55,17 +55,17 @@ def get_available_slots(provider, slot_range):
             event_start = event_start_times[i]
             event_end = event_end_times[i]
 
-            if event_start > cursor and (
-                day >= 1 or cursor > (current_datetime + timedelta(minutes=duration))
-            ):
+            if event_start > cursor:
                 gap = (event_start - cursor).total_seconds() / 60
                 if gap >= duration:
                     gap_start = cursor
                     while (event_start - gap_start).total_seconds() / 60 >= duration:
+                        if day == 0 and gap_start < (current_datetime + timedelta(minutes=duration)):
+                            gap_start += timedelta(minutes=duration)
+                            continue
                         slot_end = gap_start + timedelta(minutes=duration)
                         available_slots.append((gap_start, slot_end))
                         gap_start = slot_end
-
             cursor = max(cursor, event_end)
 
         if day_end > cursor:

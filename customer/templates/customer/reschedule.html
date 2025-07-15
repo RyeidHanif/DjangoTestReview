@@ -1,0 +1,23 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Reschedule {% endblock %}
+
+
+{% block content %}
+
+<div class="container-fluid">
+    <div  class="justify-content-center align-items-center">
+        <div class="text-center">
+            <form action="#" method="POST" class="form-group">
+                {% csrf_token %}
+                <button class="btn btn-light" type="submit" name="checkschedule" value="check">Check Provider Schedule </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+{% endblock %}

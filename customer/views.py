@@ -53,9 +53,7 @@ def viewproviders(request):
 
 @login_required(login_url="/login/")
 def schedule(request, providerID):
-    print(
-        f"The Current provider : start of schedule function is {ProviderProfile.objects.get(id=providerID).user.username}"
-    )
+   
     provider_profile = ProviderProfile.objects.get(id=providerID)
     provider = provider_profile.user
     slot_range = 1
@@ -98,54 +96,92 @@ def schedule(request, providerID):
 
 @login_required(login_url="/login/")
 def addappointment(request, providerUserID):
+    mode = request.session.get("mode", "normal")
+    print(f"DEBUG .CURRENT SESSION IS {mode}")
     timeslot = request.session.get("timeslot_tuple", [])
     provider_user = User.objects.get(id=providerUserID)
     provider = ProviderProfile.objects.get(user=provider_user)
     start_datetime = datetime.fromisoformat(timeslot[0])
     end_datetime = datetime.fromisoformat(timeslot[1])
     if provider.pricing_model == "hourly":
-        total_price = (int(provider.duration) / 60) * (provider.rate)
+        total_price = (int(provider.duration_mins) / 60) * (provider.rate)
     else:
         total_price = provider.rate
     print(f"The current provider is {provider_user.username}")
     customer = request.user
-    if not check_appointment_exists(customer, provider_user):
-        messages.warning(
-            request,
-            "You already have an appointment with this provider . please cancel that one to create a new one ",
-        )
-        return redirect("viewproviders")
 
-    if request.method == "POST":
+    if mode == "normal":
+        print(f"DEBUG. : CURRENT SESSION IS {mode}")
+
+        if not check_appointment_exists(customer, provider_user):
+            messages.warning(
+                request,
+                "You already have an appointment with this provider . please cancel that one to create a new one ",
+            )
+            return redirect("viewproviders")
+
+        if request.method == "POST":
+            if request.POST.get("confirm"):
+                newappointment = Appointment(
+                    provider=provider_user,
+                    customer=request.user,
+                    date_start=start_datetime,
+                    date_end=end_datetime,
+                    total_price=total_price,
+                )
+                summary = f"Appointment with {newappointment.customer.username } "
+                attendee_email = newappointment.customer.email
+                event = create_calendar_appointment(
+                    timeslot[0], timeslot[1], summary, attendee_email
+                )
+                service = get_calendar_service(provider_user)
+                event = (
+                    service.events()
+                    .insert(calendarId="primary", body=event, sendUpdates="all")
+                    .execute()
+                )
+                event_id = event["id"]
+                newappointment.event_id = event_id
+                newappointment.save()
+
+                messages.success(request, "Event created successfully ")
+                return redirect("customerdashboard")
+
+            elif request.POST.get("cancel"):
+                messages.success(request, "Appointment cancelled successfully ")
+                return redirect("customerdashboard")
+    elif mode == "reschedule" :
+        print(f"DEBUG CURRENT SESSION IS {mode}")
+        appointment = Appointment.objects.filter(customer=request.user ,provider=provider_user).first()
+        appointmentid = appointment.id
+        print(f"currnt appointment id is {appointmentid}")
         if request.POST.get("confirm"):
-            newappointment = Appointment(
-                provider=provider_user,
-                customer=request.user,
-                date_start=start_datetime,
-                date_end=end_datetime,
-                total_price=total_price,
-            )
-            summary = f"Appointment with {newappointment.customer.username } "
-            attendee_email = newappointment.customer.email
-            event = create_calendar_appointment(
-                timeslot[0], timeslot[1], summary, attendee_email
-            )
-            service = get_calendar_service(provider_user)
-            event = (
-                service.events()
-                .insert(calendarId="primary", body=event, sendUpdates="all")
-                .execute()
-            )
-            event_id = event["id"]
-            newappointment.event_id = event_id
-            newappointment.save()
-
-            messages.success(request, "Event created successfully ")
-            return redirect("customerdashboard")
-
+            appointment = Appointment.objects.get(id=appointmentid)
+            print(appointment.provider.username)
+            appointment.date_start = start_datetime 
+            appointment.date_end = end_datetime
+            appointment.status = "pending"
+            appointment.save()
+            event_id = appointment.event_id
+            service = get_calendar_service(appointment.provider)
+            event = service.events().get(calendarId = "primary", eventId = event_id ).execute()
+            print(event)
+            print(f"DEBUG : END TIME IS {timeslot[1]}")
+            if event :
+                event["start"]["dateTime"] = timeslot[0] 
+                event["end"]["dateTime"] = timeslot[1]
+                service.events().update(calendarId = "primary" ,body=event , eventId = event_id).execute()
+                messages.success(request , "Event updated successfully ")
+                return redirect("viewappointments")
+            else :
+                messages.error(request, " problem in accessing google calendar,  please try later")
+                return redirect("viewappointments")
         elif request.POST.get("cancel"):
-            messages.success(request, "Appointment cancelled successfully ")
-            return redirect("customerdashboard")
+            messages.info(request,"the appointment was not changed ")
+            return redirect("viewappointments")
+        
+
+        
 
     return render(
         request,
@@ -167,7 +203,7 @@ def viewappointments(request):
                 request,
                 "This will return the status of the appointment to pending because the provider will have to review the timings again ",
             )
-            return redirect("reschedule", appointmentid=request.POST.get("reschedule"))
+            return redirect("reschedule", appointment_id=request.POST.get("reschedule"))
         if request.POST.get("cancel"):
             appointment = Appointment.objects.get(id=request.POST.get("cancel"))
             service = get_calendar_service(appointment.provider)
@@ -180,3 +216,18 @@ def viewappointments(request):
     return render(
         request, "customer/viewappointments.html", {"appointments": myappointments}
     )
+
+
+@login_required(login_url="/login/")
+def reschedule(request, appointment_id):
+    change_appointment = Appointment.objects.get(id=appointment_id)
+    if request.method == "POST":
+        if request.POST.get("checkschedule"):
+            request.session["mode"] = "reschedule"
+            print(f"DEBUG : THE CURRENT MODE IS {request.session.get("mode")}")
+            print(f"appointment ID currently is {appointment_id}")
+            messages.info(request, "Here is the providers schedule , please take note and choose a slot ")
+            return redirect("schedule", providerID = change_appointment.provider.providerprofile.id)
+    return render(request , "customer/reschedule.html")
+
+
