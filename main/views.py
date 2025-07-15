@@ -57,7 +57,7 @@ def profile_creation(request, n):
             user = User.objects.get(id=user_id)
 
             if ProviderProfile.objects.filter(user=user).exists():
-                return redirect("redirectiondashboard")
+                return redirect("login")
 
             profile = provider_form.save(commit=False)
             profile.user = user
@@ -68,7 +68,7 @@ def profile_creation(request, n):
             del request.session["temp_phone"]
             if n == "both":
                 CustomerProfile.objects.create(user=user, phone_number=phone)
-            return redirect("redirectiondashboard")
+            return redirect("login")
 
     provider_form = ProviderForm()
     return render(request, "main/profile_creation.html", {"form": provider_form})

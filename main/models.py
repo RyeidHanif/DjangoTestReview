@@ -79,6 +79,7 @@ class Appointment(models.Model):
     status = models.CharField(choices=STATUS_CHOICES, max_length=12, default="pending")
     event_id = models.TextField(blank=True, null=True)
     total_price = models.FloatField(default=0)
+    special_requests = models.TextField(default="None")
 
 
 class AnalyticsApi(models.Model):

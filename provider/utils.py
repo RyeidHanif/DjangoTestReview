@@ -36,8 +36,6 @@ def EmailDeclinedAppointment(request, customer, provider, reason, to_email):
         )
 
 
-
-
 def EmailCancelledAppointment(request, customer, provider, to_email):
     mail_subject = "Appointment Cancelled "
     message = f"Dear {customer.username}  , Unfortunately Mr.{provider} has had to cancel the  appointment "

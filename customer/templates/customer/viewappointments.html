@@ -11,6 +11,7 @@
     {% for appointment in appointments %}
     <h3>You Have an Appointment with {{appointment.provider.username}} . Current Status is {{appointment.status}} </h3>
     <h4>{{ appointment.date_start|date:"l, d F Y" }} — from {{ appointment.date_start|time:"h:i A" }} to {{ appointment.date_end|time:"h:i A" }}</h4>
+    <h5> special request : {{appointment.special_requests}}</h5>
     <form class ="form-group" method="POST" action="#">
         {% csrf_token %}
         {% if appointment.status == "pending"%}

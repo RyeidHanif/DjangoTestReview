@@ -6,19 +6,14 @@ from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
-from django.utils.timezone import (
-    get_current_timezone,
-    localdate,
-    localtime,
-    make_aware,
-    activate,
-    now,
-)
+from django.utils.timezone import (activate, get_current_timezone, localdate,
+                                   localtime, make_aware, now)
 
 from main.models import Appointment, ProviderProfile
 from main.utils import get_calendar_service
+from googleapiclient.errors import HttpError
 
-activate('Asia/Karachi')
+activate("Asia/Karachi")
 
 
 def get_available_slots(provider, slot_range):
@@ -47,18 +42,22 @@ def get_available_slots(provider, slot_range):
             if current_datetime + timedelta(minutes=duration) > day_start:
                 day_start = current_datetime + timedelta(minutes=duration)
 
+        if day_start >= day_end:
+            continue
+       
         events = (
-            service.freebusy()
-            .query(
-                body={
-                    "timeMin": day_start.isoformat(),
-                    "timeMax": day_end.isoformat(),
-                    "timeZone": "Asia/Karachi",
-                    "items": [{"id": "primary"}],
-                }
+                service.freebusy()
+                .query(
+                    body={
+                        "timeMin": day_start.isoformat(),
+                        "timeMax": day_end.isoformat(),
+                        "timeZone": "Asia/Karachi",
+                        "items": [{"id": "primary"}],
+                    }
+                )
+                .execute()
             )
-            .execute()
-        )
+
 
         busy_times = events["calendars"]["primary"]["busy"]
 
@@ -115,11 +114,8 @@ def create_calendar_appointment(start_date, end_date, summary, attendee_email):
 
 def check_appointment_exists(customer, provider):
     return not Appointment.objects.filter(
-        customer=customer,
-        provider=provider,
-        status__in=["pending", "approved"]
+        customer=customer, provider=provider, status__in=["pending", "approved"]
     ).exists()
-
 
 
 def EmailRescheduledAppointment(

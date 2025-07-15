@@ -1,27 +1,18 @@
+from datetime import datetime, timedelta
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from main.models import ProviderProfile, Appointment
-from .utils import (
-    EmailCancelledAppointment,
-    EmailConfirmedAppointment,
-    EmailDeclinedAppointment,
-)
+from django.utils.timezone import (activate, get_current_timezone, localdate,
+                                   localtime, make_aware, now)
 
-from .forms import AvailabilityForm
-from django.utils.timezone import (
-    get_current_timezone,
-    localdate,
-    localtime,
-    make_aware,
-    activate,
-    now,
-)
-
-from datetime import datetime, timedelta
+from main.models import Appointment, ProviderProfile
 from main.utils import get_calendar_service
 
-activate('Asia/Karachi')
+from .forms import AvailabilityForm
+from .utils import (EmailCancelledAppointment, EmailConfirmedAppointment,
+                    EmailDeclinedAppointment)
 
+activate("Asia/Karachi")
 
 
 # Create your views here.
@@ -97,7 +88,13 @@ def view_pending_appointments(request):
             service = get_calendar_service(request.user)
             service.events().delete(calendarId="primary", eventId=appointment.event_id)
             appointment.status = "rejected"
-            EmailDeclinedAppointment(request , appointment.customer , appointment.provider, "N/A" , to_email = appointment.customer.email)
+            EmailDeclinedAppointment(
+                request,
+                appointment.customer,
+                appointment.provider,
+                "N/A",
+                to_email=appointment.customer.email,
+            )
             appointment.save()
             messages.success(request, " appointment rejected successfully")
             return redirect("view_pending_appointments")
@@ -105,7 +102,14 @@ def view_pending_appointments(request):
             appointment = Appointment.objects.get(id=request.POST.get("accept"))
             appointment.status = "accepted"
             appointment.save()
-            EmailConfirmedAppointment(request , appointment.customer , appointment.provider , localtime(appointment.date_start) , localtime(appointment.date_end) , to_email = appointment.customer.email)
+            EmailConfirmedAppointment(
+                request,
+                appointment.customer,
+                appointment.provider,
+                localtime(appointment.date_start),
+                localtime(appointment.date_end),
+                to_email=appointment.customer.email,
+            )
             messages.success(request, "Accepted successflly ")
             return redirect("view_pending_appointments")
 
@@ -122,7 +126,7 @@ def viewanalytics(request):
 
 def myavailability(request):
 
-    tz = 'Asia/Karachi'
+    tz = "Asia/Karachi"
 
     if request.method == "POST":
         form = AvailabilityForm(request.POST)
@@ -132,7 +136,9 @@ def myavailability(request):
             start_time = form.cleaned_data["start_time"]
             end_time = form.cleaned_data["end_time"]
             cause = form.cleaned_data["cause"]
-            start_datetime = make_aware(datetime.combine(start_date, start_time), timezone=tz)
+            start_datetime = make_aware(
+                datetime.combine(start_date, start_time), timezone=tz
+            )
             end_datetime = make_aware(datetime.combine(end_date, end_time), timezone=tz)
             start_datetime_iso = start_datetime.isoformat()
             end_datetime_iso = end_datetime.isoformat()
@@ -151,16 +157,13 @@ def myavailability(request):
                 },
                 "reminders": {
                     "useDefault": True,
-                
                 },
             }
-            service.events().insert(calendarId = 'primary', body=event ).execute()
+            service.events().insert(calendarId="primary", body=event).execute()
             messages.success(request, "Added time block successfully")
             return redirect("myavailability")
 
     else:
         form = AvailabilityForm()
 
-    return render(request , "provider/myavailability.html" , {"form": form})
-
-
+    return render(request, "provider/myavailability.html", {"form": form})

@@ -5,17 +5,14 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import Permission, User
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
-from django.utils.timezone import get_current_timezone, localdate, localtime, make_aware
+from django.utils.timezone import (get_current_timezone, localdate, localtime,
+                                   make_aware)
 
 from main.models import Appointment, ProviderProfile
 from main.utils import get_calendar_service
 
-from .utils import (
-    check_appointment_exists,
-    create_calendar_appointment,
-    get_available_slots,
-    EmailRescheduledAppointment,
-)
+from .utils import (EmailRescheduledAppointment, check_appointment_exists,
+                    create_calendar_appointment, get_available_slots)
 
 # Create your views here.
 
@@ -76,9 +73,7 @@ def schedule(request, providerID):
                 timeslot[0].isoformat(),
                 timeslot[1].isoformat(),
             )
-            print(
-                f"The current provider , at the end of scheudle functions is {User.objects.get(id=provider.id).username} "
-            )
+            
             return redirect("addappointment", providerUserID=provider.id)
 
     else:
@@ -98,7 +93,7 @@ def schedule(request, providerID):
 @login_required(login_url="/login/")
 def addappointment(request, providerUserID):
     mode = request.session.get("mode", "normal")
-    
+
     print(f"DEBUG .CURRENT SESSION IS {mode}")
     timeslot = request.session.get("timeslot_tuple", [])
     provider_user = User.objects.get(id=providerUserID)
@@ -123,6 +118,7 @@ def addappointment(request, providerUserID):
             return redirect("viewproviders")
         else:
 
+            special_requests= request.POST.get("special_requests")
             if request.method == "POST":
                 if request.POST.get("confirm"):
                     newappointment = Appointment(
@@ -131,6 +127,7 @@ def addappointment(request, providerUserID):
                         date_start=start_datetime,
                         date_end=end_datetime,
                         total_price=total_price,
+                        special_requests = special_requests
                     )
                     summary = f"Appointment with {newappointment.customer.username } "
                     attendee_email = newappointment.customer.email
@@ -153,11 +150,6 @@ def addappointment(request, providerUserID):
             elif request.POST.get("cancel"):
                 messages.success(request, "Appointment cancelled successfully ")
                 return redirect("customerdashboard")
-            
-
-
-
-
 
     elif mode == "reschedule":
         print(f"DEBUG CURRENT SESSION IS {mode}")
@@ -184,7 +176,16 @@ def addappointment(request, providerUserID):
                 service.events().update(
                     calendarId="primary", body=event, eventId=event_id
                 ).execute()
-                EmailRescheduledAppointment(request , appointment.customer , appointment.provider , localtime(old_date_start) , localtime(old_date_end) , localtime(appointment.date_start) , localtime(appointment.date_end) ,appointment.provider.email) 
+                EmailRescheduledAppointment(
+                    request,
+                    appointment.customer,
+                    appointment.provider,
+                    localtime(old_date_start),
+                    localtime(old_date_end),
+                    localtime(appointment.date_start),
+                    localtime(appointment.date_end),
+                    appointment.provider.email,
+                )
                 messages.success(request, "Event updated successfully ")
                 request.session.pop("mode", None)
                 return redirect("viewappointments")
@@ -207,7 +208,8 @@ def addappointment(request, providerUserID):
 @login_required(login_url="/login/")
 def viewappointments(request):
     myappointments = (
-        Appointment.objects.filter(customer=request.user).order_by('-date_added')
+        Appointment.objects.filter(customer=request.user)
+        .order_by("-date_added")
         .all()
         .exclude(status="rejected")
         .exclude(status="cancelled")
@@ -218,12 +220,18 @@ def viewappointments(request):
                 request,
                 "This will return the status of the appointment to pending because the provider will have to review the timings again ",
             )
-            change_appointment = Appointment.objects.get(id=request.POST.get("reschedule"))
+            change_appointment = Appointment.objects.get(
+                id=request.POST.get("reschedule")
+            )
             if change_appointment.status != "accepted":
-                messages.error(request, "sorry you cannot reschedule a non accepted appointment ")
+                messages.error(
+                    request, "sorry you cannot reschedule a non accepted appointment "
+                )
                 return redirect("viewappointments")
-            else :
-                return redirect("reschedule", appointment_id=request.POST.get("reschedule"))
+            else:
+                return redirect(
+                    "reschedule", appointment_id=request.POST.get("reschedule")
+                )
         if request.POST.get("cancel"):
             appointment = Appointment.objects.get(id=request.POST.get("cancel"))
             service = get_calendar_service(appointment.provider)

@@ -13,5 +13,5 @@ urlpatterns = [
         name="view_pending_appointments",
     ),
     path("view-analytics", views.viewanalytics, name="viewanalytics"),
-    path("myavailability", views.myavailability , name="myavailability")
+    path("myavailability", views.myavailability, name="myavailability"),
 ]

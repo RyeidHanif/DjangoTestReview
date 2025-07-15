@@ -14,6 +14,7 @@
 <h3>Customer : {{appointment.customer.username}} </h3>
 <h3>{{ appointment.date_start|date:"l, d F Y" }} — from {{ appointment.date_start|time:"h:i A" }} to {{ appointment.date_end|time:"h:i A" }}</h3>
 <h3> Status : {{appointment.status}} </h3>
+<h4> special requests : {{appointment.special_requests}}</h4>
 
 <form class="form-group" method="POST" action="#">
     {% csrf_token %}
