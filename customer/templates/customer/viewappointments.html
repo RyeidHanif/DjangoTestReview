@@ -13,7 +13,11 @@
     <h4>{{ appointment.date_start|date:"l, d F Y" }} — from {{ appointment.date_start|time:"h:i A" }} to {{ appointment.date_end|time:"h:i A" }}</h4>
     <form class ="form-group" method="POST" action="#">
         {% csrf_token %}
-        <button class="btn btn-dark" type="submit" name="reschedule" value="{{appointment.id}}">Reschedule</button>
+        {% if appointment.status == "pending"%}
+            <button class="btn btn-dark" type="submit" name="reschedule" value="{{appointment.id}}" disabled>Reschedule</button>
+        {% else %}
+            <button class="btn btn-dark" type="submit" name="reschedule" value="{{appointment.id}}">Reschedule</button>
+        {% endif %}
         <button class="btn btn-danger" type="submit" name="cancel" value="{{appointment.id}}">Cancel</button>
     </form>
 </div>

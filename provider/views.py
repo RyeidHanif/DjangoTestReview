@@ -20,7 +20,7 @@ from django.utils.timezone import (
 from datetime import datetime, timedelta
 from main.utils import get_calendar_service
 
-activate(get_current_timezone())
+activate('Asia/Karachi')
 
 
 
@@ -105,7 +105,7 @@ def view_pending_appointments(request):
             appointment = Appointment.objects.get(id=request.POST.get("accept"))
             appointment.status = "accepted"
             appointment.save()
-            EmailConfirmedAppointment(request , appointment.customer , appointment.provider , appointment.date_start , appointment.date_end , to_email = appointment.customer.email)
+            EmailConfirmedAppointment(request , appointment.customer , appointment.provider , localtime(appointment.date_start) , localtime(appointment.date_end) , to_email = appointment.customer.email)
             messages.success(request, "Accepted successflly ")
             return redirect("view_pending_appointments")
 
@@ -122,7 +122,7 @@ def viewanalytics(request):
 
 def myavailability(request):
 
-    tz = get_current_timezone()
+    tz = 'Asia/Karachi'
 
     if request.method == "POST":
         form = AvailabilityForm(request.POST)

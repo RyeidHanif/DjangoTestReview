@@ -9,15 +9,15 @@
 
 <div class="d-flex justify-content-center align-items-center vh-100">
     <div class="text-align-center">
-        <h1>Welcome to the Provider Dashboard </h1>
+        <h1>Welcome to the Provider Dashboard {{user.username}} </h1>
         <h3> what would you like to do today </h3>
         <form action="#" method = "POST" class = "form-group">
             {% csrf_token %}
-            <button class="btn btn-secondary" type="submit" name="viewmyappointments" value = "viewmyappointments">View my appointmnets</button>
-            <button class="btn btn-secondary" type="submit" name="viewpendingappointments" value = "viewpendingappointments">View Pending appointments</button>
-            <button class="btn btn-secondary" type="submit" name="myprofile" value="myprofile">My profile </button>
-            <button class="btn btn-success" type="submit" name="viewanalytics" value="viewanalytics">Analytics</button>
-            <button class="btn btn-dark" type="submit" name="myavailability" value="myavailability"> My Availability </button>
+            <button class="btn btn-outline-dark" type="submit" name="viewmyappointments" value = "viewmyappointments">View my appointmnets</button>
+            <button class="btn btn-outline-success" type="submit" name="viewpendingappointments" value = "viewpendingappointments">View Pending appointments</button>
+            <button class="btn btn-outline-primary" type="submit" name="myprofile" value="myprofile">My profile </button>
+            <button class="btn btn-outline-secondary" type="submit" name="viewanalytics" value="viewanalytics">Analytics</button>
+            <button class="btn btn-outline-danger" type="submit" name="myavailability" value="myavailability"> My Availability </button>
            
         </form>
     </div>

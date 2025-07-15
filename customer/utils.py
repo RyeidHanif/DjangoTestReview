@@ -18,7 +18,7 @@ from django.utils.timezone import (
 from main.models import Appointment, ProviderProfile
 from main.utils import get_calendar_service
 
-activate(get_current_timezone())
+activate('Asia/Karachi')
 
 
 def get_available_slots(provider, slot_range):
@@ -119,3 +119,31 @@ def check_appointment_exists(customer, provider):
         provider=provider,
         status__in=["pending", "approved"]
     ).exists()
+
+
+
+def EmailRescheduledAppointment(
+    request,
+    customer,
+    provider,
+    old_date_start,
+    old_date_end,
+    new_date_start,
+    new_date_end,
+    to_email,
+):
+    mail_subject = "Appointment Rescheduled "
+    message = f"""Dear {provider.username} , Mr. {customer.username} wishes to reschedule the appointment from the original date and time which was
+    originally :  {old_date_start} to {old_date_end}   and now shall be : {new_date_start} To {new_date_end} . If you wish to reject  the appointment please do so in your account , otherwise 
+    this will stay in the calendar and occur  as planned . Its Status is Accepted"""
+    email = EmailMessage(mail_subject, message, to=[to_email])
+    if email.send():
+        messages.success(
+            request,
+            f"Dear {customer.username} The email has been sent to the provider  . please do not Try to reschedule events unnecessarily as it created a lot of problems   ",
+        )
+    else:
+        messages.error(
+            request,
+            f"Problem sending confirmation email to {to_email}, check if you typed it correctly.",
+        )

@@ -36,31 +36,6 @@ def EmailDeclinedAppointment(request, customer, provider, reason, to_email):
         )
 
 
-def EmailRescheduledAppointment(
-    request,
-    customer,
-    provider,
-    old_date_start,
-    old_date_end,
-    new_date_start,
-    new_date_end,
-    to_email,
-):
-    mail_subject = "Appointment Rescheduled "
-    message = f"""Dear {customer.username} , Mr. {provider.username} wishes to reschedule the appointment from the original date and time which was
-    originally :  {old_date_start} to {old_date_end}   and now shall be : {new_date_start} To {new_date_end} . If you wish to cancel the appointment please do so in your account , otherwise 
-    this will go ahead as planned """
-    email = EmailMessage(mail_subject, message, to=[to_email])
-    if email.send():
-        messages.success(
-            request,
-            f"Dear {provider.username} The email has been sent to the customer . please do not reject appointments unnecessarily or otherwise block that time slot  ",
-        )
-    else:
-        messages.error(
-            request,
-            f"Problem sending confirmation email to {to_email}, check if you typed it correctly.",
-        )
 
 
 def EmailCancelledAppointment(request, customer, provider, to_email):

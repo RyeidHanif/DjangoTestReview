@@ -14,6 +14,7 @@ from .utils import (
     check_appointment_exists,
     create_calendar_appointment,
     get_available_slots,
+    EmailRescheduledAppointment,
 )
 
 # Create your views here.
@@ -97,7 +98,7 @@ def schedule(request, providerID):
 @login_required(login_url="/login/")
 def addappointment(request, providerUserID):
     mode = request.session.get("mode", "normal")
-    request.session.pop("mode", None)
+    
     print(f"DEBUG .CURRENT SESSION IS {mode}")
     timeslot = request.session.get("timeslot_tuple", [])
     provider_user = User.objects.get(id=providerUserID)
@@ -152,6 +153,12 @@ def addappointment(request, providerUserID):
             elif request.POST.get("cancel"):
                 messages.success(request, "Appointment cancelled successfully ")
                 return redirect("customerdashboard")
+            
+
+
+
+
+
     elif mode == "reschedule":
         print(f"DEBUG CURRENT SESSION IS {mode}")
         appointment = Appointment.objects.filter(
@@ -161,25 +168,25 @@ def addappointment(request, providerUserID):
         print(f"currnt appointment id is {appointmentid}")
         if request.POST.get("confirm"):
             appointment = Appointment.objects.get(id=appointmentid)
-            print(appointment.provider.username)
+            old_date_start = appointment.date_start
+            old_date_end = appointment.date_end
             appointment.date_start = start_datetime
             appointment.date_end = end_datetime
-            appointment.status = "pending"
             appointment.save()
             event_id = appointment.event_id
             service = get_calendar_service(appointment.provider)
             event = (
                 service.events().get(calendarId="primary", eventId=event_id).execute()
             )
-            print(event)
-            print(f"DEBUG : END TIME IS {timeslot[1]}")
             if event:
                 event["start"]["dateTime"] = timeslot[0]
                 event["end"]["dateTime"] = timeslot[1]
                 service.events().update(
                     calendarId="primary", body=event, eventId=event_id
                 ).execute()
+                EmailRescheduledAppointment(request , appointment.customer , appointment.provider , localtime(old_date_start) , localtime(old_date_end) , localtime(appointment.date_start) , localtime(appointment.date_end) ,appointment.provider.email) 
                 messages.success(request, "Event updated successfully ")
+                request.session.pop("mode", None)
                 return redirect("viewappointments")
             else:
                 messages.error(
@@ -200,7 +207,7 @@ def addappointment(request, providerUserID):
 @login_required(login_url="/login/")
 def viewappointments(request):
     myappointments = (
-        Appointment.objects.filter(customer=request.user)
+        Appointment.objects.filter(customer=request.user).order_by('-date_added')
         .all()
         .exclude(status="rejected")
         .exclude(status="cancelled")
@@ -211,7 +218,12 @@ def viewappointments(request):
                 request,
                 "This will return the status of the appointment to pending because the provider will have to review the timings again ",
             )
-            return redirect("reschedule", appointment_id=request.POST.get("reschedule"))
+            change_appointment = Appointment.objects.get(id=request.POST.get("reschedule"))
+            if change_appointment.status != "accepted":
+                messages.error(request, "sorry you cannot reschedule a non accepted appointment ")
+                return redirect("viewappointments")
+            else :
+                return redirect("reschedule", appointment_id=request.POST.get("reschedule"))
         if request.POST.get("cancel"):
             appointment = Appointment.objects.get(id=request.POST.get("cancel"))
             service = get_calendar_service(appointment.provider)
