@@ -16,7 +16,7 @@ from main.utils import get_calendar_service
 from googleapiclient.errors import HttpError
 
 
-def create_calendar_appointment(start_date, end_date, summary, attendee_email ,recurrence_frequency , until_date):
+def create_calendar_appointment(start_date, end_date, summary, attendee_email ,recurrence_frequency , until_date, appointment):
     event = {
         "summary": summary,
         "location": "My Office ",
@@ -29,9 +29,7 @@ def create_calendar_appointment(start_date, end_date, summary, attendee_email ,r
             "dateTime": end_date,
             "timeZone": "Asia/Karachi",
         },
-        "attendees": [
-            {"email": attendee_email},
-        ],
+        "attendees": [],
         "reminders": {
             "useDefault": False,
             "overrides": [
@@ -47,6 +45,19 @@ def create_calendar_appointment(start_date, end_date, summary, attendee_email ,r
         until_str = until_utc.strftime('%Y%m%dT%H%M%SZ')
         recur = f"RRULE:FREQ={recurrence_frequency};UNTIL={until_str}"
         event["recurrence"] = [recur]
+    
+    customer_pref = appointment.customer.notification_settings.preferences
+    provider_pref = appointment.provider.notification_settings.preferences
+   
+    if customer_pref != "none":
+        event["attendees"].append({"email": attendee_email})
+
+    if provider_pref == "none":
+        event["reminders"] = {
+            "useDefault": False,
+            "overrides": []
+        }
+    
 
     return event
 def EmailConfirmedAppointment(
@@ -100,8 +111,8 @@ def EmailCancelledAppointment(request, customer, provider, to_email):
 
 
 
-def create_google_calendar_event(service, timeslot, summary, attendee_email, recurrence_frequency , until_date):
-    event_body = create_calendar_appointment(timeslot[0], timeslot[1], summary, attendee_email , recurrence_frequency , until_date)
+def create_google_calendar_event(service, timeslot, summary, attendee_email, recurrence_frequency , until_date, appointment):
+    event_body = create_calendar_appointment(timeslot[0], timeslot[1], summary, attendee_email , recurrence_frequency , until_date ,appointment)
     return service.events().insert(calendarId="primary", body=event_body, sendUpdates="all").execute()
 
 def reschedule_google_event(service, event_id, new_start, new_end , recurrence_frequency , recurrence_until):

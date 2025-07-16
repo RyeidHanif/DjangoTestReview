@@ -10,9 +10,9 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 
 from main.forms import ProviderForm
-from main.models import CustomerProfile, ProviderProfile
+from main.models import CustomerProfile, ProviderProfile , NotificationPreferences
 
-from .forms import SetPasswordForm, SignUpForm
+from .forms import SetPasswordForm, SignUpForm ,ChangeNotificationPreferencesForm
 from .tokens import account_activation_token
 
 
@@ -126,10 +126,19 @@ def password_change(request):
 
 @login_required(login_url="/login/")
 def userprofile(request):
+
     me = User.objects.get(id=request.user.id)
     my_provider_profile = ProviderProfile.objects.filter(user=me).first()
     my_customer_profile = CustomerProfile.objects.filter(user=me).first()
     if request.method == "POST":
+        if request.POST.get("changenot"):
+            notiform = ChangeNotificationPreferencesForm(request.POST)
+            if notiform.is_valid():
+                preference = notiform.cleaned_data["preferences"]
+                obj, created = NotificationPreferences.objects.get_or_create(user=request.user)
+                obj.preferences = preference
+                obj.save()
+
         if request.POST.get("modifyprofile"):
             return redirect("modifyprofile")
         if request.POST.get("deleteaccount"):
@@ -138,6 +147,8 @@ def userprofile(request):
                 "All your data will be lost . Are you sure you wish to delete your account ? ",
             )
             return redirect("deleteaccount")
+    user_pref = NotificationPreferences.objects.filter(user=request.user).first()
+    notiform = ChangeNotificationPreferencesForm(instance=user_pref)
 
     return render(
         request,
@@ -146,6 +157,7 @@ def userprofile(request):
             "me": me,
             "my_provider": my_provider_profile,
             "my_customer": my_customer_profile,
+            "form": notiform,
         },
     )
 

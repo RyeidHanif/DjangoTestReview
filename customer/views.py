@@ -8,7 +8,7 @@ from django.shortcuts import redirect, render
 from django.utils.timezone import (get_current_timezone, localdate, localtime,
                                    make_aware)
 
-from main.models import Appointment, ProviderProfile
+from main.models import Appointment, ProviderProfile , NotificationPreferences
 from main.utils import get_calendar_service
 
 from .utils import (EmailRescheduledAppointment, check_appointment_exists,
@@ -144,15 +144,15 @@ def addappointment(request, providerUserID):
                 )
 
                 # Removed google calendar API integration from here to prevent ghost appointments 
-
-                EmailPendingAppointment(
-                    request,
-                    customer,
-                    provider_user,
-                    start_datetime,
-                    end_datetime,
-                    provider_user.email,
-                )
+                if appointment.provider.notification_settings.preferences == "all":
+                    EmailPendingAppointment(
+                        request,
+                        customer,
+                        provider_user,
+                        start_datetime,
+                        end_datetime,
+                        provider_user.email,
+                    )
 
                 messages.success(request, "Appointment created successfully")
                 return redirect("customerdashboard")
@@ -197,17 +197,18 @@ def addappointment(request, providerUserID):
                 appointment.save()
 
                 
+                if appointment.provider.notification_settings.preferences == "all":
 
-                EmailRescheduledAppointment(
-                    request,
-                    customer,
-                    provider_user,
-                    localtime(old_start),
-                    localtime(old_end),
-                    localtime(appointment.date_start),
-                    localtime(appointment.date_end),
-                    provider_user.email,
-                )
+                    EmailRescheduledAppointment(
+                        request,
+                        customer,
+                        provider_user,
+                        localtime(old_start),
+                        localtime(old_end),
+                        localtime(appointment.date_start),
+                        localtime(appointment.date_end),
+                        provider_user.email,
+                    )
 
                 request.session.pop("mode", None)
                 messages.success(request, "Appointment rescheduled successfully")

@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.timezone import (activate, get_current_timezone, localdate,
                                    localtime, make_aware, now)
 
-from main.models import Appointment, ProviderProfile
+from main.models import Appointment, ProviderProfile ,NotificationPreferences
 from main.utils import get_calendar_service
 
 from .forms import AvailabilityForm
@@ -53,8 +53,8 @@ def view_my_appointments(request):
                 calendarId="primary", eventId=cancel_appointment.event_id
             ).execute()
             cancel_appointment.save()
-
-            EmailCancelledAppointment(request, customer, provider, to_email)
+            if customer.notification_settings.preferences == "all":
+                EmailCancelledAppointment(request, customer, provider, to_email)
             return redirect("view_my_appointments")
 
         if request.POST.get("markcompleted"):
@@ -90,13 +90,14 @@ def view_pending_appointments(request):
             service.events().delete(calendarId="primary", eventId=appointment.event_id).execute()
             if appointment.status == "pending":
                 appointment.status = "rejected"
-                EmailDeclinedAppointment(
-                    request,
-                    appointment.customer,
-                    appointment.provider,
-                    "N/A",
-                    to_email=appointment.customer.email,
-                )
+                if appointment.customer.notification_settings.preferences == "all":
+                    EmailDeclinedAppointment(
+                        request,
+                        appointment.customer,
+                        appointment.provider,
+                        "N/A",
+                        to_email=appointment.customer.email,
+                    )
                 appointment.save()
                 messages.success(request, " appointment rejected successfully")
                 return redirect("view_pending_appointments")
@@ -104,7 +105,8 @@ def view_pending_appointments(request):
                 appointment.status ="cancelled"
                 appointment.save()
                 messages.info(request , "reschedule rejected successfully ")
-                EmailRescheduleDeclined(request , appointment.customer,  appointment.provider , appointment.date_start , appointment.date_end , appointment.customer.email)
+                if appointment.customer.notification_settings.preferences == "all":
+                    EmailRescheduleDeclined(request , appointment.customer,  appointment.provider , appointment.date_start , appointment.date_end , appointment.customer.email)
         if request.POST.get("accept") :
             appointment = Appointment.objects.get(id=request.POST.get("accept"))
             if appointment.status == "pending":
@@ -121,18 +123,20 @@ def view_pending_appointments(request):
                     appointment.customer.email,
                     appointment.recurrence_frequency,
                     appointment.recurrence_until,
+                    appointment,
                 )
 
                 appointment.event_id = event["id"]
                 appointment.save()
-                EmailConfirmedAppointment(
-                    request,
-                    appointment.customer,
-                    appointment.provider,
-                    localtime(appointment.date_start),
-                    localtime(appointment.date_end),
-                    to_email=appointment.customer.email,
-                )
+                if appointment.customer.notification_settings.preferences == "all":
+                    EmailConfirmedAppointment(
+                        request,
+                        appointment.customer,
+                        appointment.provider,
+                        localtime(appointment.date_start),
+                        localtime(appointment.date_end),
+                        to_email=appointment.customer.email,
+                    )
                 messages.success(request, "Accepted successflly ")
                 return redirect("view_pending_appointments")
             elif appointment.status == "rescheduled":
@@ -210,7 +214,8 @@ def viewanalytics(request):
                 "accepted":0 ,
                 "rejected": 0,
                 "cancelled": 0,
-                "completed": 0
+                "completed": 0,
+                "rescheduled":0,
                 }
     customers = []
     for appointment in myappointments :

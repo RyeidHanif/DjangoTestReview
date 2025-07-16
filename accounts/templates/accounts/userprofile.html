@@ -1,49 +1,64 @@
 {% extends 'main/base.html' %}
-
+{% load crispy_forms_tags %}
 {% block title %} My Profile {% endblock %}
 
-
-
 {% block content %}
+<div class="container py-4">
+    <h1 class="mb-4 text-center">My Profile</h1>
 
-<div class="container-fluid">
-    <div class="justify-content-center align-items-center">
-        <div class="text-align-center">
-            <h1>Your Details are As Follows </h1>
-            <h3> Name : {{me.username}}</h3>
-            <h3> Name : {{me.email}}</h3>
-            <a href="{% url  'password_change' %}">Change password </a>
-
-            {% if my_customer != None %}
-            <h3> This is your Customer Profile </h3>
-            <h4> Phone number : {{my_customer.phone_number}}</h4>
-
-            {% endif %}
-            
-
-            {% if my_provider != None  %}
-            <h3>This is Your Provider Profile</h3>
-            <h4>Phone number : {{my_provider.phone_number}}</h4>
-            <h4>Service Name  : {{my_provider.service_name}}</h4>
-            <h4>Service Category  : {{my_provider.service_category}}</h4>
-            <h4>Duration  : {{my_provider.duration_mins}} mins</h4>
-            <h4>Pricing Model : {{my_provider.pricing_model}}</h4>
-            <h4>Starting Time : {{my_provider.start_time}}</h4>
-            <h4>Ending time : {{my_provider.end_time}}</h4>
-            <h4> My Rate : {{my_provider.rate}} </h4>
-            <form class="form-group" method="POST" action="#">
-                {% csrf_token %}
-                <button class="btn btn-dark" type="submit" name="modifyprofile" value="modifyprofile">Change Details </button>
-                <button class="btn btn-danger" type="submit" name="deleteaccount" value="deleteaccount">Delete Account </button>
-            </form>
-
- 
-            {%endif%}
+  
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4 class="card-title">Personal Information</h4>
+            <p><strong>Username:</strong> {{ me.username }}</p>
+            <p><strong>Email:</strong> {{ me.email }}</p>
+            <a href="{% url 'password_change' %}" class="btn btn-sm btn-outline-primary">Change Password</a>
         </div>
     </div>
+
+  
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4 class="card-title">Notification Preferences</h4>
+            <p><strong>Current:</strong> {{ me.notification_settings.preferences }}</p>
+            <form method="POST" class="mt-3">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <button class="btn btn-outline-dark mt-2" type="submit" name="changenot" value="changenot">Update Preferences</button>
+            </form>
+        </div>
+    </div>
+
+    {% if my_customer %}
+  
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4 class="card-title">Customer Profile</h4>
+            <p><strong>Phone Number:</strong> {{ my_customer.phone_number }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if my_provider %}
+  
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4 class="card-title">Provider Profile</h4>
+            <p><strong>Phone Number:</strong> {{ my_provider.phone_number }}</p>
+            <p><strong>Service Name:</strong> {{ my_provider.service_name }}</p>
+            <p><strong>Category:</strong> {{ my_provider.service_category }}</p>
+            <p><strong>Duration:</strong> {{ my_provider.duration_mins }} mins</p>
+            <p><strong>Pricing Model:</strong> {{ my_provider.pricing_model }}</p>
+            <p><strong>Start Time:</strong> {{ my_provider.start_time }}</p>
+            <p><strong>End Time:</strong> {{ my_provider.end_time }}</p>
+            <p><strong>Rate:</strong> {{ my_provider.rate }}</p>
+            <form method="POST">
+                {% csrf_token %}
+                <button class="btn btn-warning" type="submit" name="modifyprofile" value="modifyprofile">Change Details</button>
+                <button class="btn btn-danger" type="submit" name="deleteaccount" value="deleteaccount">Delete Account</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
 </div>
-
-
-
-
 {% endblock %}

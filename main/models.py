@@ -21,6 +21,12 @@ STATUS_CHOICES = [
     ("rescheduled", "Rescheduled")
 ]
 
+NOTIFICATION_CHOICES = [
+    ("all", "All"),
+    ("reminders","Reminders"),
+    ("none","None")
+]
+
 default_start = datetime.time(9, 0, 0)
 default_end = datetime.time(17, 0, 0)
 
@@ -93,3 +99,21 @@ class AnalyticsApi(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     access_token = models.TextField(blank=True, null=True)
     refresh_token = models.TextField(blank=True, null=True)
+
+
+
+class NotificationPreferences(models.Model):
+    """
+    Allow the user to change notification prferences 
+
+    Includes  3 levels :
+    1. All notifications 
+    2. Only google calendar Reminders 
+    3. None 
+
+    Args:
+    user : One to one field to user for easy access 
+    preferences : the actual user choice , defaulting to all 
+    """
+    user = models.OneToOneField(User , related_name="notification_settings" , on_delete = models.CASCADE)
+    preferences = models.CharField(max_length=11 , choices=NOTIFICATION_CHOICES , default="all")
