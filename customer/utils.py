@@ -27,6 +27,7 @@ def get_available_slots(provider, slot_range):
     duration = provider.providerprofile.duration_mins
     start_time = provider.providerprofile.start_time
     end_time = provider.providerprofile.end_time
+    buffer = provider.providerprofile.buffer
 
     available_slots = []
 
@@ -71,7 +72,7 @@ def get_available_slots(provider, slot_range):
             while (busy_start - cursor).total_seconds() >= duration * 60:
                 slot_end = cursor + timedelta(minutes=duration)
                 available_slots.append((cursor, slot_end))
-                cursor = slot_end
+                cursor = slot_end + timedelta(minutes=buffer)
 
             if cursor < busy_end:
                 cursor = busy_end
@@ -79,7 +80,7 @@ def get_available_slots(provider, slot_range):
         while (day_end - cursor).total_seconds() >= duration * 60:
             slot_end = cursor + timedelta(minutes=duration)
             available_slots.append((cursor, slot_end))
-            cursor = slot_end
+            cursor = slot_end + timedelta(minutes=buffer)
 
     return available_slots
 

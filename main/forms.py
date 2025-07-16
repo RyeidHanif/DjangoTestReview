@@ -18,6 +18,7 @@ class ProviderForm(forms.ModelForm):
             "start_time",
             "end_time",
             "rate",
+            "buffer",
         ]
         widgets = {
             "start_time": forms.TimeInput(attrs={"type": "time"}),

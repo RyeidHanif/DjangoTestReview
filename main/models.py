@@ -52,6 +52,7 @@ class ProviderProfile(models.Model):
     start_time = models.TimeField(default=default_start)
     end_time = models.TimeField(default=default_end)
     rate = models.FloatField(default=0)
+    buffer = models.IntegerField(default=0)
 
     def __str__(self):
         return f"provider profile of user {self.user.username}"
