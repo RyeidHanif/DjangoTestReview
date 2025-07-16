@@ -122,7 +122,8 @@ def create_calendar_appointment(start_date, end_date, summary, attendee_email ,r
 
 def check_appointment_exists(customer, provider):
     return not Appointment.objects.filter(
-        customer=customer, provider=provider, status__in=["pending", "approved"]
+        customer=customer, provider=provider, status__in=["pending", "accepted", "rescheduled"]
+
     ).exists()
 
 
@@ -136,10 +137,10 @@ def EmailRescheduledAppointment(
     new_date_end,
     to_email,
 ):
-    mail_subject = "Appointment Rescheduled "
+    mail_subject = "Appointment Reschedule Request"
     message = f"""Dear {provider.username} , Mr. {customer.username} wishes to reschedule the appointment from the original date and time which was
-    originally :  {old_date_start} to {old_date_end}   and now shall be : {new_date_start} To {new_date_end} . If you wish to reject  the appointment please do so in your account , otherwise 
-    this will stay in the calendar and occur  as planned . Its Status is Accepted"""
+    originally :  {old_date_start} to {old_date_end}   and now shall be : {new_date_start} To {new_date_end} . If you wish to reject  the appointment please do so in your account . dont worry currently, the original date is 
+    still there"""
     email = EmailMessage(mail_subject, message, to=[to_email])
     if email.send():
         messages.success(

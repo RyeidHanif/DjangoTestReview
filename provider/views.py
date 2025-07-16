@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from django.db.models  import Q
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -10,10 +11,9 @@ from main.utils import get_calendar_service
 
 from .forms import AvailabilityForm
 from .utils import (EmailCancelledAppointment, EmailConfirmedAppointment,
-                    EmailDeclinedAppointment)
-
-activate("Asia/Karachi")
-
+                    EmailDeclinedAppointment, create_google_calendar_event , reschedule_google_event , SendEmailRescheduleAccepted ,EmailRescheduleDeclined)
+from django.utils.timezone import localtime
+from datetime import datetime, time
 
 # Create your views here.
 from django.shortcuts import redirect, render
@@ -79,39 +79,73 @@ def view_my_appointments(request):
 
 @login_required(login_url="/login/")
 def view_pending_appointments(request):
-    my_appointments = Appointment.objects.filter(
-        provider=request.user, status="pending"
-    )
+    from django.db.models import Q
+
+    my_appointments = Appointment.objects.filter(status__in=["pending", "rescheduled"] , provider = request.user)
+    
     if request.method == "POST":
         if request.POST.get("reject"):
             appointment = Appointment.objects.get(id=request.POST.get("reject"))
             service = get_calendar_service(request.user)
             service.events().delete(calendarId="primary", eventId=appointment.event_id)
-            appointment.status = "rejected"
-            EmailDeclinedAppointment(
-                request,
-                appointment.customer,
-                appointment.provider,
-                "N/A",
-                to_email=appointment.customer.email,
-            )
-            appointment.save()
-            messages.success(request, " appointment rejected successfully")
-            return redirect("view_pending_appointments")
-        if request.POST.get("accept"):
+            if appointment.status == "pending":
+                appointment.status = "rejected"
+                EmailDeclinedAppointment(
+                    request,
+                    appointment.customer,
+                    appointment.provider,
+                    "N/A",
+                    to_email=appointment.customer.email,
+                )
+                appointment.save()
+                messages.success(request, " appointment rejected successfully")
+                return redirect("view_pending_appointments")
+            elif appointment.status == "rescheduled":
+                appointment.status ="cancelled"
+                EmailRescheduleDeclined(request , appointment.customer,  appointment.provider , appointment.date_start , appointment.date_end , appointment.customer.email)
+        if request.POST.get("accept") :
             appointment = Appointment.objects.get(id=request.POST.get("accept"))
-            appointment.status = "accepted"
-            appointment.save()
-            EmailConfirmedAppointment(
-                request,
-                appointment.customer,
-                appointment.provider,
-                localtime(appointment.date_start),
-                localtime(appointment.date_end),
-                to_email=appointment.customer.email,
-            )
-            messages.success(request, "Accepted successflly ")
-            return redirect("view_pending_appointments")
+            if appointment.status == "pending":
+                appointment.status = "accepted"
+                #add the rest here 
+                summary = f"Appointment with {appointment.customer.username}"
+                service = get_calendar_service(appointment.provider)
+        
+                timeslot = (localtime(appointment.date_start).isoformat() , localtime(appointment.date_end).isoformat())
+                event = create_google_calendar_event(
+                    service,
+                    timeslot,
+                    summary,
+                    appointment.customer.email,
+                    appointment.recurrence_frequency,
+                    appointment.recurrence_until,
+                )
+
+                appointment.event_id = event["id"]
+                appointment.save()
+                EmailConfirmedAppointment(
+                    request,
+                    appointment.customer,
+                    appointment.provider,
+                    localtime(appointment.date_start),
+                    localtime(appointment.date_end),
+                    to_email=appointment.customer.email,
+                )
+                messages.success(request, "Accepted successflly ")
+                return redirect("view_pending_appointments")
+            elif appointment.status == "rescheduled":
+                appointment.status = "accepted"
+                aware_midnight = make_aware(datetime.combine(appointment.recurrence_until, time.min), timezone=get_current_timezone())
+                recurrence_until_iso_format = aware_midnight.isoformat()
+                service = get_calendar_service(request.user)
+                reschedule_google_event(
+                    service, appointment.event_id, localtime(appointment.date_start).isoformat(), localtime(appointment.date_end).isoformat() , appointment.recurrence_frequency , recurrence_until_iso_format
+                )
+                SendEmailRescheduleAccepted(request, appointment.customer , appointment.provider , appointment.date_start ,appointment.date_end, appointment.customer.email)
+                appointment.save()
+
+
+
 
     return render(
         request,

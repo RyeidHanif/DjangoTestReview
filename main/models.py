@@ -18,6 +18,7 @@ STATUS_CHOICES = [
     ("rejected", "Rejected"),
     ("completed", "Completed"),
     ("cancelled", "Cancelled"),
+    ("rescheduled", "Rescheduled")
 ]
 
 default_start = datetime.time(9, 0, 0)

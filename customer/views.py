@@ -96,6 +96,7 @@ def schedule(request, providerID):
 @login_required(login_url="/login/")
 def addappointment(request, providerUserID):
     mode = request.session.get("mode", "normal")
+    print(f"DEBUG : THE CURRENT MODE IS {mode}")
     timeslot = request.session.get("timeslot_tuple", [])
 
     provider_user = User.objects.get(id=providerUserID)
@@ -106,9 +107,11 @@ def addappointment(request, providerUserID):
     end_datetime = datetime.fromisoformat(timeslot[1])
     total_price = calculate_total_price(provider)
 
-    recurrence_form = AppointmentRecurrenceForm(request.POST or None)
-
+    print(f"DEBUG : THE CURRENT MODE IS {mode}")
     if mode == "normal":
+        print(f"DEBUG : THE CURRENT MODE IS {mode}")
+        recurrence_form = AppointmentRecurrenceForm()
+
         if not check_appointment_exists(customer, provider_user):
             messages.warning(
                 request,
@@ -117,6 +120,8 @@ def addappointment(request, providerUserID):
             return redirect("viewproviders")
 
         if request.method == "POST":
+            print(f"DEBUG : THE CURRENT MODE IS {mode}")
+            recurrence_form = AppointmentRecurrenceForm(request.POST)
             if request.POST.get("confirm"):
                 if recurrence_form.is_valid():
                     recurrence_frequency = recurrence_form.cleaned_data["recurrence"]
@@ -138,19 +143,7 @@ def addappointment(request, providerUserID):
                     until_date,
                 )
 
-                summary = f"Appointment with {customer.username}"
-                service = get_calendar_service(provider_user)
-                event = create_google_calendar_event(
-                    service,
-                    timeslot,
-                    summary,
-                    customer.email,
-                    recurrence_frequency,
-                    until_date,
-                )
-
-                appointment.event_id = event["id"]
-                appointment.save()
+                # Removed google calendar API integration from here to prevent ghost appointments 
 
                 EmailPendingAppointment(
                     request,
@@ -169,24 +162,40 @@ def addappointment(request, providerUserID):
                 return redirect("customerdashboard")
 
     elif mode == "reschedule":
+        print(f"DEBUG : THE CURRENT MODE IS {mode}")
         appointment = Appointment.objects.filter(customer=customer, provider=provider_user).first()
+        recurrence_form = AppointmentRecurrenceForm(initial={
+            "recurrence": appointment.recurrence_frequency,
+            "until_date": appointment.recurrence_until
+        })
+        
         if not appointment:
             messages.error(request, "No existing appointment found for rescheduling.")
             return redirect("viewappointments")
 
         if request.method == "POST":
+            print(f"DEBUG : THE CURRENT MODE IS {mode}")
+            recurrence_form = AppointmentRecurrenceForm(request.POST)
+            if recurrence_form.is_valid():
+                if recurrence_form.is_valid():
+                    recurrence_frequency = recurrence_form.cleaned_data["recurrence"]
+                    until_date = recurrence_form.cleaned_data["until_date"]
+                else:
+                    recurrence_frequency = appointment.recurrence_frequency
+                    until_date = appointment.recurrence_until
+
             if request.POST.get("confirm"):
                 old_start = appointment.date_start
                 old_end = appointment.date_end
 
                 appointment.date_start = start_datetime
                 appointment.date_end = end_datetime
+                appointment.status = "rescheduled"
+                appointment.recurrence_frequency = recurrence_frequency
+                appointment.recurrence_until = until_date
                 appointment.save()
 
-                service = get_calendar_service(provider_user)
-                reschedule_google_event(
-                    service, appointment.event_id, timeslot[0], timeslot[1]
-                )
+                
 
                 EmailRescheduledAppointment(
                     request,
@@ -233,7 +242,7 @@ def viewappointments(request):
         if request.POST.get("reschedule"):
             messages.warning(
                 request,
-                "This will return the status of the appointment to pending because the provider will have to review the timings again ",
+                "This will change the status to Rescheduled but the event for now will remain in the calendar  because the provider will have to review the timings again ",
             )
             change_appointment = Appointment.objects.get(
                 id=request.POST.get("reschedule")
@@ -249,10 +258,9 @@ def viewappointments(request):
                 )
         if request.POST.get("cancel"):
             appointment = Appointment.objects.get(id=request.POST.get("cancel"))
-            service = get_calendar_service(appointment.provider)
-            service.events().delete(
-                calendarId="primary", eventId=appointment.event_id
-            ).execute()
+            if appointment.status == "accepted":
+                service = get_calendar_service(appointment.provider)
+                service.events().delete(calendarId="primary" , eventId = appointment.event_id).execute()
             appointment.status = "cancelled"
             appointment.save()
             messages.success(request, "Cancelled successfully ")
@@ -268,8 +276,6 @@ def reschedule(request, appointment_id):
     if request.method == "POST":
         if request.POST.get("checkschedule"):
             request.session["mode"] = "reschedule"
-            print(f"DEBUG : THE CURRENT MODE IS {request.session.get("mode")}")
-            print(f"appointment ID currently is {appointment_id}")
             messages.info(
                 request,
                 "Here is the providers schedule , please take note and choose a slot ",
