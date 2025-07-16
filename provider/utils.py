@@ -43,7 +43,6 @@ def create_calendar_appointment(start_date, end_date, summary, attendee_email ,r
     }
     if recurrence_frequency not in [None , "NONE"] and until_date != None :
        
-        until_date = datetime(2025, 7, 25).date()  # Replace with your form field
         until_utc = datetime.combine(until_date, time.min).replace(tzinfo=timezone.utc)
         until_str = until_utc.strftime('%Y%m%dT%H%M%SZ')
         recur = f"RRULE:FREQ={recurrence_frequency};UNTIL={until_str}"
@@ -109,8 +108,10 @@ def reschedule_google_event(service, event_id, new_start, new_end , recurrence_f
     event = service.events().get(calendarId="primary", eventId=event_id).execute()
     event["start"]["dateTime"] = new_start
     event["end"]["dateTime"] = new_end
+    until_utc = datetime.combine(recurrence_until, time.min).replace(tzinfo=timezone.utc)
+    until_str = until_utc.strftime('%Y%m%dT%H%M%SZ')
     if recurrence_frequency and recurrence_until:
-        event["recurrence"] = [f"RRULE:FREQ={recurrence_frequency};UNTIL={recurrence_until}"]
+        event["recurrence"] = [f"RRULE:FREQ={recurrence_frequency};UNTIL={until_str}"]
     else:
         event.pop("recurrence", None)
 

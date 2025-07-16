@@ -193,6 +193,7 @@ def addappointment(request, providerUserID):
                 appointment.status = "rescheduled"
                 appointment.recurrence_frequency = recurrence_frequency
                 appointment.recurrence_until = until_date
+                appointment.special_requests = request.POST.get("special_requests", "")
                 appointment.save()
 
                 
@@ -223,6 +224,8 @@ def addappointment(request, providerUserID):
             "start": start_datetime,
             "end": end_datetime,
             "form": recurrence_form,
+            "mode": mode,
+            "appointment": appointment if mode == "reschedule" else None,
         },
     )
 

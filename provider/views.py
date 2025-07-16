@@ -79,7 +79,7 @@ def view_my_appointments(request):
 
 @login_required(login_url="/login/")
 def view_pending_appointments(request):
-    from django.db.models import Q
+
 
     my_appointments = Appointment.objects.filter(status__in=["pending", "rescheduled"] , provider = request.user)
     
@@ -87,7 +87,7 @@ def view_pending_appointments(request):
         if request.POST.get("reject"):
             appointment = Appointment.objects.get(id=request.POST.get("reject"))
             service = get_calendar_service(request.user)
-            service.events().delete(calendarId="primary", eventId=appointment.event_id)
+            service.events().delete(calendarId="primary", eventId=appointment.event_id).execute()
             if appointment.status == "pending":
                 appointment.status = "rejected"
                 EmailDeclinedAppointment(
@@ -102,6 +102,8 @@ def view_pending_appointments(request):
                 return redirect("view_pending_appointments")
             elif appointment.status == "rescheduled":
                 appointment.status ="cancelled"
+                appointment.save()
+                messages.info(request , "reschedule rejected successfully ")
                 EmailRescheduleDeclined(request , appointment.customer,  appointment.provider , appointment.date_start , appointment.date_end , appointment.customer.email)
         if request.POST.get("accept") :
             appointment = Appointment.objects.get(id=request.POST.get("accept"))
@@ -135,11 +137,9 @@ def view_pending_appointments(request):
                 return redirect("view_pending_appointments")
             elif appointment.status == "rescheduled":
                 appointment.status = "accepted"
-                aware_midnight = make_aware(datetime.combine(appointment.recurrence_until, time.min), timezone=get_current_timezone())
-                recurrence_until_iso_format = aware_midnight.isoformat()
                 service = get_calendar_service(request.user)
                 reschedule_google_event(
-                    service, appointment.event_id, localtime(appointment.date_start).isoformat(), localtime(appointment.date_end).isoformat() , appointment.recurrence_frequency , recurrence_until_iso_format
+                    service, appointment.event_id, localtime(appointment.date_start).isoformat(), localtime(appointment.date_end).isoformat() , appointment.recurrence_frequency , appointment.recurrence_until
                 )
                 SendEmailRescheduleAccepted(request, appointment.customer , appointment.provider , appointment.date_start ,appointment.date_end, appointment.customer.email)
                 appointment.save()
