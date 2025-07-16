@@ -1,4 +1,4 @@
-from datetime import datetime, time, timedelta
+from datetime import datetime, time, timedelta, timezone 
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -12,6 +12,7 @@ from django.utils.timezone import (activate, get_current_timezone, localdate,
 from main.models import Appointment, ProviderProfile
 from main.utils import get_calendar_service
 from googleapiclient.errors import HttpError
+
 
 activate("Asia/Karachi")
 
@@ -83,7 +84,7 @@ def get_available_slots(provider, slot_range):
     return available_slots
 
 
-def create_calendar_appointment(start_date, end_date, summary, attendee_email):
+def create_calendar_appointment(start_date, end_date, summary, attendee_email ,recurrence_frequency , until_date):
     event = {
         "summary": summary,
         "location": "My Office ",
@@ -108,6 +109,13 @@ def create_calendar_appointment(start_date, end_date, summary, attendee_email):
             ],
         },
     }
+    if recurrence_frequency not in [None , "NONE"] and until_date != None :
+       
+        until_date = datetime(2025, 7, 25).date()  # Replace with your form field
+        until_utc = datetime.combine(until_date, time.min).replace(tzinfo=timezone.utc)
+        until_str = until_utc.strftime('%Y%m%dT%H%M%SZ')
+        recur = f"RRULE:FREQ={recurrence_frequency};UNTIL={until_str}"
+        event["recurrence"] = [recur]
 
     return event
 
@@ -143,3 +151,53 @@ def EmailRescheduledAppointment(
             request,
             f"Problem sending confirmation email to {to_email}, check if you typed it correctly.",
         )
+
+
+
+def EmailPendingAppointment(
+    request, customer, provider, date_start, date_end, to_email
+):
+    mail_subject = "Appointment Created - pending "
+    message = f"Dear {provider.username} , {customer.username} has created an appointment with you from  {date_start} To {date_end} . The Status is currently pending . Please accept or reject it in your account  "
+    email = EmailMessage(mail_subject, message, to=[to_email])
+    if email.send():
+        messages.success(
+            request,
+            f"Dear {customer.username}, your email has been sent to the customer . please prepare for the appointment accordingly ",
+        )
+    else:
+        messages.error(
+            request,
+            f"Problem sending confirmation email to {to_email}, check if you typed it correctly.",
+        )
+
+
+def calculate_total_price(provider):
+    if provider.pricing_model == "hourly":
+        return (int(provider.duration_mins) / 60) * provider.rate
+    return provider.rate
+
+def create_and_save_appointment(customer, provider_user, start, end, price, special_requests, recurrence_frequency , until_date):
+    appointment = Appointment(
+        provider=provider_user,
+        customer=customer,
+        date_start=start,
+        date_end=end,
+        total_price=price,
+        special_requests=special_requests,
+        recurrence_frequency=recurrence_frequency,
+        recurrence_until = until_date,
+        
+    )
+    appointment.save()
+    return appointment
+
+def create_google_calendar_event(service, timeslot, summary, attendee_email, recurrence_frequency , until_date):
+    event_body = create_calendar_appointment(timeslot[0], timeslot[1], summary, attendee_email , recurrence_frequency , until_date)
+    return service.events().insert(calendarId="primary", body=event_body, sendUpdates="all").execute()
+
+def reschedule_google_event(service, event_id, new_start, new_end):
+    event = service.events().get(calendarId="primary", eventId=event_id).execute()
+    event["start"]["dateTime"] = new_start
+    event["end"]["dateTime"] = new_end
+    return service.events().update(calendarId="primary", eventId=event_id, body=event).execute()

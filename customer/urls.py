@@ -13,4 +13,5 @@ urlpatterns = [
     path("schedule/<int:providerID>", views.schedule, name="schedule"),
     path("viewappointments", views.viewappointments, name="viewappointments"),
     path("reschedule/<appointment_id>", views.reschedule, name="reschedule"),
+    path("bookinghistory/", views.bookinghistory , name="bookinghistory")
 ]

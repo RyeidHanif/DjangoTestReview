@@ -1,6 +1,7 @@
 {% extends 'main/base.html' %}
 
 {% block title %} Add Appointment  {% endblock %}
+{% load crispy_forms_tags %}
 
 
 {% block content %}
@@ -12,6 +13,7 @@
             <h3>{{ start|date:"l, d F Y" }} — from {{ start|time:"h:i A" }} to {{ end|time:"h:i A" }}</h3>
             <form class="form-group" method="POST" action="#">
                 {% csrf_token %}
+                {{form | crispy }}
          
                 <label for="special_requests" > Please enter Any Special requests </label>
                 <input type="text" name="special_requests" placeholder=" ">

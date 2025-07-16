@@ -120,8 +120,7 @@ def view_pending_appointments(request):
     )
 
 
-def viewanalytics(request):
-    pass
+
 
 
 def myavailability(request):
@@ -167,3 +166,26 @@ def myavailability(request):
         form = AvailabilityForm()
 
     return render(request, "provider/myavailability.html", {"form": form})
+
+
+
+@login_required(login_url="/login/")
+def viewanalytics(request):
+    myappointments = Appointment.objects.filter(provider=request.user)
+    statuses = {"pending": 0,
+                "accepted":0 ,
+                "rejected": 0,
+                "cancelled": 0,
+                "completed": 0
+                }
+    customers = []
+    for appointment in myappointments :
+        statuses[appointment.status] +=1
+        customers.append(appointment.customer.username)
+    
+    return render(request , "provider/viewanalytics.html" , {"customers": customers , "myappointments": myappointments , "statuses": statuses})
+        
+
+
+
+        

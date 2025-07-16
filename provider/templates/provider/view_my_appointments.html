@@ -15,6 +15,7 @@
 <h3>{{ appointment.date_start|date:"l, d F Y" }} — from {{ appointment.date_start|time:"h:i A" }} to {{ appointment.date_end|time:"h:i A" }}</h3>
 <h3> Status : {{appointment.status}} </h3>
 <h4> special requests : {{appointment.special_requests}}</h4>
+<h5> Recurrence : {{ appointment.recurrence_frequency}} and will go on until {{appointment.recurrence_until}}</h5>
 
 <form class="form-group" method="POST" action="#">
     {% csrf_token %}

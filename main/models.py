@@ -80,6 +80,8 @@ class Appointment(models.Model):
     event_id = models.TextField(blank=True, null=True)
     total_price = models.FloatField(default=0)
     special_requests = models.TextField(default="None")
+    recurrence_frequency= models.CharField(max_length = 10 , null=True , blank=True)
+    recurrence_until = models.DateField(blank = True , null=True )
 
 
 class AnalyticsApi(models.Model):

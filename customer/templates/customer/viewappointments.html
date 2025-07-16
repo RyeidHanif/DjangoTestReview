@@ -6,12 +6,13 @@
 {% block content %}
 
 
-<div class="justify-content-center">
+<div class="d-flex justify-content-center">
     <h1> Here Are All your appointments </h1>
     {% for appointment in appointments %}
     <h3>You Have an Appointment with {{appointment.provider.username}} . Current Status is {{appointment.status}} </h3>
     <h4>{{ appointment.date_start|date:"l, d F Y" }} — from {{ appointment.date_start|time:"h:i A" }} to {{ appointment.date_end|time:"h:i A" }}</h4>
     <h5> special request : {{appointment.special_requests}}</h5>
+    <h5> appointment Recurrence : {{appointment.recurrence_frequency}} will go on until : {{appointment.recurrence_until}}</h5>
     <form class ="form-group" method="POST" action="#">
         {% csrf_token %}
         {% if appointment.status == "pending"%}

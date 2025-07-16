@@ -1,12 +1,26 @@
 {% extends 'main/base.html' %}
 
 
-{% block title %} My Appointments  {% endblock %}
+{% block title %} Analytics {% endblock %}
 
 
 
 {% block content %}
 
+<h2> appointment statuses and their numbers </h2>
+{% for key, value in  statuses.items %}
+
+<h3> status : {{key}}  || Count : {{value}}</h3>
+
+{% endfor %}
+
+
+<h2> Customer names who have made appointments with me overall </h2>
+{% for customer in customers %}
+
+<h3> {{customer}}</h3>
+
+{% endfor %}
 
 
 {% endblock %}
