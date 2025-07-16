@@ -1,16 +1,40 @@
 {% extends "main/base.html" %}
 
+{% block title %}Home Page{% endblock %}
 
-{% block title %} home page {% endblock %}
+{% block content %}
+<style>
+  .hero-container {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-radius: 2rem;
+    padding: 3rem;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 2s ease-in-out;
+    text-align: center;
+  }
 
+  h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    animation: slideIn 1.5s ease-out;
+  }
 
+  @keyframes fadeIn {
+    0% {opacity: 0; transform: scale(0.95);}
+    100% {opacity: 1; transform: scale(1);}
+  }
 
-{% block content %} 
+  @keyframes slideIn {
+    0% {transform: translateY(-20px); opacity: 0;}
+    100% {transform: translateY(0); opacity: 1;}
+  }
+</style>
 
-<div class = "d-flex justify-content-center align-items-center vh-100">
-<div class="text-align-center" >
-    <h1> Welcome to the homepage  </h1>
+<div class="d-flex justify-content-center align-items-center vh-100">
+  <div class="hero-container">
+    <h1>Welcome to the Homepage</h1>
+    <p class="mt-3 fs-4">Your portal to Easy Appointments 🚀</p>
+  </div>
 </div>
-</div>
-
 {% endblock %}
