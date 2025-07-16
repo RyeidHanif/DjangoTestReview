@@ -12,7 +12,8 @@
             <h3>{{ start|date:"l, d F Y" }} — from {{ start|time:"h:i A" }} to {{ end|time:"h:i A" }}</h3>
             <form class="form-group" method="POST" action="#">
                 {% csrf_token %}
-                <p>do you have any special requests ? </p>
+         
+                <label for="special_requests" > Please enter Any Special requests </label>
                 <input type="text" name="special_requests" placeholder=" ">
                 <button class="btn btn-primary" type="submit" name="confirm" value="confirm">Confirm </button>
                 <button class="btn btn-danger" type="submit" name="cancel" value="cancel">Cancel</button>
