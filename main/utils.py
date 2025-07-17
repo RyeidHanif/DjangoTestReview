@@ -8,6 +8,7 @@ from googleapiclient.discovery import build
 from datetime import datetime , timedelta 
 from django.utils.timezone import (activate, get_current_timezone, localdate,
                                    localtime, make_aware, now)
+from google.auth.exceptions import RefreshError
 
 
 
@@ -36,12 +37,22 @@ def get_calendar_service(user):
         scopes=["https://www.googleapis.com/auth/calendar"],
     )
 
+       # Try refreshing only if token expired
     if creds.expired and creds.refresh_token:
-        creds.refresh(Request())
-        profile.google_access_token = creds.token
-        profile.google_refresh_token = creds.refresh_token
-        profile.google_token_expiry = creds.expiry
-        profile.save()
+        try:
+            creds.refresh(Request())
+            profile.google_access_token = creds.token
+            profile.google_refresh_token = creds.refresh_token
+            profile.google_token_expiry = creds.expiry
+            profile.save()
+        except RefreshError:
+            # Refresh token is invalid — handle re-auth here
+            profile.google_access_token = None
+            profile.google_refresh_token = None
+            profile.google_token_expiry = None
+            profile.google_calendar_connected = False
+            profile.save()
+            raise Exception("Google Calendar token expired. Please reconnect your calendar.")
 
     return build("calendar", "v3", credentials=creds)
 
