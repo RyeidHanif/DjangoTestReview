@@ -121,9 +121,10 @@ def reschedule_google_event(service, event_id, new_start, new_end , recurrence_f
     event = service.events().get(calendarId="primary", eventId=event_id).execute()
     event["start"]["dateTime"] = new_start
     event["end"]["dateTime"] = new_end
-    until_utc = datetime.combine(recurrence_until, time.min).replace(tzinfo=timezone.utc)
-    until_str = until_utc.strftime('%Y%m%dT%H%M%SZ')
+    
     if recurrence_frequency and recurrence_until:
+        until_utc = datetime.combine(recurrence_until, time.min).replace(tzinfo=timezone.utc)
+        until_str = until_utc.strftime('%Y%m%dT%H%M%SZ')
         event["recurrence"] = [f"RRULE:FREQ={recurrence_frequency};UNTIL={until_str}"]
     else:
         event.pop("recurrence", None)

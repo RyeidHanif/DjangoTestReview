@@ -29,6 +29,7 @@ def home(request):
 def redirectiondashboard(request):
     """temporary dashboard to redirect  different users to their respective places"""
     user = request.user
+    prefs, created = NotificationPreferences.objects.get_or_create(user=request.user)
     if hasattr(user, "customerprofile") and hasattr(user, "providerprofile"):
         return render(request, "main/redirectdashboard.html")
     elif hasattr(user, "customerprofile"):

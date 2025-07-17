@@ -20,6 +20,7 @@ from django.shortcuts import redirect, render
 from main.utils import cancellation
 from django.contrib.auth import logout
 
+
 @login_required(login_url="/login/")
 def providerdashboard(request):
     if request.method == "POST":
@@ -182,7 +183,7 @@ def view_pending_appointments(request):
 
 def myavailability(request):
 
-    tz = "Asia/Karachi"
+
 
     if request.method == "POST":
         form = AvailabilityForm(request.POST)
@@ -193,9 +194,9 @@ def myavailability(request):
             end_time = form.cleaned_data["end_time"]
             cause = form.cleaned_data["cause"]
             start_datetime = make_aware(
-                datetime.combine(start_date, start_time), timezone=tz
+                datetime.combine(start_date, start_time), timezone=get_current_timezone()
             )
-            end_datetime = make_aware(datetime.combine(end_date, end_time), timezone=tz)
+            end_datetime = make_aware(datetime.combine(end_date, end_time), timezone=get_current_timezone())
             start_datetime_iso = start_datetime.isoformat()
             end_datetime_iso = end_datetime.isoformat()
             service = get_calendar_service(request.user)
@@ -249,8 +250,13 @@ def viewanalytics(request):
     
     admin_cut = 0.05 * revenue
     for key,value in statuses.items():
-        percentage = (value/total_statuses)*100
-        percentage_statuses_dict[key] = percentage
+            if total_statuses != 0 :
+                percentage = (value/total_statuses)*100
+            else :
+                percentage= 0
+            percentage_statuses_dict[key] = percentage
+
+
 
     
 
