@@ -9,7 +9,7 @@ from django.utils.timezone import (get_current_timezone, localdate, localtime,
                                    make_aware)
 
 from main.models import Appointment, ProviderProfile , NotificationPreferences
-from main.utils import get_calendar_service
+from main.utils import get_calendar_service, cancellation
 
 from .utils import (EmailRescheduledAppointment, check_appointment_exists,
                     create_calendar_appointment, get_available_slots , EmailPendingAppointment,calculate_total_price, create_and_save_appointment, create_google_calendar_event,reschedule_google_event )
@@ -18,6 +18,8 @@ from django.views.generic import ListView
 from django.contrib.auth.mixins import LoginRequiredMixin
 # Create your views here.
 from .forms import AppointmentRecurrenceForm
+from django.contrib.auth import logout
+
 
 
 @login_required(login_url="/login/")
@@ -152,6 +154,7 @@ def addappointment(request, providerUserID):
                         start_datetime,
                         end_datetime,
                         provider_user.email,
+                        special_requests,
                     )
 
                 messages.success(request, "Appointment created successfully")
@@ -208,6 +211,7 @@ def addappointment(request, providerUserID):
                         localtime(appointment.date_start),
                         localtime(appointment.date_end),
                         provider_user.email,
+                        appointment.special_requests,
                     )
 
                 request.session.pop("mode", None)
@@ -262,13 +266,21 @@ def viewappointments(request):
                 )
         if request.POST.get("cancel"):
             appointment = Appointment.objects.get(id=request.POST.get("cancel"))
+            count_cancel = cancellation(request.user , appointment)
             if appointment.status == "accepted":
                 service = get_calendar_service(appointment.provider)
                 service.events().delete(calendarId="primary" , eventId = appointment.event_id).execute()
             appointment.status = "cancelled"
             appointment.save()
-            messages.success(request, "Cancelled successfully ")
-            return redirect("viewappointments")
+            if count_cancel >= 3 :
+                request.user.is_active = False
+                request.user.save()
+                logout(request)
+                messages.warning(request,"You have cancelled too many appointments in a shot span , your account has been deactivated ")
+                return redirect("home")
+            else:
+                messages.success(request, "Cancelled successfully ")
+                return redirect("viewappointments")
     return render(
         request, "customer/viewappointments.html", {"appointments": myappointments}
     )

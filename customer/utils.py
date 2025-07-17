@@ -137,11 +137,12 @@ def EmailRescheduledAppointment(
     new_date_start,
     new_date_end,
     to_email,
+    special_requests,
 ):
     mail_subject = "Appointment Reschedule Request"
     message = f"""Dear {provider.username} , Mr. {customer.username} wishes to reschedule the appointment from the original date and time which was
     originally :  {old_date_start} to {old_date_end}   and now shall be : {new_date_start} To {new_date_end} . If you wish to reject  the appointment please do so in your account . dont worry currently, the original date is 
-    still there"""
+    still there and here are the customer's Specil requests : {special_requests}"""
     email = EmailMessage(mail_subject, message, to=[to_email])
     if email.send():
         messages.success(
@@ -157,15 +158,15 @@ def EmailRescheduledAppointment(
 
 
 def EmailPendingAppointment(
-    request, customer, provider, date_start, date_end, to_email
+    request, customer, provider, date_start, date_end, to_email , special_requests
 ):
     mail_subject = "Appointment Created - pending "
-    message = f"Dear {provider.username} , {customer.username} has created an appointment with you from  {date_start} To {date_end} . The Status is currently pending . Please accept or reject it in your account  "
+    message = f"Dear {provider.username} , {customer.username} has created an appointment with you from  {date_start} To {date_end} . The Status is currently pending . Please accept or reject it in your account  .These are some requests : {special_requests} "
     email = EmailMessage(mail_subject, message, to=[to_email])
     if email.send():
         messages.success(
             request,
-            f"Dear {customer.username}, your email has been sent to the customer . please prepare for the appointment accordingly ",
+            f"Dear {customer.username}, your email has been sent to the Provider . please prepare for the appointment accordingly ",
         )
     else:
         messages.error(
@@ -203,3 +204,8 @@ def reschedule_google_event(service, event_id, new_start, new_end):
     event["start"]["dateTime"] = new_start
     event["end"]["dateTime"] = new_end
     return service.events().update(calendarId="primary", eventId=event_id, body=event).execute()
+
+
+
+
+    

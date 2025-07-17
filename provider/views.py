@@ -9,7 +9,7 @@ from django.utils.timezone import (activate, get_current_timezone, localdate,
 from main.models import Appointment, ProviderProfile ,NotificationPreferences
 from main.utils import get_calendar_service
 
-from .forms import AvailabilityForm
+from .forms import AvailabilityForm , SendNoteForm
 from .utils import (EmailCancelledAppointment, EmailConfirmedAppointment,
                     EmailDeclinedAppointment, create_google_calendar_event , reschedule_google_event , SendEmailRescheduleAccepted ,EmailRescheduleDeclined)
 from django.utils.timezone import localtime
@@ -17,7 +17,8 @@ from datetime import datetime, time
 
 # Create your views here.
 from django.shortcuts import redirect, render
-
+from main.utils import cancellation
+from django.contrib.auth import logout
 
 @login_required(login_url="/login/")
 def providerdashboard(request):
@@ -55,7 +56,15 @@ def view_my_appointments(request):
             cancel_appointment.save()
             if customer.notification_settings.preferences == "all":
                 EmailCancelledAppointment(request, customer, provider, to_email)
-            return redirect("view_my_appointments")
+            count_cancel = cancellation(request.user , cancel_appointment)
+            if count_cancel >= 3 :
+                request.user.is_active = False
+                request.user.save()
+                logout(request)
+                messages.warning(request , "you cancelled too many apointments after deadline in a short span of time ")
+                return redirect("home")
+            else:
+                return redirect("view_my_appointments")
 
         if request.POST.get("markcompleted"):
             appointment = Appointment.objects.get(id=request.POST.get("markcompleted"))

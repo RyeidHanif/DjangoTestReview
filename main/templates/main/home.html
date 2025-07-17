@@ -4,37 +4,107 @@
 
 {% block content %}
 <style>
+  body {
+    background: #f1f4f9;
+  }
+
   .hero-container {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
+    background: linear-gradient(135deg, #4e54c8, #8f94fb);
+    color: #f9f9f9;
     border-radius: 2rem;
-    padding: 3rem;
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-    animation: fadeIn 2s ease-in-out;
+    padding: 4rem;
+    margin-top: 2rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    animation: fadeIn 1.2s ease-out;
     text-align: center;
   }
 
-  h1 {
-    font-size: 3rem;
-    font-weight: 700;
-    animation: slideIn 1.5s ease-out;
+  .hero-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.4rem;
+    opacity: 0.95;
   }
 
   @keyframes fadeIn {
-    0% {opacity: 0; transform: scale(0.95);}
-    100% {opacity: 1; transform: scale(1);}
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
-  @keyframes slideIn {
-    0% {transform: translateY(-20px); opacity: 0;}
-    100% {transform: translateY(0); opacity: 1;}
+  .info-box {
+    background-color: #ffffff;
+    border-radius: 1.5rem;
+    padding: 2rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: all 0.3s ease;
+    height: 100%;
+  }
+
+  .info-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+  }
+
+  .info-icon {
+    font-size: 2.5rem;
+    color: #4e54c8;
+    margin-bottom: 1rem;
+  }
+
+  .info-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .info-text {
+    font-size: 0.95rem;
+    color: #444;
   }
 </style>
 
-<div class="d-flex justify-content-center align-items-center vh-100">
-  <div class="hero-container">
-    <h1>Welcome to the Homepage</h1>
-    <p class="mt-3 fs-4">Your portal to Easy Appointments 🚀</p>
+<div class="container">
+  <!-- Hero Section -->
+  <div class="hero-container mx-auto col-lg-10">
+    <h1 class="hero-title">Welcome to the Appointment Hub</h1>
+    <p class="hero-subtitle">Manage your bookings, check stats, and never miss a beat 🚀</p>
+  </div>
+
+  <!-- Info Boxes -->
+  <div class="row mt-5 g-4">
+    <div class="col-md-4">
+      <div class="info-box h-100">
+        <div class="info-icon"><i class="bi bi-exclamation-octagon-fill"></i></div>
+        <div class="info-title">Cancellation Policy</div>
+        <div class="info-text">
+          Read the rules. Late cancellations can lead to account bans.
+        </div>
+        <a href="{% url 'cancellation_policy' %}" class="btn btn-outline-primary mt-3">Read Policy</a>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="info-box h-100">
+        <div class="info-icon"><i class="bi bi-graph-up-arrow"></i></div>
+        <div class="info-title">Analytics</div>
+        <div class="info-text">
+          Track your appointment trends and performance metrics in real time.
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="info-box h-100">
+        <div class="info-icon"><i class="bi bi-gear-fill"></i></div>
+        <div class="info-title">Smart Features</div>
+        <div class="info-text">
+          Automatic reminders, rescheduling, and smart calendar sync built in.
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

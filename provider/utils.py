@@ -61,10 +61,12 @@ def create_calendar_appointment(start_date, end_date, summary, attendee_email ,r
 
     return event
 def EmailConfirmedAppointment(
-    request, customer, provider, date_start, date_end, to_email
+    request, customer, provider, date_start, date_end, to_email,
 ):
     mail_subject = "Appointment confirmed"
-    message = f"Dear {customer.username} You have been allotted the slot from {date_start} To {date_end} with provider : {provider} . Please do not miss the appointment . You will recieve reminder emails before the appointment as well "
+    message = f'''Dear {customer.username} You have been allotted the slot from {date_start} To {date_end} with provider : {provider} . Please do not miss the appointment . You will recieve reminder emails before the appointment as well .
+     '''
+    
     email = EmailMessage(mail_subject, message, to=[to_email])
     if email.send():
         messages.success(
@@ -78,9 +80,9 @@ def EmailConfirmedAppointment(
         )
 
 
-def EmailDeclinedAppointment(request, customer, provider, reason, to_email):
+def EmailDeclinedAppointment(request, customer, provider, reason, to_email,  ):
     mail_subject = "Appointment Declined"
-    message = f"Dear {customer.username}  , Unfortunately Mr.{provider} could not accept your appointment request, for the following reason : {reason}"
+    message = f"Dear {customer.username}  , Unfortunately Mr.{provider} could not accept your appointment request, "
     email = EmailMessage(mail_subject, message, to=[to_email])
     if email.send():
         messages.success(
@@ -94,9 +96,9 @@ def EmailDeclinedAppointment(request, customer, provider, reason, to_email):
         )
 
 
-def EmailCancelledAppointment(request, customer, provider, to_email):
+def EmailCancelledAppointment(request, customer, provider, to_email , ):
     mail_subject = "Appointment Cancelled "
-    message = f"Dear {customer.username}  , Unfortunately Mr.{provider} has had to cancel the  appointment "
+    message = f"Dear {customer.username}  , Unfortunately Mr.{provider} has had to cancel the  appointment ."
     email = EmailMessage(mail_subject, message, to=[to_email])
     if email.send():
         messages.success(
@@ -130,10 +132,10 @@ def reschedule_google_event(service, event_id, new_start, new_end , recurrence_f
 
 
 def SendEmailRescheduleAccepted(
-    request, customer, provider, date_start, date_end, to_email
+    request, customer, provider, date_start, date_end, to_email,  
 ):
     mail_subject = "Reschedule Approved "
-    message = f"Dear {customer.username} You have been allotted the slot from {date_start} To {date_end} with provider : {provider} . Please do not miss the appointment . You will recieve reminder emails before the appointment as well "
+    message = f"Dear {customer.username} You have been allotted the slot from {date_start} To {date_end} with provider : {provider} . Please do not miss the appointment . You will recieve reminder emails before the appointment as well.  "
     email = EmailMessage(mail_subject, message, to=[to_email])
     if email.send():
         messages.success(
@@ -148,9 +150,9 @@ def SendEmailRescheduleAccepted(
 
 
 
-def EmailRescheduleDeclined(request , customer , provider , date_start , date_end , to_email):
+def EmailRescheduleDeclined(request , customer , provider , date_start , date_end , to_email,  ):
     mail_subject = "Reschedule Declined  "
-    message = f"Dear {customer.username} Your Alloted slot from  {date_start} To {date_end} with provider : {provider} Has been Declined . The appointment has been removed . Please act accordingly  "
+    message = f"Dear {customer.username} Your Alloted slot from  {date_start} To {date_end} with provider : {provider} Has been Declined . The appointment has been removed . Please act accordingly. "
     email = EmailMessage(mail_subject, message, to=[to_email])
     if email.send():
         messages.success(

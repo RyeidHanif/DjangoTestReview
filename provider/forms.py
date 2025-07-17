@@ -15,3 +15,7 @@ class AvailabilityForm(forms.Form):
     end_time = forms.TimeField(
         widget=forms.TimeInput(attrs={"type": "time"}), required=True
     )
+
+
+class SendNoteForm(forms.Form):
+    note = forms.CharField(max_length = 100)

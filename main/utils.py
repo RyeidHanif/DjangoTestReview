@@ -5,8 +5,13 @@ from django.utils.timezone import now
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
+from datetime import datetime , timedelta 
+from django.utils.timezone import (activate, get_current_timezone, localdate,
+                                   localtime, make_aware, now)
 
-from .models import ProviderProfile
+
+
+from .models import ProviderProfile, Cancellation
 
 with open("credentials.json", "r") as f:
     data = json.load(f)
@@ -39,3 +44,21 @@ def get_calendar_service(user):
         profile.save()
 
     return build("calendar", "v3", credentials=creds)
+
+
+
+
+def cancellation(user , appointment):
+    cutoff_date = now() - timedelta(days=30)
+    
+    appointment_date = appointment.date_start.astimezone(get_current_timezone())
+    cancel_date =now()
+    if appointment_date - cancel_date < timedelta(hours=12):
+        cancelled =Cancellation.objects.create(user=user, appointment=appointment)
+    
+    count__recent_cancelled = Cancellation.objects.filter(user=user, cancelled_at__gte = cutoff_date ).count()
+    return count__recent_cancelled
+
+
+
+

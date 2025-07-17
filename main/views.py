@@ -138,3 +138,7 @@ def oauth2callback(request):
     profile.save()
     messages.success(request, "Your Google Calendar is successfully connected!")
     return redirect("providerdashboard")
+
+
+def cancellation_policy(request):
+    return render(request , "main/cancellationpolicy.html")
