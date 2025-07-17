@@ -1,0 +1,36 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Customer Profile - {{ user.username }}{% endblock %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4 text-center">Customer Profile: {{ user.username }}</h2>
+
+    <div class="card mx-auto" style="max-width: 500px;">
+        <div class="card-body text-center">
+            {% if user_customer_profile.profile_photo %}
+                <img src="{{ user_customer_profile.profile_photo.url }}" alt="Profile Photo" class="rounded-circle mb-3" style="width:120px; height:120px; object-fit:cover;">
+            {% else %}
+                <img src="{% static 'images/default_pic.jpeg' %}" alt="Default Profile Photo" class="rounded-circle mb-3" style="width:120px; height:120px; object-fit:cover;">
+            {% endif %}
+            <h5 class="card-title">User Details</h5>
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            <p><strong>Phone Number:</strong> {{ user_customer_profile.phone_number }}</p>
+            
+            <hr>
+
+            <h5>Notification Preferences</h5>
+            {% if user.notification_settings %}
+                <p>{{ user.notification_settings.get_preferences_display }}</p>
+            {% else %}
+                <p class="text-muted">No notification preferences set.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-4 text-center">
+        <a href="{% url 'admin_dashboard' %}" class="btn btn-primary">Back to Admin Dashboard</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Provider Profile - {{ user.username }}{% endblock %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4 text-center">Provider Profile: {{ user.username }}</h2>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-body d-flex align-items-center">
+                    <div class="me-4">
+                        {% if user_provider_profile.profile_photo %}
+                            <img src="{{ user_provider_profile.profile_photo.url }}" alt="Profile Photo" class="rounded-circle" style="width:120px; height:120px; object-fit:cover;">
+                        {% else %}
+                            <img src="{% static 'images/default_pic.jpeg' %}" alt="Default Profile Photo" class="rounded-circle" style="width:120px; height:120px; object-fit:cover;">
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h4>{{ user.get_full_name|default:user.username }}</h4>
+                        <p><strong>Email:</strong> {{ user.email }}</p>
+                        <p><strong>Phone:</strong> {{ user_provider_profile.phone_number }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Service Details</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Category:</strong> {{ user_provider_profile.get_service_category_display }}</p>
+                    <p><strong>Service Name:</strong> {{ user_provider_profile.service_name }}</p>
+                    <p><strong>Pricing Model:</strong> {{ user_provider_profile.pricing_model|capfirst }}</p>
+                    <p><strong>Duration (mins):</strong> {{ user_provider_profile.duration_mins }}</p>
+                    <p><strong>Rate:</strong> Rs. {{ user_provider_profile.rate }}</p>
+                    <p><strong>Buffer (mins):</strong> {{ user_provider_profile.buffer }}</p>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Working Hours</h5>
+                </div>
+                <div class="card-body">
+                    <p>From <strong>{{ user_provider_profile.start_time|time:"H:i" }}</strong> to <strong>{{ user_provider_profile.end_time|time:"H:i" }}</strong></p>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Google Calendar Connection</h5>
+                </div>
+                <div class="card-body">
+                    {% if user_provider_profile.google_calendar_connected %}
+                        <p class="text-success">Connected ✅</p>
+                    {% else %}
+                        <p class="text-danger">Not Connected ❌</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Notification Preferences</h5>
+                </div>
+                <div class="card-body">
+                    {% if user.notification_settings %}
+                        <p>{{ user.notification_settings.get_preferences_display }}</p>
+                    {% else %}
+                        <p class="text-muted">No notification preferences set.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="text-center">
+                <a href="{% url 'admin_dashboard' %}" class="btn btn-primary">Back to Admin Dashboard</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
