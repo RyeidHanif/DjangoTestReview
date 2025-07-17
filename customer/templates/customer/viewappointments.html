@@ -6,6 +6,13 @@
 <div class="container py-4">
   <h1 class="text-center mb-4">Here Are All Your Appointments</h1>
 
+    <form method="get" action="" class="mb-4">
+    <div class="input-group">
+      <input type="text" name="q" class="form-control rounded-start" placeholder="Search appointments by provider name..." value="{{ request.GET.q }}">
+      <button class="btn btn-outline-primary" type="submit">Search</button>
+    </div>
+  </form>
+
   {% if appointments %}
     <div class="row">
       {% for appointment in appointments %}

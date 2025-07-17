@@ -38,7 +38,13 @@ def customerdashboard(request):
 
 @login_required(login_url="/login/")
 def viewproviders(request):
-    providers = ProviderProfile.objects.exclude(user=request.user)
+    query = request.GET.get('q')
+    if query :
+        providers = ProviderProfile.objects.filter(user__username__icontains= query).exclude(user=request.user)
+    else:
+
+        providers = ProviderProfile.objects.exclude(user=request.user)
+
     categories = ["doctor", "consultant", "therapist", "counsellor"]
     if request.method == "POST":
         print(
@@ -239,13 +245,24 @@ def addappointment(request, providerUserID):
 
 @login_required(login_url="/login/")
 def viewappointments(request):
-    myappointments = (
-        Appointment.objects.filter(customer=request.user)
+    query =  request.GET.get("q")
+    if query :
+        myappointments = (
+        Appointment.objects.filter(customer=request.user, provider__username__icontains=query)
         .order_by("-date_added")
         .all()
         .exclude(status="rejected")
         .exclude(status="cancelled").exclude(status="completed")
     )
+    else:
+
+        myappointments = (
+            Appointment.objects.filter(customer=request.user)
+            .order_by("-date_added")
+            .all()
+            .exclude(status="rejected")
+            .exclude(status="cancelled").exclude(status="completed")
+        )
     if request.method == "POST":
         if request.POST.get("reschedule"):
             messages.warning(

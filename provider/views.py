@@ -39,9 +39,15 @@ def providerdashboard(request):
 
 @login_required(login_url="/login/")
 def view_my_appointments(request):
-    my_appointments = Appointment.objects.filter(
+    query = request.GET.get("q")
+    if query:
+        my_appointments = Appointment.objects.filter(
+        provider=request.user, status="accepted", customer__username__icontains=query,
+        ).order_by("-date_added")
+    else : 
+        my_appointments = Appointment.objects.filter(
         provider=request.user, status="accepted"
-    ).order_by("-date_added")
+        ).order_by("-date_added")
     if request.method == "POST":
         if request.POST.get("cancel"):
             cancel_appointment = Appointment.objects.get(id=request.POST.get("cancel"))
@@ -89,8 +95,12 @@ def view_my_appointments(request):
 @login_required(login_url="/login/")
 def view_pending_appointments(request):
 
+    query= request.GET.get("q")
+    if query :
+        my_appointments = Appointment.objects.filter(status__in=["pending", "rescheduled"] , provider = request.user , customer__username__icontains=query)
+    else :
+        my_appointments = Appointment.objects.filter(status__in=["pending", "rescheduled"] , provider = request.user)
 
-    my_appointments = Appointment.objects.filter(status__in=["pending", "rescheduled"] , provider = request.user)
     
     if request.method == "POST":
         if request.POST.get("reject"):
