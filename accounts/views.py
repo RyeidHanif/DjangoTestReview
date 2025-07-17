@@ -126,7 +126,7 @@ def password_change(request):
 
 
 @login_required(login_url="/login/")
-def userprofile(request, userID):
+def userprofile(request):
 
     me = User.objects.get(id=request.user.id)
     my_provider_profile = ProviderProfile.objects.filter(user=me).first()

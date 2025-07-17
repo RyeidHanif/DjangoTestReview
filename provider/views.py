@@ -24,7 +24,7 @@ from django.contrib.auth import logout
 def providerdashboard(request):
     if request.method == "POST":
         if request.POST.get("myprofile"):
-            return redirect("userprofile", userID = request.user.id)
+            return redirect("userprofile")
         if request.POST.get("viewanalytics"):
             return redirect("viewanalytics")
         if request.POST.get("viewmyappointments"):
@@ -228,7 +228,10 @@ def myavailability(request):
 
 @login_required(login_url="/login/")
 def viewanalytics(request):
+    revenue = 0
     myappointments = Appointment.objects.filter(provider=request.user)
+    total_statuses = 0
+    percentage_statuses_dict = {}
     statuses = {"pending": 0,
                 "accepted":0 ,
                 "rejected": 0,
@@ -239,9 +242,20 @@ def viewanalytics(request):
     customers = []
     for appointment in myappointments :
         statuses[appointment.status] +=1
+        total_statuses +=1
         customers.append(appointment.customer.username)
+        if appointment.status in ["accepted" , "completed"]:
+            revenue += appointment.total_price
     
-    return render(request , "provider/viewanalytics.html" , {"customers": customers , "myappointments": myappointments , "statuses": statuses})
+    admin_cut = 0.05 * revenue
+    for key,value in statuses.items():
+        percentage = (value/total_statuses)*100
+        percentage_statuses_dict[key] = percentage
+
+    
+
+    
+    return render(request , "provider/viewanalytics.html" , {"customers": customers , "myappointments": myappointments , "statuses": statuses , "revenue": revenue,  "admin_cut": admin_cut, "percentage_statuses_dict":percentage_statuses_dict} )
         
 
 

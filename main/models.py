@@ -30,6 +30,15 @@ NOTIFICATION_CHOICES = [
 default_start = datetime.time(9, 0, 0)
 default_end = datetime.time(17, 0, 0)
 
+class ActiveProviderManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(user__is_active=True)
+
+
+class ActiveAppointmentManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(customer__is_active=True , provider__is_active=True)
+
 
 class ProviderProfile(models.Model):
     """
@@ -54,6 +63,9 @@ class ProviderProfile(models.Model):
     rate = models.FloatField(default=0)
     buffer = models.IntegerField(default=0)
     profile_photo = models.ImageField(default=None , null=True , blank=True)
+
+    objects = ActiveProviderManager()
+    all_objects = models.Manager()
 
     def __str__(self):
         return f"provider profile of user {self.user.username}"
@@ -91,6 +103,9 @@ class Appointment(models.Model):
     special_requests = models.TextField(default="None")
     recurrence_frequency= models.CharField(max_length = 10 , null=True , blank=True)
     recurrence_until = models.DateField(blank = True , null=True )
+
+    objects = ActiveAppointmentManager()
+    all_objects = models.Manager()
 
 
 class AnalyticsApi(models.Model):
