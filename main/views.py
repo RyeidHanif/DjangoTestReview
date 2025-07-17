@@ -162,11 +162,16 @@ def admin_dashboard(request):
         if appointment.status in ["completed", "accepted"]:
             revenue += appointment.total_price
     admin_revenue = 0.05 * revenue
-
+    categories = {}
     statuses = {}
     provider_dict = {}
     for appointment in appointments :
         count +=1
+        category = appointment.provider.providerprofile.service_category 
+        if category in categories.keys():
+            categories[category] +=1
+        else:
+            categories[category] = 1 
         if appointment.provider.username in provider_dict.keys():
             provider_dict[appointment.provider.username] +=1
         else :
@@ -178,6 +183,7 @@ def admin_dashboard(request):
             statuses[appointment.status] =1
     total_appointments = count 
     provider_dict = dict(sorted(provider_dict.items(), key=lambda item: item[1], reverse=True))
+    categories= dict(sorted(categories.items(), key=lambda item: item[1], reverse=True ))
 
     if request.method == "POST":
         if request.POST.get("toggle_active"):
@@ -201,7 +207,7 @@ def admin_dashboard(request):
     
 
     
-    return render(request , "main/admin_dashboard.html", {"revenue": revenue , "myrevenue": admin_revenue , "statuses": statuses , "all_appointments": appointments , "all_providers": providers, "all_customers": customers, "total_appointments" : total_appointments, "users":users , "provider_dict": provider_dict})
+    return render(request , "main/admin_dashboard.html", {"revenue": revenue , "myrevenue": admin_revenue , "statuses": statuses , "all_appointments": appointments , "all_providers": providers, "all_customers": customers, "total_appointments" : total_appointments, "users":users , "provider_dict": provider_dict , "categories": categories})
 
 
 
