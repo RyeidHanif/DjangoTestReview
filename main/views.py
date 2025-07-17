@@ -51,7 +51,7 @@ def profile_creation(request, n):
     if not user_id:
         return redirect("signup")
     if request.method == "POST":
-        provider_form = ProviderForm(request.POST)
+        provider_form = ProviderForm(request.POST , request.FILES)
         if provider_form.is_valid():
 
             user = User.objects.get(id=user_id)

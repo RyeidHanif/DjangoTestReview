@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import SetPasswordForm, UserCreationForm
 from django.contrib.auth.models import User
-from main.models import NotificationPreferences
+from main.models import NotificationPreferences , ProviderProfile
 
 NOTIFICATION_CHOICES = [
     ("all", "All"),
@@ -46,3 +46,10 @@ class ChangeNotificationPreferencesForm(forms.ModelForm):
     class Meta:
         model = NotificationPreferences
         fields = ["preferences"]
+
+
+
+class ProfilePhotoForm(forms.ModelForm):
+    class Meta:
+        model= ProviderProfile
+        fields = ["profile_photo"]

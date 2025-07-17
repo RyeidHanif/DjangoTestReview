@@ -1,19 +1,28 @@
-
 {% extends "main/base.html" %}
-
 {% load crispy_forms_tags %}
+{% load static %}
 
-{% block title %} Sign Up {% endblock  %}
-
+{% block title %}Create Your Profile{% endblock %}
 
 {% block content %}
-
-<form method="POST" action="#" class = "form-group">
-    {% csrf_token %}
-
-    {{ form | crispy }}  
-    <button type ="submit" name ="submitbutton" class = "btn btn-success">Add Profile</button>
-</form>
-
-
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg rounded-3">
+                <div class="card-header bg-success text-white text-center">
+                    <h3 class="mb-0">Complete Your Provider Profile</h3>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" enctype="multipart/form-data" class="form-group">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        <button type="submit" class="btn btn-success w-100 mt-3">
+                            Submit Profile
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

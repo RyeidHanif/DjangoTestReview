@@ -30,7 +30,7 @@ def customerdashboard(request):
         if request.POST.get("viewappointments"):
             return redirect("viewappointments")
         if request.POST.get("myprofile"):
-            return redirect("userprofile")
+            return redirect("userprofile" , userID = request.user.id)
         if request.POST.get("bookinghistory"):
             return redirect("bookinghistory")
     return render(request, "customer/customerdashboard.html")

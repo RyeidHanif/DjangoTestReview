@@ -11,5 +11,5 @@ urlpatterns = [
     path("connect_calendar", views.connect_to_calendar, name="connect_to_calendar"),
     path("connect-google/", views.connect_google, name="connect_google"),
     path("google/oauth2callback/", views.oauth2callback, name="oauth2callback"),
-    path("cancellation" , views.cancellation_policy , name="cancellation_policy")
+    path("cancellation" , views.cancellation_policy , name="cancellation_policy"),
 ]

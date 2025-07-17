@@ -12,8 +12,9 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from main.forms import ProviderForm
 from main.models import CustomerProfile, ProviderProfile , NotificationPreferences
 
-from .forms import SetPasswordForm, SignUpForm ,ChangeNotificationPreferencesForm
+from .forms import SetPasswordForm, SignUpForm ,ChangeNotificationPreferencesForm , ProfilePhotoForm
 from .tokens import account_activation_token
+
 
 
 # Create your views here.
@@ -125,11 +126,14 @@ def password_change(request):
 
 
 @login_required(login_url="/login/")
-def userprofile(request):
+def userprofile(request, userID):
 
     me = User.objects.get(id=request.user.id)
     my_provider_profile = ProviderProfile.objects.filter(user=me).first()
     my_customer_profile = CustomerProfile.objects.filter(user=me).first()
+    change_profile_form = None
+    if my_provider_profile:
+        change_profile_form = ProfilePhotoForm(request.POST or None, request.FILES or None, instance=my_provider_profile)
     if request.method == "POST":
         if request.POST.get("changenot"):
             notiform = ChangeNotificationPreferencesForm(request.POST)
@@ -147,6 +151,16 @@ def userprofile(request):
                 "All your data will be lost . Are you sure you wish to delete your account ? ",
             )
             return redirect("deleteaccount")
+        
+        if request.POST.get("change_pfp"):
+            if change_profile_form.is_valid():
+                change_profile_form.save()
+                messages.success(request,"changed successfuly")
+        elif request.POST.get("remove_pfp") and my_provider_profile:
+            my_provider_profile.profile_photo.delete(save=True)
+            messages.success(request, "Profile picture removed.")
+            return redirect("userprofile")
+
     user_pref = NotificationPreferences.objects.filter(user=request.user).first()
     notiform = ChangeNotificationPreferencesForm(instance=user_pref)
 
@@ -158,6 +172,7 @@ def userprofile(request):
             "my_provider": my_provider_profile,
             "my_customer": my_customer_profile,
             "form": notiform,
+            "change_profile_form" : change_profile_form,
         },
     )
 

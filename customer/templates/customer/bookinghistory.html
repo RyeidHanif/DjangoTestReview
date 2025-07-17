@@ -11,7 +11,7 @@
     {% for appointment in appointments %}
     <div class="card">
         <div class="card-body">
-    <h3> Appointment with {{appointment.provider.username}} .  Status is {{appointment.status}} </h3>
+    <h3> Appointment with  {{appointment.provider.username}}.  Status is {{appointment.status}} </h3>
     <h4>{{ appointment.date_start|date:"l, d F Y" }} — from {{ appointment.date_start|time:"h:i A" }} to {{ appointment.date_end|time:"h:i A" }}</h4>
     <h5> special request : {{appointment.special_requests}}</h5>
     <h5> appointment Recurrence : {{appointment.recurrence_frequency}} will go on until : {{appointment.recurrence_until}}</h5>

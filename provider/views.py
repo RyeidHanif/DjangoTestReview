@@ -24,7 +24,7 @@ from django.contrib.auth import logout
 def providerdashboard(request):
     if request.method == "POST":
         if request.POST.get("myprofile"):
-            return redirect("userprofile")
+            return redirect("userprofile", userID = request.user.id)
         if request.POST.get("viewanalytics"):
             return redirect("viewanalytics")
         if request.POST.get("viewmyappointments"):

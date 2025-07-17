@@ -14,7 +14,11 @@
           <div class="col-md-4 mb-4">
             <div class="card h-100 shadow-sm">
               <div class="card-body d-flex flex-column">
-                <h5 class="card-title">{{ provider.user.username }}</h5>
+                <h5 class="card-title">
+                 
+                  {{ provider.user.username }}
+              
+                </h5>
                 <p class="card-text mb-1"><strong>Service:</strong> {{ provider.service_name }}</p>
                 <p class="card-text mb-1"><strong>Pricing:</strong> {{ provider.pricing_model|capfirst }}, {{ provider.duration_mins }} mins</p>
                 <p class="card-text mb-3"><strong>Price:</strong> {{ provider.rate }} PKR</p>
