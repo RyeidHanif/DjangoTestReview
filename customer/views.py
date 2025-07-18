@@ -209,145 +209,145 @@ schedule = Schedule.as_view()
 
 
 
-@login_required(login_url="/login/")
-def addappointment(request, providerUserID):
+# @login_required(login_url="/login/")
+# def addappointment(request, providerUserID):
 
-    mode = request.session.get("mode", "normal")
-    print(f"DEBUG : THE CURRENT MODE IS {mode}")
-    timeslot = request.session.get("timeslot_tuple", [])
+#     mode = request.session.get("mode", "normal")
+#     print(f"DEBUG : THE CURRENT MODE IS {mode}")
+#     timeslot = request.session.get("timeslot_tuple", [])
 
-    provider_user = User.objects.get(id=providerUserID)
-    provider = ProviderProfile.objects.get(user=provider_user)
-    customer = request.user
+#     provider_user = User.objects.get(id=providerUserID)
+#     provider = ProviderProfile.objects.get(user=provider_user)
+#     customer = request.user
 
-    start_datetime = datetime.fromisoformat(timeslot[0])
-    end_datetime = datetime.fromisoformat(timeslot[1])
-    total_price = calculate_total_price(provider)
+#     start_datetime = datetime.fromisoformat(timeslot[0])
+#     end_datetime = datetime.fromisoformat(timeslot[1])
+#     total_price = calculate_total_price(provider)
 
-    print(f"DEBUG : THE CURRENT MODE IS {mode}")
-    if mode == "normal":
-        print(f"DEBUG : THE CURRENT MODE IS {mode}")
-        recurrence_form = AppointmentRecurrenceForm()
+#     print(f"DEBUG : THE CURRENT MODE IS {mode}")
+#     if mode == "normal":
+#         print(f"DEBUG : THE CURRENT MODE IS {mode}")
+#         recurrence_form = AppointmentRecurrenceForm()
 
-        if not check_appointment_exists(customer, provider_user):
-            messages.warning(
-                request,
-                "You already have an appointment with this provider. Cancel that one first.",
-            )
-            return redirect("viewproviders")
+#         if not check_appointment_exists(customer, provider_user):
+#             messages.warning(
+#                 request,
+#                 "You already have an appointment with this provider. Cancel that one first.",
+#             )
+#             return redirect("viewproviders")
 
-        if request.method == "POST":
-            print(f"DEBUG : THE CURRENT MODE IS {mode}")
-            recurrence_form = AppointmentRecurrenceForm(request.POST)
-            if request.POST.get("confirm"):
-                if recurrence_form.is_valid():
-                    recurrence_frequency = recurrence_form.cleaned_data["recurrence"]
-                    until_date = recurrence_form.cleaned_data["until_date"]
-                else:
-                    recurrence_frequency = None
-                    until_date = None
+#         if request.method == "POST":
+#             print(f"DEBUG : THE CURRENT MODE IS {mode}")
+#             recurrence_form = AppointmentRecurrenceForm(request.POST)
+#             if request.POST.get("confirm"):
+#                 if recurrence_form.is_valid():
+#                     recurrence_frequency = recurrence_form.cleaned_data["recurrence"]
+#                     until_date = recurrence_form.cleaned_data["until_date"]
+#                 else:
+#                     recurrence_frequency = None
+#                     until_date = None
 
-                special_requests = request.POST.get("special_requests", "")
+#                 special_requests = request.POST.get("special_requests", "")
 
-                appointment = create_and_save_appointment(
-                    customer,
-                    provider_user,
-                    start_datetime,
-                    end_datetime,
-                    total_price,
-                    special_requests,
-                    recurrence_frequency,
-                    until_date,
-                )
+#                 appointment = create_and_save_appointment(
+#                     customer,
+#                     provider_user,
+#                     start_datetime,
+#                     end_datetime,
+#                     total_price,
+#                     special_requests,
+#                     recurrence_frequency,
+#                     until_date,
+#                 )
 
-                # Removed google calendar API integration from here to prevent ghost appointments 
-                if appointment.provider.notification_settings.preferences == "all":
-                    EmailPendingAppointment(
-                        request,
-                        customer,
-                        provider_user,
-                        start_datetime,
-                        end_datetime,
-                        provider_user.email,
-                        special_requests,
-                    )
+#                 # Removed google calendar API integration from here to prevent ghost appointments 
+#                 if appointment.provider.notification_settings.preferences == "all":
+#                     EmailPendingAppointment(
+#                         request,
+#                         customer,
+#                         provider_user,
+#                         start_datetime,
+#                         end_datetime,
+#                         provider_user.email,
+#                         special_requests,
+#                     )
 
-                messages.success(request, "Appointment created successfully")
-                return redirect("customerdashboard")
+#                 messages.success(request, "Appointment created successfully")
+#                 return redirect("customerdashboard")
 
-            elif request.POST.get("cancel"):
-                messages.info(request, "Appointment was not created")
-                return redirect("customerdashboard")
+#             elif request.POST.get("cancel"):
+#                 messages.info(request, "Appointment was not created")
+#                 return redirect("customerdashboard")
 
-    elif mode == "reschedule":
-        print(f"DEBUG : THE CURRENT MODE IS {mode}")
-        appointment = Appointment.objects.filter(customer=customer, provider=provider_user).first()
-        recurrence_form = AppointmentRecurrenceForm(initial={
-            "recurrence": appointment.recurrence_frequency,
-            "until_date": appointment.recurrence_until
-        })
+#     elif mode == "reschedule":
+#         print(f"DEBUG : THE CURRENT MODE IS {mode}")
+#         appointment = Appointment.objects.filter(customer=customer, provider=provider_user).first()
+#         recurrence_form = AppointmentRecurrenceForm(initial={
+#             "recurrence": appointment.recurrence_frequency,
+#             "until_date": appointment.recurrence_until
+#         })
         
-        if not appointment:
-            messages.error(request, "No existing appointment found for rescheduling.")
-            return redirect("viewappointments")
+#         if not appointment:
+#             messages.error(request, "No existing appointment found for rescheduling.")
+#             return redirect("viewappointments")
 
-        if request.method == "POST":
-            print(f"DEBUG : THE CURRENT MODE IS {mode}")
-            recurrence_form = AppointmentRecurrenceForm(request.POST)
-            if recurrence_form.is_valid():
-                if recurrence_form.is_valid():
-                    recurrence_frequency = recurrence_form.cleaned_data["recurrence"]
-                    until_date = recurrence_form.cleaned_data["until_date"]
-                else:
-                    recurrence_frequency = appointment.recurrence_frequency
-                    until_date = appointment.recurrence_until
+#         if request.method == "POST":
+#             print(f"DEBUG : THE CURRENT MODE IS {mode}")
+#             recurrence_form = AppointmentRecurrenceForm(request.POST)
+#             if recurrence_form.is_valid():
+#                 if recurrence_form.is_valid():
+#                     recurrence_frequency = recurrence_form.cleaned_data["recurrence"]
+#                     until_date = recurrence_form.cleaned_data["until_date"]
+#                 else:
+#                     recurrence_frequency = appointment.recurrence_frequency
+#                     until_date = appointment.recurrence_until
 
-            if request.POST.get("confirm"):
-                old_start = appointment.date_start
-                old_end = appointment.date_end
+#             if request.POST.get("confirm"):
+#                 old_start = appointment.date_start
+#                 old_end = appointment.date_end
 
-                appointment.date_start = start_datetime
-                appointment.date_end = end_datetime
-                appointment.status = "rescheduled"
-                appointment.recurrence_frequency = recurrence_frequency
-                appointment.recurrence_until = until_date
-                appointment.special_requests = request.POST.get("special_requests", "")
-                appointment.save()
+#                 appointment.date_start = start_datetime
+#                 appointment.date_end = end_datetime
+#                 appointment.status = "rescheduled"
+#                 appointment.recurrence_frequency = recurrence_frequency
+#                 appointment.recurrence_until = until_date
+#                 appointment.special_requests = request.POST.get("special_requests", "")
+#                 appointment.save()
 
                 
-                if appointment.provider.notification_settings.preferences == "all":
+#                 if appointment.provider.notification_settings.preferences == "all":
 
-                    EmailRescheduledAppointment(
-                        request,
-                        customer,
-                        provider_user,
-                        localtime(old_start),
-                        localtime(old_end),
-                        localtime(appointment.date_start),
-                        localtime(appointment.date_end),
-                        provider_user.email,
-                        appointment.special_requests,
-                    )
+#                     EmailRescheduledAppointment(
+#                         request,
+#                         customer,
+#                         provider_user,
+#                         localtime(old_start),
+#                         localtime(old_end),
+#                         localtime(appointment.date_start),
+#                         localtime(appointment.date_end),
+#                         provider_user.email,
+#                         appointment.special_requests,
+#                     )
 
-                request.session.pop("mode", None)
-                messages.success(request, "Appointment rescheduled successfully")
-                return redirect("viewappointments")
+#                 request.session.pop("mode", None)
+#                 messages.success(request, "Appointment rescheduled successfully")
+#                 return redirect("viewappointments")
 
-            elif request.POST.get("cancel"):
-                messages.info(request, "Reschedule cancelled")
-                return redirect("viewappointments")
+#             elif request.POST.get("cancel"):
+#                 messages.info(request, "Reschedule cancelled")
+#                 return redirect("viewappointments")
 
-    return render(
-        request,
-        "customer/addappointment.html",
-        {
-            "start": start_datetime,
-            "end": end_datetime,
-            "form": recurrence_form,
-            "mode": mode,
-            "appointment": appointment if mode == "reschedule" else None,
-        },
-    )
+#     return render(
+#         request,
+#         "customer/addappointment.html",
+#         {
+#             "start": start_datetime,
+#             "end": end_datetime,
+#             "form": recurrence_form,
+#             "mode": mode,
+#             "appointment": appointment if mode == "reschedule" else None,
+#         },
+#     )
 
 
 
@@ -438,9 +438,10 @@ class AddAppointment(View , LoginRequiredMixin):
             until_date = self.appointment.recurrence_until
         
         if request.POST.get("confirm"):
-            appointment = change_and_save_appointment(request , self.appointment , recurrence_frequency , until_date, self.start_datetime , self.end_datetime)
+            self.appointment = Appointment.objects.filter(customer=self.customer, provider=self.provider_user).first()
+            self.appointment = change_and_save_appointment(request , self.appointment , recurrence_frequency , until_date, self.start_datetime , self.end_datetime)
             request.session.pop("mode", None)
-            if appointment :
+            if self.appointment :
                 messages.success(request ," appointment reschedule successfully ")
                 return redirect("viewappointments")
             else :
@@ -449,11 +450,8 @@ class AddAppointment(View , LoginRequiredMixin):
         if request.POST.get("cancel"):
             messages.info(request, "reschedule ancelled")
             return redirect("viewappoinments")
-        
 
-                
-
-
+            
 
     def render_template(self , request , *args , **kwargs):
         return render(request, "customer/addappointment.html", {
@@ -464,6 +462,8 @@ class AddAppointment(View , LoginRequiredMixin):
             "appointment": self.appointment if self.mode=="reschedule" else None 
 
         })
+    
+addappointment = AddAppointment.as_view()
 
 
 

@@ -219,7 +219,7 @@ def change_and_save_appointment(request, appointment, recurrence_frequency , unt
     appointment.recurrence_frequency = recurrence_frequency
     appointment.recurrence_until = until_date
     appointment.special_requests = request.POST.get("special_requests", "")
-    changed_appointment = appointment.save()
+    appointment.save()
 
                 
     if appointment.provider.notification_settings.preferences == "all":
@@ -235,4 +235,4 @@ def change_and_save_appointment(request, appointment, recurrence_frequency , unt
             appointment.provider.email,
             appointment.special_requests,
         )
-    return changed_appointment
+    return appointment
