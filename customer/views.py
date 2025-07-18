@@ -47,9 +47,6 @@ def viewproviders(request):
 
     categories = ["doctor", "consultant", "therapist", "counsellor"]
     if request.method == "POST":
-        print(
-            f"The current provider  at the end of viewproviders function is {ProviderProfile.objects.get(id=request.POST.get("bookappointment")).user.username}"
-        )
         messages.info(
             request, "You are being redirected to the service providers schedule"
         )
@@ -76,8 +73,10 @@ def schedule(request, providerID):
             slot_range = 1
         elif request.POST.get("slot_range"):
             slot_range = int(request.POST.get("slot_range"))
+        
 
         available_slots = get_available_slots(provider, slot_range)
+
 
         if request.POST.get("addappointment"):
             index = int(request.POST.get("addappointment"))

@@ -216,8 +216,9 @@ def admin_dashboard(request):
 def view_customer_profile(request , userID):
     user = User.objects.get(id=userID)
     user_customer_profile = CustomerProfile.objects.get(user=user)
+    appointments_customer = Appointment.objects.filter(customer=user).all()
 
-    return render(request , "main/view_customer_profile.html" , {"user": user, "user_customer_profile": user_customer_profile})
+    return render(request , "main/view_customer_profile.html" , {"user": user, "user_customer_profile": user_customer_profile, "appointments_customer": appointments_customer})
 
 
 
@@ -225,4 +226,5 @@ def view_customer_profile(request , userID):
 def view_provider_profile(request , userID):
     user = User.objects.get(id=userID)
     user_provider_profile = ProviderProfile.objects.get(user=user)
-    return render(request,"main/view_provider_profile.html",  {"user" : user , "user_provider_profile": user_provider_profile})
+    appointments_provider = Appointment.objects.filter(provider=user).all()
+    return render(request,"main/view_provider_profile.html",  {"user" : user , "user_provider_profile": user_provider_profile , "appointments_provider": appointments_provider})

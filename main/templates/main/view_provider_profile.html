@@ -1,7 +1,7 @@
 {% extends 'main/base.html' %}
+{% load static %}
 
 {% block title %}Provider Profile - {{ user.username }}{% endblock %}
-{% load static %}
 
 {% block content %}
 <div class="container py-4">
@@ -9,6 +9,7 @@
 
     <div class="row justify-content-center">
         <div class="col-md-8">
+       
             <div class="card mb-4">
                 <div class="card-body d-flex align-items-center">
                     <div class="me-4">
@@ -26,6 +27,7 @@
                 </div>
             </div>
 
+   
             <div class="card mb-4">
                 <div class="card-header">
                     <h5>Service Details</h5>
@@ -40,6 +42,7 @@
                 </div>
             </div>
 
+            <!-- Working Hours -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h5>Working Hours</h5>
@@ -49,6 +52,7 @@
                 </div>
             </div>
 
+            <!-- Google Calendar Connection -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h5>Google Calendar Connection</h5>
@@ -62,6 +66,7 @@
                 </div>
             </div>
 
+         
             <div class="card mb-4">
                 <div class="card-header">
                     <h5>Notification Preferences</h5>
@@ -71,6 +76,37 @@
                         <p>{{ user.notification_settings.get_preferences_display }}</p>
                     {% else %}
                         <p class="text-muted">No notification preferences set.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+       
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="mb-4 text-center">User's Appointments</h4>
+
+                    {% if appointments_provider %}
+                    <div class="row">
+                        {% for appointment in appointments_provider %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title">Appointment with {{ appointment.customer.username }}</h5>
+                                    <p class="mb-1"><strong>Status:</strong> {{ appointment.status|capfirst }}</p>
+                                    <p class="mb-1"><strong>Date:</strong> {{ appointment.date_start|date:"l, d F Y" }}</p>
+                                    <p class="mb-3"><strong>Time:</strong> {{ appointment.date_start|time:"h:i A" }} - {{ appointment.date_end|time:"h:i A" }}</p>
+                                    <p class="mb-2"><strong>Special Request:</strong> {{ appointment.special_requests|default:"None" }}</p>
+                                    <p class="mb-3">
+                                        <strong>Recurrence:</strong> {{ appointment.recurrence_frequency|default:"None" }}
+                                        {% if appointment.recurrence_until %} until {{ appointment.recurrence_until|date:"d M Y" }}{% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                        <p class="text-center text-muted">No appointments found.</p>
                     {% endif %}
                 </div>
             </div>
