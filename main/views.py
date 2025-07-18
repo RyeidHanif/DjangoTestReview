@@ -11,20 +11,27 @@ from google_auth_oauthlib.flow import Flow
 from .forms import ProviderForm
 from .models import CustomerProfile, ProviderProfile, User, Appointment , NotificationPreferences 
 from django.contrib.admin.views.decorators import staff_member_required
+from django.views import View
 
+from django.views.generic import ListView, TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+from django.utils.decorators import method_decorator
+from collections import Counter
 
 
 
 # Create your views here.
 
 
-def home(request):
-    """
-    display the homepage
-    """
-    return render(request, "main/home.html")
+class Home(TemplateView):
+    template_name = "main/home.html"
+
+home = Home.as_view()
 
 
+
+# simple , CBV would add complexity 
 @login_required(login_url="/login/")
 def redirectiondashboard(request):
     """temporary dashboard to redirect  different users to their respective places"""
@@ -77,6 +84,7 @@ def profile_creation(request, n):
 
     provider_form = ProviderForm()
     return render(request, "main/profile_creation.html", {"form": provider_form})
+
 
 
 @login_required(login_url="/login/")
@@ -144,57 +152,51 @@ def oauth2callback(request):
     messages.success(request, "Your Google Calendar is successfully connected!")
     return redirect("providerdashboard")
 
+class CancellationPolicy(TemplateView):
+    template_name = "main/cancellationpolicy.html"
 
-def cancellation_policy(request):
-    return render(request , "main/cancellationpolicy.html")
+cancellation_policy = CancellationPolicy.as_view()
 
 
+@method_decorator(staff_member_required, name='dispatch')
+class AdminDashboard(View , LoginRequiredMixin):
+    def get(self , request , *args , **kwargs):
+        admin_revenue= 0
+        revenue = 0
+        users = User.objects.all()
+        appointments = Appointment.objects.select_related('provider__providerprofile').all()
+        providers = ProviderProfile.objects.all()
+        customers = CustomerProfile.objects.all()
+        for appointment in appointments :
+            if appointment.status in ["completed", "accepted"]:
+                revenue += appointment.total_price
+                admin_revenue = 0.05 * revenue
+        categories = Counter()
+        statuses = Counter()
+        provider_dict = Counter()
 
-@staff_member_required
-def admin_dashboard(request):
-    count = 0
-    revenue = 0
-    users = User.objects.all()
-    appointments = Appointment.objects.all()
-    providers = ProviderProfile.objects.all()
-    customers = CustomerProfile.objects.all()
-    for appointment in appointments :
-        if appointment.status in ["completed", "accepted"]:
-            revenue += appointment.total_price
-    admin_revenue = 0.05 * revenue
-    categories = {}
-    statuses = {}
-    provider_dict = {}
-    for appointment in appointments :
-        count +=1
-        category = appointment.provider.providerprofile.service_category 
-        if category in categories.keys():
-            categories[category] +=1
-        else:
-            categories[category] = 1 
-        if appointment.provider.username in provider_dict.keys():
-            provider_dict[appointment.provider.username] +=1
-        else :
-            provider_dict[appointment.provider.username] = 1
-        
-        if appointment.status in statuses.keys():
-            statuses[appointment.status] +=1
-        else :
-            statuses[appointment.status] =1
-    total_appointments = count 
-    provider_dict = dict(sorted(provider_dict.items(), key=lambda item: item[1], reverse=True))
-    categories= dict(sorted(categories.items(), key=lambda item: item[1], reverse=True ))
+        for appointment in appointments:
+            categories[appointment.provider.providerprofile.service_category] += 1
+            statuses[appointment.status] += 1
+            provider_dict[appointment.provider.username] += 1
 
-    if request.method == "POST":
+        total_appointments = sum(categories.values())
+
+        categories = dict(categories.most_common())
+        provider_dict = dict(provider_dict.most_common())
+        statuses =dict(statuses)
+
+        return render(request , "main/admin_dashboard.html", {"revenue": revenue , "myrevenue": admin_revenue , "statuses": statuses , "all_appointments": appointments , "all_providers": providers, "all_customers": customers, "total_appointments" : total_appointments, "users":users , "provider_dict": provider_dict , "categories": categories})
+    
+    def post(self , request , *args , **kwargs):
         if request.POST.get("toggle_active"):
             user_id = request.POST.get("toggle_active")
-            change_active_user = User.objects.get(id=user_id)
-            if change_active_user.is_active :
-                change_active_user.is_active = False 
-
+            current_user = User.objects.get(id=user_id)
+            if current_user.is_active:
+                current_user.is_active = False
             else:
-                change_active_user.is_active= True
-            change_active_user.save()
+                current_user.is_active = True
+            current_user.save()
         if request.POST.get("delete"):
             user_id = request.POST.get("delete")
             user = User.objects.get(id=user_id)
@@ -202,29 +204,40 @@ def admin_dashboard(request):
                 user.delete()
             else :
                 messages.error(request,"user does not exist")
+        return self.get(request)
 
-
-    
-
-    
-    return render(request , "main/admin_dashboard.html", {"revenue": revenue , "myrevenue": admin_revenue , "statuses": statuses , "all_appointments": appointments , "all_providers": providers, "all_customers": customers, "total_appointments" : total_appointments, "users":users , "provider_dict": provider_dict , "categories": categories})
-
+        
+admin_dashboard = AdminDashboard.as_view()
 
 
 
-@staff_member_required
-def view_customer_profile(request , userID):
-    user = User.objects.get(id=userID)
-    user_customer_profile = CustomerProfile.objects.get(user=user)
-    appointments_customer = Appointment.objects.filter(customer=user).all()
-
-    return render(request , "main/view_customer_profile.html" , {"user": user, "user_customer_profile": user_customer_profile, "appointments_customer": appointments_customer})
 
 
 
-@staff_member_required
-def view_provider_profile(request , userID):
-    user = User.objects.get(id=userID)
-    user_provider_profile = ProviderProfile.objects.get(user=user)
-    appointments_provider = Appointment.objects.filter(provider=user).all()
-    return render(request,"main/view_provider_profile.html",  {"user" : user , "user_provider_profile": user_provider_profile , "appointments_provider": appointments_provider})
+@method_decorator(staff_member_required, name='dispatch')
+class ViewCustomerProfile(TemplateView):
+    template_name = "main/view_customer_profile.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = User.objects.get(id=kwargs['userID'])
+        context["user"] = user
+        context["user_customer_profile"] = CustomerProfile.objects.get(user=user)
+        context["appointments_customer"] = Appointment.objects.filter(customer=user)
+        return context
+
+view_customer_profile = ViewCustomerProfile.as_view()
+
+@method_decorator(staff_member_required, name='dispatch')
+class ViewProviderProfile(TemplateView):
+    template_name = "main/view_provider_profile.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = User.objects.get(id=kwargs['userID'])
+        context["user"] = user
+        context["user_provider_profile"] = ProviderProfile.objects.get(user=user)
+        context["appointments_provider"] = Appointment.objects.filter(provider=user)
+        return context
+
+view_provider_profile = ViewProviderProfile.as_view()
