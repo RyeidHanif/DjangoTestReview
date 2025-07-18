@@ -209,3 +209,30 @@ def reschedule_google_event(service, event_id, new_start, new_end):
 
 
     
+def change_and_save_appointment(request, appointment, recurrence_frequency , until_date, start_datetime , end_datetime):
+    old_start = appointment.date_start
+    old_end = appointment.date_end
+
+    appointment.date_start = start_datetime
+    appointment.date_end = end_datetime
+    appointment.status = "rescheduled"
+    appointment.recurrence_frequency = recurrence_frequency
+    appointment.recurrence_until = until_date
+    appointment.special_requests = request.POST.get("special_requests", "")
+    changed_appointment = appointment.save()
+
+                
+    if appointment.provider.notification_settings.preferences == "all":
+
+        EmailRescheduledAppointment(
+            request,
+            appointment.customer,
+            appointment.provider,
+            localtime(old_start),
+            localtime(old_end),
+            localtime(appointment.date_start),
+            localtime(appointment.date_end),
+            appointment.provider.email,
+            appointment.special_requests,
+        )
+    return changed_appointment
