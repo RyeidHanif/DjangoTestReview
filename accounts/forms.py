@@ -12,17 +12,9 @@ class SignUpForm(UserCreationForm):
     creation system before login
     """
 
-    PROFILE_CHOICES = [
-        ("customer", "Customer"),
-        ("provider", "Provider"),
-        ("both", "Both"),
-    ]
-    profile_choice = forms.ChoiceField(
-        choices=PROFILE_CHOICES, widget=forms.RadioSelect
-    )
     phone_number = forms.CharField(required=True)
 
     class Meta:
         '''connect form to model User and customize fields'''
         model = User
-        fields = ["email", "username", "password1", "password2", "profile_choice"]
+        fields = ["email", "username", "password1", "password2", "phone_number"]
