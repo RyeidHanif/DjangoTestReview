@@ -56,20 +56,16 @@ class ViewProviders(ListView, LoginRequiredMixin):
 
     def get_queryset(self):
         query = self.request.GET.get("q")
-        key = f"view_providers_for_user_{self.request.user.id}_with_{query}"
-        provider_list = cache.get(key)
-        if provider_list:
-            return provider_list
-        else:
-
-            if query:
+   
+       
+        if query:
                 provider_list = ProviderProfile.objects.filter(
                     user__username__icontains=query
                 ).exclude(user=self.request.user)
-            else:
+        else:
                 provider_list = ProviderProfile.objects.exclude(user=self.request.user)
-            cache.set(key, list(provider_list), timeout=60 * 5)
-            return provider_list
+
+        return provider_list
 
     def post(self, request, *args, **kwargs):
         messages.info(
@@ -304,12 +300,7 @@ class ViewAppointments(View, LoginRequiredMixin):
     def get_query(self, request, *args, **kwargs):
 
         query = request.GET.get("q")
-        key = f"get_appointments_for_{request.user.id}_and_{query}"
-        myappointments = cache.get(key)
-        if myappointments:
-            return myappointments
-        else:
-            if query:
+        if query:
                 myappointments = (
                     Appointment.objects.filter(
                         customer=request.user, provider__username__icontains=query
@@ -320,7 +311,7 @@ class ViewAppointments(View, LoginRequiredMixin):
                     .exclude(status="cancelled")
                     .exclude(status="completed")
                 )
-            else:
+        else:
 
                 myappointments = (
                     Appointment.objects.filter(customer=request.user)
@@ -330,10 +321,11 @@ class ViewAppointments(View, LoginRequiredMixin):
                     .exclude(status="cancelled")
                     .exclude(status="completed")
                 )
-            cache.set(key, list(myappointments), timeout=60 * 7)
-            return myappointments
+        
+        return myappointments
 
     def reschedule(self, request, *args, **kwargs):
+       
         messages.warning(
             request,
             "This will change the status to Rescheduled but the event for now will remain in the calendar  because the provider will have to review the timings again ",
@@ -348,6 +340,7 @@ class ViewAppointments(View, LoginRequiredMixin):
             return redirect("reschedule", appointment_id=self.appointmentID)
 
     def cancel(self, request, *args, **kwargs):
+    
         appointment = Appointment.objects.get(id=self.appointmentID)
         count_cancel = cancellation(request.user, appointment)
         if appointment.status == "accepted":

@@ -175,10 +175,12 @@ def EmailPendingAppointment(
         )
 
 
-def calculate_total_price(provider):
+def calculate_total_price(provider, **kwargs):
     if provider.pricing_model == "hourly":
-        return (int(provider.duration_mins) / 60) * provider.rate
-    return provider.rate
+        price =  (int(provider.duration_mins) / 60) * provider.rate
+        return price
+
+
 
 
 def create_and_save_appointment(

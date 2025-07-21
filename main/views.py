@@ -16,8 +16,11 @@ from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import Flow
 
 from .forms import ProviderForm
-from .models import (Appointment, CustomerProfile, NotificationPreferences,
+from .models import (Appointment, CustomerProfile,
+                      NotificationPreferences,
                      ProviderProfile, User)
+
+from django.core.paginator import Paginator
 
 # Create your views here.
 
@@ -184,6 +187,9 @@ class AdminDashboard(View, LoginRequiredMixin):
         admin_revenue = 0
         revenue = 0
         users = User.objects.all()
+        paginator = Paginator(users , 10)
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
         appointments = Appointment.objects.select_related(
             "provider__providerprofile"
         ).all()
@@ -219,7 +225,7 @@ class AdminDashboard(View, LoginRequiredMixin):
                 "all_providers": providers,
                 "all_customers": customers,
                 "total_appointments": total_appointments,
-                "users": users,
+                "page_obj": page_obj,
                 "provider_dict": provider_dict,
                 "categories": categories,
             },

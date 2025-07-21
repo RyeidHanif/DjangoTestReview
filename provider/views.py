@@ -23,7 +23,7 @@ from .utils import (EmailCancelledAppointment, EmailConfirmedAppointment,
                     SendEmailRescheduleAccepted, create_google_calendar_event,
                     reschedule_google_event)
 
-
+from django.core.paginator import Paginator
 class ProviderDashboard(View, LoginRequiredMixin):
     login_url = "/login/"
 
@@ -52,37 +52,33 @@ class ViewMyAppointments(View, LoginRequiredMixin):
 
     def get(self, request, *args, **kwargs):
         query = request.GET.get("q")
-        key = f"accepted_appointments_of_{request.user.id}_with_customer_{query}"
-        appointments = cache.get(key)
-        if appointments:
-            logger.info("The query is being used from the cache")
-            my_appointments = appointments
-        else:
-            logger.info("The query is being used from the database")
-            if query:
-                my_appointments = Appointment.objects.filter(
+  
+        if query:
+            my_appointments = Appointment.objects.filter(
                     provider=request.user,
                     status="accepted",
                     customer__username__icontains=query,
                 ).order_by("-date_added")
-            else:
-                my_appointments = Appointment.objects.filter(
+        else:
+            my_appointments = Appointment.objects.filter(
                     provider=request.user, status="accepted"
                 ).order_by("-date_added")
-            cache.set(key, list(my_appointments), timeout=60 * 5)
+   
+        paginator= Paginator(my_appointments , 10 )
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
+        
 
         return render(
             request,
             "provider/view_my_appointments.html",
-            {"appointments": my_appointments},
+            {"page_obj": page_obj},
         )
 
     def post(self, request, *args, **kwargs):
-        query = request.GET.get("q")
-        key = f"accepted_appointments_of_{request.user.id}_with_customer_{query}"
+       
         if request.POST.get("cancel"):
-            if cache.get(key):
-                cache.delete(key)
+            
             cancel_appointment = Appointment.objects.select_related(
                 "customer", "provider"
             ).get(id=request.POST.get("cancel"))
@@ -111,8 +107,7 @@ class ViewMyAppointments(View, LoginRequiredMixin):
                 return redirect("view_my_appointments")
 
         if request.POST.get("markcompleted"):
-            if cache.get(key):
-                cache.delete(key)
+          
             appointment = Appointment.objects.get(id=request.POST.get("markcompleted"))
             current_datetime = now()
             if appointment.date_start > current_datetime:
@@ -136,39 +131,32 @@ class ViewPendingAppointments(View, LoginRequiredMixin):
 
     def get(self, request, *args, **kwargs):
         query = request.GET.get("q")
-        key = f"Pending_appointments_of_{request.user.id}_with_{query}"
-        appointments = cache.get(key)
-        if appointments:
-            logger.info("The query is being used from the cache")
-            my_appointments = appointments
-        else:
-            logger.info("The query is being used rom the database ")
-            if query:
-                my_appointments = Appointment.objects.filter(
+        
+        if query:
+            my_appointments = Appointment.objects.filter(
                     status__in=["pending", "rescheduled"],
                     provider=request.user,
                     customer__username__icontains=query,
                 )
-            else:
-                my_appointments = Appointment.objects.filter(
+        else:
+            my_appointments = Appointment.objects.filter(
                     status__in=["pending", "rescheduled"], provider=request.user
                 )
-            cache.set(key, list(my_appointments), timeout=60 * 5)
+        
+        paginator = Paginator(my_appointments, 10)
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
         return render(
             request,
             "provider/view_pending_appointments.html",
-            {"appointments": my_appointments},
+            {"page_obj": page_obj},
         )
 
     def post(self, request, *args, **kwargs):
-        query = request.GET.get("q")
-        key = f"Pending_appointments_of_{request.user.id}_with_{query}"
         if request.POST.get("reject"):
             appointment = Appointment.objects.select_related(
                 "customer", "customer__notification_settings"
             ).get(id=request.POST.get("reject"))
-            if cache.get(key):
-                cache.delete(key)
             return self.reject_appointment(request, appointment)
 
         if request.POST.get("accept"):
@@ -176,8 +164,7 @@ class ViewPendingAppointments(View, LoginRequiredMixin):
             appointment = Appointment.objects.select_related(
                 "customer", "customer__notification_settings"
             ).get(id=request.POST.get("accept"))
-            if cache.get(key):
-                cache.delete(key)
+          
             return self.accept_appointment(request, appointment)
 
         return redirect("view_pending_appointments")
@@ -359,7 +346,7 @@ class ViewAnalytics(View, LoginRequiredMixin):
             "provider/viewanalytics.html",
             {
                 "customers": customers,
-                "myappointments": myappointments,
+                "appointments":myappointments,
                 "statuses": statuses,
                 "revenue": revenue,
                 "admin_cut": admin_cut,
