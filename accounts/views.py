@@ -98,7 +98,7 @@ def activate(request, uidb64, token):
         )
         if choice == "customer":
             CustomerProfile.objects.create(user=user, phone_number=phone_number)
-            return redirect("customerdashboard")
+            return redirect("customer_dashboard")
         elif choice == "provider" or choice == "both":
             request.session["temp_user_id"] = user.id
             return redirect("profile_creation", n=choice)

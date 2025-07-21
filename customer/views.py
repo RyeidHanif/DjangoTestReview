@@ -31,7 +31,7 @@ class CustomerDashboard(View, LoginRequiredMixin):
     login_url = "/login/"
 
     def get(self, request, *args, **kwargs):
-        return render(request, "customer/customerdashboard.html")
+        return render(request, "customer/customer_dashboard.html")
 
     def post(self, request, *args, **kwargs):
         if request.POST.get("viewproviders"):
@@ -46,7 +46,7 @@ class CustomerDashboard(View, LoginRequiredMixin):
             return self.get(request)
 
 
-customerdashboard = CustomerDashboard.as_view()
+customer_dashboard = CustomerDashboard.as_view()
 
 
 class ViewProviders(ListView, LoginRequiredMixin):
@@ -205,10 +205,10 @@ class AddAppointment(View, LoginRequiredMixin):
                     self.special_requests,
                 )
             messages.success(request, " Appointment Created Succesfully ")
-            return redirect("customerdashboard")
+            return redirect("customer_dashboard")
         elif request.POST.get("cancel"):
             messages.info(request, "Appointment Was NOT created")
-            return redirect("customerdashboard")
+            return redirect("customer_dashboard")
 
     def handle_reschedule_get(self, request, *args, **kwargs):
         self.appointment = Appointment.objects.filter(

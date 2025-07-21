@@ -28,7 +28,7 @@ class ProviderDashboard(View, LoginRequiredMixin):
     login_url = "/login/"
 
     def get(self, request, *args, **kwargs):
-        return render(request, "provider/providerdashboard.html")
+        return render(request, "provider/provider_dashboard.html")
 
     def post(self, request, *args, **kwargs):
         if request.POST.get("myprofile"):
@@ -43,7 +43,7 @@ class ProviderDashboard(View, LoginRequiredMixin):
             return redirect("myavailability")
 
 
-providerdashboard = ProviderDashboard.as_view()
+provider_dashboard = ProviderDashboard.as_view()
 
 
 class ViewMyAppointments(View, LoginRequiredMixin):

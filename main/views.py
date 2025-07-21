@@ -42,7 +42,7 @@ def redirectiondashboard(request):
     if hasattr(user, "customerprofile") and hasattr(user, "providerprofile"):
         return render(request, "main/redirectdashboard.html")
     elif hasattr(user, "customerprofile"):
-        return redirect("customerdashboard")
+        return redirect("customer_dashboard")
     elif hasattr(user, "providerprofile"):
         return redirect("connect_to_calendar")
     messages.error(request, "you do not have a profile , please create one ")
@@ -95,7 +95,7 @@ def connect_to_calendar(request):
     profile = ProviderProfile.objects.get(user=user)
     if profile.google_calendar_connected:
         messages.info(request, "you are connected to calendar")
-        return redirect("providerdashboard")
+        return redirect("provider_dashboard")
     else:
         if request.method == "POST":
             return redirect("connect_google")
@@ -151,7 +151,7 @@ def oauth2callback(request):
     profile.google_calendar_connected = True
     profile.save()
     messages.success(request, "Your Google Calendar is successfully connected!")
-    return redirect("providerdashboard")
+    return redirect("provider_dashboard")
 
 
 @method_decorator(cache_page(60 * 5), name="dispatch")
