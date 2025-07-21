@@ -1,0 +1,5 @@
+accounts/__pycache__
+main/__pycache__
+mysite/__pycache__
+db.sqlite3
+.env
