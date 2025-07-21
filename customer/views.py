@@ -20,7 +20,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from .forms import AppointmentRecurrenceForm
 from django.contrib.auth import logout
 from django.views import View
-
+from django.views.decorators.cache import cache_page
+from django.core.cache import cache
 class CustomerDashboard(View , LoginRequiredMixin):
     login_url = "/login/"
     def get(self, request , *args , **kwargs):
@@ -77,7 +78,9 @@ class Schedule(View , LoginRequiredMixin):
     login_url = "/login/"
 
     def dispatch(self, request, *args , **kwargs):
-        self.provider_profile = ProviderProfile.objects.get(id=kwargs['providerID'])
+
+
+        self.provider_profile = ProviderProfile.objects.select_related('user').get(id=kwargs['providerID'])
         self.provider = self.provider_profile.user
         self.slot_range = 1 
         return super().dispatch(request , *args , **kwargs)
@@ -262,13 +265,22 @@ class ViewAppointments(View , LoginRequiredMixin):
 
 
     def get_query(self , request , *args , **kwargs):
-        query = request.GET.get("q")
-        if query :
-            return Appointment.objects.filter(customer=request.user, provider__username__icontains=query).order_by("-date_added").all().exclude(status="rejected").exclude(status="cancelled").exclude(status="completed")
-        else:
 
-            return Appointment.objects.filter(customer=request.user).order_by("-date_added").all().exclude(status="rejected").exclude(status="cancelled").exclude(status="completed")
-        
+        query = request.GET.get("q")
+        key = f"get_appointments_for_{request.user.id}_and_{query}"
+        myappointments = cache.get(key)
+        if myappointments :
+            return myappointments 
+        else :
+            if query :
+                myappointments = Appointment.objects.filter(customer=request.user, provider__username__icontains=query).order_by("-date_added").all().exclude(status="rejected").exclude(status="cancelled").exclude(status="completed")
+            else:
+
+                myappointments = Appointment.objects.filter(customer=request.user).order_by("-date_added").all().exclude(status="rejected").exclude(status="cancelled").exclude(status="completed")
+            cache.set(key , list(myappointments) ,timeout=60 * 7 )
+            return myappointments
+
+            
     
     def reschedule(self, request, *args , **kwargs):
         messages.warning(
