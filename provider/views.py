@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from main.utils import get_calendar_service
 from django.contrib import messages
@@ -44,7 +44,7 @@ def providerdashboard(request):
                 return redirect("providerdashboard")
             messages.success(request ,"Event created successfully")
             return redirect("providerdashboard")
-           
 
-
+        if request.POST.get("customerdashboard"):
+            return redirect("customerdashboard")
     return render(request , "provider/providerdashboard.html")
