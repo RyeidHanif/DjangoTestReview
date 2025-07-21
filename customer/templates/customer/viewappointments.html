@@ -34,6 +34,9 @@
               <p class="mb-2">
                 <strong>Special Request:</strong> {{ appointment.special_requests|default:"None" }}
               </p>
+              <p class="mb-2">
+                <strong>Total Price : </strong> {{ appointment.total_price }}
+              </p>
               <p class="mb-3">
                 <strong>Recurrence:</strong> {{ appointment.recurrence_frequency|default:"None" }}
                 {% if appointment.recurrence_until %}

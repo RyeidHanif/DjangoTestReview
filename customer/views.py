@@ -181,6 +181,7 @@ class AddAppointment(View, LoginRequiredMixin):
             if self.recurrence_form.is_valid():
                 recurrence_frequency = self.recurrence_form.cleaned_data["recurrence"]
                 until_date = self.recurrence_form.cleaned_data["until_date"]
+                self.total_price =  calculate_total_price(self.provider , recurrence_frequency= recurrence_frequency , until_date=until_date)
 
             self.special_requests = request.POST.get("special_requests", " ")
             appointment = create_and_save_appointment(
@@ -229,9 +230,12 @@ class AddAppointment(View, LoginRequiredMixin):
         if self.recurrence_form.is_valid():
             recurrence_frequency = self.recurrence_form.cleaned_data["recurrence"]
             until_date = self.recurrence_form.cleaned_data["until_date"]
+
         else:
             recurrence_frequency = self.appointment.recurrence_frequency
             until_date = self.appointment.recurrence_until
+        
+        self.total_price = calculate_total_price(self.appointment.provider.providerprofile , recurrence_frequency=recurrence_frequency , until_date=until_date)
 
         if request.POST.get("confirm"):
             self.appointment = Appointment.objects.filter(
@@ -244,6 +248,7 @@ class AddAppointment(View, LoginRequiredMixin):
                 until_date,
                 self.start_datetime,
                 self.end_datetime,
+                self.total_price,
             )
             request.session.pop("mode", None)
             if self.appointment:

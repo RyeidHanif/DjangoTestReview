@@ -24,6 +24,7 @@
               <p class="mb-1"><strong>Date:</strong> {{ appointment.date_start|date:"l, d F Y" }}</p>
               <p class="mb-1"><strong>Time:</strong> {{ appointment.date_start|time:"h:i A" }} — {{ appointment.date_end|time:"h:i A" }}</p>
               <p class="mb-1"><strong>Status:</strong> <span class="text-capitalize">{{ appointment.status }}</span></p>
+               <p class="mb-2"><strong>total Price :</strong> {{ appointment.total_price }}</p>
               <p class="mb-2"><strong>Special Requests:</strong> {{ appointment.special_requests|default:"None" }}</p>
               <p class="mb-3">
                 <strong>Recurrence:</strong> {{ appointment.recurrence_frequency|default:"None" }} 
