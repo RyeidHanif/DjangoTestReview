@@ -191,7 +191,7 @@ def calculate_total_price(provider, **kwargs):
         if recurrence_freq=="DAILY":
             occurrences = (recurrence_until - start_date).days  + 1 
         elif recurrence_freq =="WEEKLY":
-            occurrences = ((recurrence_until - start_date)//7 ) +1 
+            occurrences = ((recurrence_until - start_date).days //7 ) +1 
         elif recurrence_freq == "MONTHLY":
             occurrences =  (recurrence_until.year - start_date.year) * 12 + (recurrence_until.month - start_date.month) + 1
 

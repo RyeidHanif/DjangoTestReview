@@ -235,7 +235,7 @@ class AddAppointment(View, LoginRequiredMixin):
             recurrence_frequency = self.appointment.recurrence_frequency
             until_date = self.appointment.recurrence_until
         
-        self.total_price = calculate_total_price(self.appointment.provider.providerprofile , recurrence_frequency=recurrence_frequency , until_date=until_date)
+        self.total_price = calculate_total_price(self.provider, recurrence_frequency=recurrence_frequency , until_date=until_date)
 
         if request.POST.get("confirm"):
             self.appointment = Appointment.objects.filter(

@@ -7,3 +7,4 @@ black
 python-dotenv
 six
 django-redis
+djangorestframework-simplejwt

@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
 
 # Load environment variables from the .env file
 load_dotenv()
@@ -51,6 +52,7 @@ INSTALLED_APPS = [
     "customer",
     "provider",
     "api",
+    'rest_framework',
 ]
 
 
@@ -128,7 +130,14 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
+REST_FRAMEWORK = {
+   
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+       
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+   
+}
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
@@ -185,3 +194,10 @@ STATICFILES_DIRS = [
 STATIC_ROOT = os.path.join(
     BASE_DIR, "staticfiles"
 )  # django collects all static files into this folder when we do collect static for prod
+
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=20),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=100),
+
+}
