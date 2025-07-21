@@ -10,11 +10,15 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 
 from main.forms import ProviderForm
-from main.models import CustomerProfile, ProviderProfile , NotificationPreferences
+from main.models import CustomerProfile, NotificationPreferences, ProviderProfile
 
-from .forms import SetPasswordForm, SignUpForm ,ChangeNotificationPreferencesForm , ProfilePhotoForm
+from .forms import (
+    ChangeNotificationPreferencesForm,
+    ProfilePhotoForm,
+    SetPasswordForm,
+    SignUpForm,
+)
 from .tokens import account_activation_token
-
 
 
 # Create your views here.
@@ -133,13 +137,17 @@ def userprofile(request):
     my_customer_profile = CustomerProfile.objects.filter(user=me).first()
     change_profile_form = None
     if my_provider_profile:
-        change_profile_form = ProfilePhotoForm(request.POST or None, request.FILES or None, instance=my_provider_profile)
+        change_profile_form = ProfilePhotoForm(
+            request.POST or None, request.FILES or None, instance=my_provider_profile
+        )
     if request.method == "POST":
         if request.POST.get("changenot"):
             notiform = ChangeNotificationPreferencesForm(request.POST)
             if notiform.is_valid():
                 preference = notiform.cleaned_data["preferences"]
-                obj, created = NotificationPreferences.objects.get_or_create(user=request.user)
+                obj, created = NotificationPreferences.objects.get_or_create(
+                    user=request.user
+                )
                 obj.preferences = preference
                 obj.save()
 
@@ -151,11 +159,11 @@ def userprofile(request):
                 "All your data will be lost . Are you sure you wish to delete your account ? ",
             )
             return redirect("deleteaccount")
-        
+
         if request.POST.get("change_pfp"):
             if change_profile_form.is_valid():
                 change_profile_form.save()
-                messages.success(request,"changed successfuly")
+                messages.success(request, "changed successfuly")
         elif request.POST.get("remove_pfp") and my_provider_profile:
             my_provider_profile.profile_photo.delete(save=True)
             messages.success(request, "Profile picture removed.")
@@ -172,7 +180,7 @@ def userprofile(request):
             "my_provider": my_provider_profile,
             "my_customer": my_customer_profile,
             "form": notiform,
-            "change_profile_form" : change_profile_form,
+            "change_profile_form": change_profile_form,
         },
     )
 

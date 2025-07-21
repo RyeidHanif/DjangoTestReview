@@ -1,6 +1,13 @@
 from django.contrib import admin
 
-from .models import AnalyticsApi, Appointment, CustomerProfile, ProviderProfile ,NotificationPreferences , Cancellation
+from .models import (
+    AnalyticsApi,
+    Appointment,
+    Cancellation,
+    CustomerProfile,
+    NotificationPreferences,
+    ProviderProfile,
+)
 
 admin.site.register(ProviderProfile)
 admin.site.register(CustomerProfile)

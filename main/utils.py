@@ -1,18 +1,21 @@
 # extra utility functions needed for e.g refrehsing tokens ,getting calender service
 import json
+from datetime import datetime, timedelta
 
-from django.utils.timezone import now
+from django.utils.timezone import (
+    activate,
+    get_current_timezone,
+    localdate,
+    localtime,
+    make_aware,
+    now,
+)
+from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
-from datetime import datetime , timedelta 
-from django.utils.timezone import (activate, get_current_timezone, localdate,
-                                   localtime, make_aware, now)
-from google.auth.exceptions import RefreshError
 
-
-
-from .models import ProviderProfile, Cancellation
+from .models import Cancellation, ProviderProfile
 
 with open("credentials.json", "r") as f:
     data = json.load(f)
@@ -37,7 +40,7 @@ def get_calendar_service(user):
         scopes=["https://www.googleapis.com/auth/calendar"],
     )
 
-       # Try refreshing only if token expired
+    # Try refreshing only if token expired
     if creds.expired and creds.refresh_token:
         try:
             creds.refresh(Request())
@@ -52,24 +55,22 @@ def get_calendar_service(user):
             profile.google_token_expiry = None
             profile.google_calendar_connected = False
             profile.save()
-            raise Exception("Google Calendar token expired. Please reconnect your calendar.")
+            raise Exception(
+                "Google Calendar token expired. Please reconnect your calendar."
+            )
 
     return build("calendar", "v3", credentials=creds)
 
 
-
-
-def cancellation(user , appointment):
+def cancellation(user, appointment):
     cutoff_date = now() - timedelta(days=30)
-    
+
     appointment_date = appointment.date_start.astimezone(get_current_timezone())
-    cancel_date =now()
+    cancel_date = now()
     if appointment_date - cancel_date < timedelta(hours=12):
-        cancelled =Cancellation.objects.create(user=user, appointment=appointment)
-    
-    count__recent_cancelled = Cancellation.objects.filter(user=user, cancelled_at__gte = cutoff_date ).count()
+        cancelled = Cancellation.objects.create(user=user, appointment=appointment)
+
+    count__recent_cancelled = Cancellation.objects.filter(
+        user=user, cancelled_at__gte=cutoff_date
+    ).count()
     return count__recent_cancelled
-
-
-
-

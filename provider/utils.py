@@ -1,6 +1,4 @@
-from django.contrib import messages
-from django.core.mail import EmailMessage
-from datetime import datetime, time, timedelta, timezone 
+from datetime import datetime, time, timedelta, timezone
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -8,15 +6,29 @@ from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
-from django.utils.timezone import (activate, get_current_timezone, localdate,
-                                   localtime, make_aware, now)
+from django.utils.timezone import (
+    activate,
+    get_current_timezone,
+    localdate,
+    localtime,
+    make_aware,
+    now,
+)
+from googleapiclient.errors import HttpError
 
 from main.models import Appointment, ProviderProfile
 from main.utils import get_calendar_service
-from googleapiclient.errors import HttpError
 
 
-def create_calendar_appointment(start_date, end_date, summary, attendee_email ,recurrence_frequency , until_date, appointment):
+def create_calendar_appointment(
+    start_date,
+    end_date,
+    summary,
+    attendee_email,
+    recurrence_frequency,
+    until_date,
+    appointment,
+):
     event = {
         "summary": summary,
         "location": "My Office ",
@@ -39,34 +51,37 @@ def create_calendar_appointment(start_date, end_date, summary, attendee_email ,r
             ],
         },
     }
-    if recurrence_frequency not in [None , "NONE"] and until_date != None :
-       
+    if recurrence_frequency not in [None, "NONE"] and until_date != None:
+
         until_utc = datetime.combine(until_date, time.min).replace(tzinfo=timezone.utc)
-        until_str = until_utc.strftime('%Y%m%dT%H%M%SZ')
+        until_str = until_utc.strftime("%Y%m%dT%H%M%SZ")
         recur = f"RRULE:FREQ={recurrence_frequency};UNTIL={until_str}"
         event["recurrence"] = [recur]
-    
+
     customer_pref = appointment.customer.notification_settings.preferences
     provider_pref = appointment.provider.notification_settings.preferences
-   
+
     if customer_pref != "none":
         event["attendees"].append({"email": attendee_email})
 
     if provider_pref == "none":
-        event["reminders"] = {
-            "useDefault": False,
-            "overrides": []
-        }
-    
+        event["reminders"] = {"useDefault": False, "overrides": []}
 
     return event
+
+
 def EmailConfirmedAppointment(
-    request, customer, provider, date_start, date_end, to_email,
+    request,
+    customer,
+    provider,
+    date_start,
+    date_end,
+    to_email,
 ):
     mail_subject = "Appointment confirmed"
-    message = f'''Dear {customer.username} You have been allotted the slot from {date_start} To {date_end} with provider : {provider} . Please do not miss the appointment . You will recieve reminder emails before the appointment as well .
-     '''
-    
+    message = f"""Dear {customer.username} You have been allotted the slot from {date_start} To {date_end} with provider : {provider} . Please do not miss the appointment . You will recieve reminder emails before the appointment as well .
+     """
+
     email = EmailMessage(mail_subject, message, to=[to_email])
     if email.send():
         messages.success(
@@ -80,7 +95,13 @@ def EmailConfirmedAppointment(
         )
 
 
-def EmailDeclinedAppointment(request, customer, provider, reason, to_email,  ):
+def EmailDeclinedAppointment(
+    request,
+    customer,
+    provider,
+    reason,
+    to_email,
+):
     mail_subject = "Appointment Declined"
     message = f"Dear {customer.username}  , Unfortunately Mr.{provider} could not accept your appointment request, "
     email = EmailMessage(mail_subject, message, to=[to_email])
@@ -96,7 +117,12 @@ def EmailDeclinedAppointment(request, customer, provider, reason, to_email,  ):
         )
 
 
-def EmailCancelledAppointment(request, customer, provider, to_email , ):
+def EmailCancelledAppointment(
+    request,
+    customer,
+    provider,
+    to_email,
+):
     mail_subject = "Appointment Cancelled "
     message = f"Dear {customer.username}  , Unfortunately Mr.{provider} has had to cancel the  appointment ."
     email = EmailMessage(mail_subject, message, to=[to_email])
@@ -112,28 +138,61 @@ def EmailCancelledAppointment(request, customer, provider, to_email , ):
         )
 
 
+def create_google_calendar_event(
+    service,
+    timeslot,
+    summary,
+    attendee_email,
+    recurrence_frequency,
+    until_date,
+    appointment,
+):
+    event_body = create_calendar_appointment(
+        timeslot[0],
+        timeslot[1],
+        summary,
+        attendee_email,
+        recurrence_frequency,
+        until_date,
+        appointment,
+    )
+    return (
+        service.events()
+        .insert(calendarId="primary", body=event_body, sendUpdates="all")
+        .execute()
+    )
 
-def create_google_calendar_event(service, timeslot, summary, attendee_email, recurrence_frequency , until_date, appointment):
-    event_body = create_calendar_appointment(timeslot[0], timeslot[1], summary, attendee_email , recurrence_frequency , until_date ,appointment)
-    return service.events().insert(calendarId="primary", body=event_body, sendUpdates="all").execute()
 
-def reschedule_google_event(service, event_id, new_start, new_end , recurrence_frequency , recurrence_until):
+def reschedule_google_event(
+    service, event_id, new_start, new_end, recurrence_frequency, recurrence_until
+):
     event = service.events().get(calendarId="primary", eventId=event_id).execute()
     event["start"]["dateTime"] = new_start
     event["end"]["dateTime"] = new_end
-    
+
     if recurrence_frequency and recurrence_until:
-        until_utc = datetime.combine(recurrence_until, time.min).replace(tzinfo=timezone.utc)
-        until_str = until_utc.strftime('%Y%m%dT%H%M%SZ')
+        until_utc = datetime.combine(recurrence_until, time.min).replace(
+            tzinfo=timezone.utc
+        )
+        until_str = until_utc.strftime("%Y%m%dT%H%M%SZ")
         event["recurrence"] = [f"RRULE:FREQ={recurrence_frequency};UNTIL={until_str}"]
     else:
         event.pop("recurrence", None)
 
-    return service.events().update(calendarId="primary", eventId=event_id, body=event).execute()
+    return (
+        service.events()
+        .update(calendarId="primary", eventId=event_id, body=event)
+        .execute()
+    )
 
 
 def SendEmailRescheduleAccepted(
-    request, customer, provider, date_start, date_end, to_email,  
+    request,
+    customer,
+    provider,
+    date_start,
+    date_end,
+    to_email,
 ):
     mail_subject = "Reschedule Approved "
     message = f"Dear {customer.username} You have been allotted the slot from {date_start} To {date_end} with provider : {provider} . Please do not miss the appointment . You will recieve reminder emails before the appointment as well.  "
@@ -150,8 +209,14 @@ def SendEmailRescheduleAccepted(
         )
 
 
-
-def EmailRescheduleDeclined(request , customer , provider , date_start , date_end , to_email,  ):
+def EmailRescheduleDeclined(
+    request,
+    customer,
+    provider,
+    date_start,
+    date_end,
+    to_email,
+):
     mail_subject = "Reschedule Declined  "
     message = f"Dear {customer.username} Your Alloted slot from  {date_start} To {date_end} with provider : {provider} Has been Declined . The appointment has been removed . Please act accordingly. "
     email = EmailMessage(mail_subject, message, to=[to_email])
