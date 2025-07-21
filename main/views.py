@@ -16,13 +16,8 @@ from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import Flow
 
 from .forms import ProviderForm
-from .models import (
-    Appointment,
-    CustomerProfile,
-    NotificationPreferences,
-    ProviderProfile,
-    User,
-)
+from .models import (Appointment, CustomerProfile, NotificationPreferences,
+                     ProviderProfile, User)
 
 # Create your views here.
 

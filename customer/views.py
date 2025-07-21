@@ -6,9 +6,11 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Permission, User
 from django.core.cache import cache
+from django.core.paginator import Paginator
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
-from django.utils.timezone import get_current_timezone, localdate, localtime, make_aware
+from django.utils.timezone import (get_current_timezone, localdate, localtime,
+                                   make_aware)
 from django.views import View
 from django.views.decorators.cache import cache_page
 from django.views.generic import ListView
@@ -18,20 +20,11 @@ from main.utils import cancellation, get_calendar_service
 
 # Create your views here.
 from .forms import AppointmentRecurrenceForm
-from .utils import (
-    EmailPendingAppointment,
-    EmailRescheduledAppointment,
-    calculate_total_price,
-    change_and_save_appointment,
-    check_appointment_exists,
-    create_and_save_appointment,
-    create_calendar_appointment,
-    create_google_calendar_event,
-    get_available_slots,
-    reschedule_google_event,
-)
-
-from django.core.paginator import Paginator
+from .utils import (EmailPendingAppointment, EmailRescheduledAppointment,
+                    calculate_total_price, change_and_save_appointment,
+                    check_appointment_exists, create_and_save_appointment,
+                    create_calendar_appointment, create_google_calendar_event,
+                    get_available_slots, reschedule_google_event)
 
 
 class CustomerDashboard(View, LoginRequiredMixin):
@@ -290,10 +283,14 @@ class ViewAppointments(View, LoginRequiredMixin):
     def get(self, request, *args, **kwargs):
 
         self.myappointments = self.get_query(request, *args, **kwargs)
+        paginator = Paginator(self.myappointments , 10)
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
         return render(
             request,
             "customer/viewappointments.html",
-            {"appointments": self.myappointments},
+            {"appointments": self.myappointments,
+            "page_obj": page_obj},
         )
 
     def post(self, request, *args, **kwargs):
@@ -399,6 +396,7 @@ class BookingHistoryView(LoginRequiredMixin, ListView):
     template_name = "customer/bookinghistory.html"
     context_object_name = "appointments"
     ordering = ["-date_added"]
+    paginate_by = 5
 
     def get_queryset(self):
 

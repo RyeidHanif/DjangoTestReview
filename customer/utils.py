@@ -6,14 +6,8 @@ from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
-from django.utils.timezone import (
-    activate,
-    get_current_timezone,
-    localdate,
-    localtime,
-    make_aware,
-    now,
-)
+from django.utils.timezone import (activate, get_current_timezone, localdate,
+                                   localtime, make_aware, now)
 from googleapiclient.errors import HttpError
 
 from main.models import Appointment, ProviderProfile

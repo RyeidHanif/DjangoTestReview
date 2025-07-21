@@ -2,14 +2,8 @@
 import json
 from datetime import datetime, timedelta
 
-from django.utils.timezone import (
-    activate,
-    get_current_timezone,
-    localdate,
-    localtime,
-    make_aware,
-    now,
-)
+from django.utils.timezone import (activate, get_current_timezone, localdate,
+                                   localtime, make_aware, now)
 from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
