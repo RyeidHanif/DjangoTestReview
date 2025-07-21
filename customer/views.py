@@ -48,11 +48,19 @@ class ViewProviders(ListView , LoginRequiredMixin):
 
     def get_queryset(self):
         query = self.request.GET.get('q')
-        if query :
-            return  ProviderProfile.objects.filter(user__username__icontains= query).exclude(user=self.request.user)
+        key = f"view_providers_for_user_{self.request.user.id}_with_{query}"
+        provider_list = cache.get(key)
+        if provider_list:
+            return provider_list
         else:
-            return ProviderProfile.objects.exclude(user=self.request.user)
-        
+                
+            if query :
+                provider_list =   ProviderProfile.objects.filter(user__username__icontains= query).exclude(user=self.request.user)
+            else:
+                provider_list =  ProviderProfile.objects.exclude(user=self.request.user)
+            cache.set(key ,list(provider_list), timeout= 60 * 5 )
+            return provider_list
+            
 
     def post(self , request , *args , **kwargs):
         messages.info(
@@ -67,8 +75,6 @@ class ViewProviders(ListView , LoginRequiredMixin):
 
 viewproviders = ViewProviders.as_view()
         
-
-
 
 
 

@@ -23,7 +23,8 @@ from django.views import View
 
 from django.views.generic import ListView
 from django.contrib.auth.mixins import LoginRequiredMixin
-
+from django.core.cache import cache
+from logging_conf import logger
 
 
 class ProviderDashboard(View , LoginRequiredMixin):
@@ -55,20 +56,32 @@ class ViewMyAppointments(View, LoginRequiredMixin):
 
     def get(self, request , *args, **kwargs):
         query = request.GET.get("q")
-        if query:
-            my_appointments = Appointment.objects.filter(
-            provider=request.user, status="accepted", customer__username__icontains=query,
-            ).order_by("-date_added")
-        else : 
-            my_appointments = Appointment.objects.filter(
-            provider=request.user, status="accepted"
-            ).order_by("-date_added")
+        key = f"accepted_appointments_of_{request.user.id}_with_customer_{query}"
+        appointments = cache.get(key)
+        if appointments:
+            logger.info("The query is being used from the cache")
+            my_appointments = appointments
+        else:
+            logger.info("The query is being used from the database")
+            if query:
+                my_appointments = Appointment.objects.filter(
+                provider=request.user, status="accepted", customer__username__icontains=query,
+                ).order_by("-date_added")
+            else : 
+                my_appointments = Appointment.objects.filter(
+                provider=request.user, status="accepted"
+                ).order_by("-date_added")
+            cache.set(key, list(my_appointments) , timeout= 60 * 5)
         
         return render(request, "provider/view_my_appointments.html", {"appointments": my_appointments})
     
     def post(self , request , *args , **kwargs):
+        query = request.GET.get("q")
+        key = f"accepted_appointments_of_{request.user.id}_with_customer_{query}"
         if request.POST.get("cancel"):
-            cancel_appointment = Appointment.objects.get(id=request.POST.get("cancel"))
+            if cache.get(key):
+                cache.delete(key)
+            cancel_appointment = Appointment.objects.select_related('customer', 'provider').get(id=request.POST.get("cancel"))
             to_email = cancel_appointment.customer.email
             customer = cancel_appointment.customer
             provider = cancel_appointment.provider
@@ -91,6 +104,8 @@ class ViewMyAppointments(View, LoginRequiredMixin):
                 return redirect("view_my_appointments")
 
         if request.POST.get("markcompleted"):
+            if cache.get(key):
+                cache.delete(key)
             appointment = Appointment.objects.get(id=request.POST.get("markcompleted"))
             current_datetime = now()
             if appointment.date_start > current_datetime:
@@ -117,22 +132,35 @@ class ViewPendingAppointments(View , LoginRequiredMixin):
 
     def get(self, request , *args , **kwargs):
         query= request.GET.get("q")
-        if query :
-                my_appointments = Appointment.objects.filter(status__in=["pending", "rescheduled"] , provider = request.user , customer__username__icontains=query)
-        else :
-                my_appointments = Appointment.objects.filter(status__in=["pending", "rescheduled"] , provider = request.user)
-        
+        key = f"Pending_appointments_of_{request.user.id}_with_{query}"
+        appointments = cache.get(key)
+        if appointments :
+            logger.info("The query is being used from the cache")
+            my_appointments = appointments
+        else:
+            logger.info("The query is being used rom the database ")
+            if query :
+                    my_appointments = Appointment.objects.filter(status__in=["pending", "rescheduled"] , provider = request.user , customer__username__icontains=query)
+            else :
+                    my_appointments = Appointment.objects.filter(status__in=["pending", "rescheduled"] , provider = request.user)
+            cache.set(key, list(my_appointments), timeout= 60 * 5 )
         return render(request , "provider/view_pending_appointments.html", {"appointments": my_appointments})
     
 
     def post(self , request , *args , **kwargs):
+        query = request.GET.get("q")
+        key = f"Pending_appointments_of_{request.user.id}_with_{query}"
         if request.POST.get("reject"):
-            appointment = Appointment.objects.get(id=request.POST.get("reject"))
+            appointment = Appointment.objects.select_related('customer', 'customer__notification_settings').get(id=request.POST.get("reject"))
+            if cache.get(key):
+                cache.delete(key)
             return self.reject_appointment(request, appointment)
 
         if request.POST.get("accept") :
 
-            appointment = Appointment.objects.get(id=request.POST.get("accept"))
+            appointment = Appointment.objects.select_related('customer', 'customer__notification_settings').get(id=request.POST.get("accept"))
+            if cache.get(key):
+                cache.delete(key)
             return self.accept_appointment(request , appointment)
         
         return redirect("view_pending_appointments")
@@ -259,7 +287,7 @@ class ViewAnalytics(View, LoginRequiredMixin):
     login_url= "/login/"
     def get(self,  request , *args , **kwargs):
         revenue = 0
-        myappointments = Appointment.objects.filter(provider=request.user)
+        myappointments = Appointment.objects.select_related('customer').filter(provider=request.user)
         total_statuses = 0
         percentage_statuses_dict = {}
         statuses = {"pending": 0,
