@@ -1,0 +1,27 @@
+{% extends 'main/base.html' %}
+
+{% block title %} Customer Dashboard {% endblock %}
+
+
+{% block content %}
+
+<div class="d-flex justify-content-center align-items-center vh-100">
+    <div class="text-align-center">
+        <h1>Welcome to the Customer Dashboard </h1>
+    </div>
+</div>
+
+<div>
+    <form class="form-group" method="POST" action="#">
+        {% csrf_token %}
+    <button class="btn btn-outline-success" type="submit" name="providerside" value="providerside">{{display}} </button>
+
+    </form>
+    
+</div>
+
+
+
+
+
+{% endblock %}

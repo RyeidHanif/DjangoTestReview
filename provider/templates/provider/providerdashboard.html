@@ -1,0 +1,25 @@
+{% extends 'main/base.html' %}
+
+
+{% block title %} Provider Dashboard {% endblock %}
+
+
+
+{% block content %}
+
+<div class="d-flex justify-content-center align-items-center vh-100">
+    <div class="text-align-center">
+        <h1>Welcome to the Provider Dashboard </h1>
+    </div>
+</div>
+
+<div>
+    <form class="form-group" method="POST" action="#">
+        {% csrf_token %}
+        <button class="btn btn-primary" name="customerdashboard" value="customerdashboard"> go to customer dashboard </button>
+    </form>
+</div>
+
+
+
+{% endblock %}

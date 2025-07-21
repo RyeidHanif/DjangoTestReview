@@ -1,0 +1,13 @@
+{% extends "main/base.html" %}
+
+
+{% block title %} Dashboard {% endblock %}
+
+
+
+{% block content %} 
+
+<a href="{% url 'customerdashboard' %}">Go to Customer Dashboard</a>
+<a href="{% url 'providerdashboard' %}">Go to Provider Dashboard</a>
+
+{% endblock %}
