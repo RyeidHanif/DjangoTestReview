@@ -64,18 +64,12 @@ def signup(request):
     if request.method == "POST":
         suform = SignUpForm(request.POST)
         if suform.is_valid():
-            user = suform.save()
             user = suform.save(commit=False)
             user.is_acive = False
             user.save()
             activateEmail(request, user, suform.cleaned_data.get("email"))
-            choice = suform.cleaned_data["profile_choice"]
             phone_number = suform.cleaned_data["phone_number"]
             CustomerProfile.objects.create(user=user, phone_number=phone_number)
-            login(request , user )
-            return redirect("customerdashboard")
-            request.session["profile_choice"] = choice
-            request.session["temp_phone"] = phone_number
             return redirect("home")
         else:
             for error in list(suform.errors.values()):
@@ -95,18 +89,12 @@ def activate(request, uidb64, token):
     if user is not None and account_activation_token.check_token(user, token):
         user.is_active = True
         user.save()
-        choice = request.session.get("profile_choice")
-        phone_number = request.session.get("temp_phone")
         messages.success(
             request,
             "Thank you for your email confirmation. Now you can continue profile creation .",
         )
-        if choice == "customer":
-            CustomerProfile.objects.create(user=user, phone_number=phone_number)
-            return redirect("customerdashboard")
-        elif choice == "provider" or choice == "both":
-            request.session["temp_user_id"] = user.id
-            return redirect("profile_creation", n=choice)
+        login(request , user )
+        return redirect("customerdashboard")
 
     else:
         messages.error(request, "Activation link is invalid!")
