@@ -20,7 +20,8 @@ class SignUpForm(UserCreationForm):
     phone_number = forms.CharField(required=True)
 
     class Meta:
-        '''connect form to model User and customize fields'''
+        """connect form to model User and customize fields"""
+
         model = User
         fields = ["email", "username", "password1", "password2", "phone_number"]
 

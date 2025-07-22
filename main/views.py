@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Permission, User
 from django.shortcuts import redirect, render
+from dotenv import load_dotenv
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import Flow
 
@@ -27,31 +28,28 @@ def home(request):
 
 @login_required(login_url="/login/")
 def redirectiondashboard(request):
-    '''temporary dashboard to redirect  different users to their respective places '''
-    user = request.user 
-    if hasattr(user, 'customerprofile' ) and hasattr(user , 'providerprofile'):
+    """temporary dashboard to redirect  different users to their respective places"""
+    user = request.user
+    if hasattr(user, "customerprofile") and hasattr(user, "providerprofile"):
         return redirect("connect_to_calendar")
-    elif hasattr(user , "customerprofile"):
-        return redirect("customerdashboard")
+    elif hasattr(user, "customerprofile"):
+        return redirect("customer_dashboard")
     elif hasattr(user, "providerprofile"):
         return redirect("connect_to_calendar")
 
-    
-   
- 
 
-@login_required(login_url='/login/')
+@login_required(login_url="/login/")
 def profile_creation(request):
-    '''
-    profile creation system which uses the provider form and parameter n to divide choices 
+    """
+    profile creation system which uses the provider form and parameter n to divide choices
 
-    user id and phone number are use from the session and then deleted 
-    n is used to differentiate between users who want to be both and those 
-    who want to be a provider 
-    if n is given as "both" , then a customer profile for that user is also created 
-    the user is then redirected to the login page 
-    '''
-  
+    user id and phone number are use from the session and then deleted
+    n is used to differentiate between users who want to be both and those
+    who want to be a provider
+    if n is given as "both" , then a customer profile for that user is also created
+    the user is then redirected to the login page
+    """
+
     if request.method == "POST":
         provider_form = ProviderForm(request.POST , request.FILES)
         if provider_form.is_valid():
@@ -79,7 +77,7 @@ def connect_to_calendar(request):
     profile = ProviderProfile.objects.get(user=user)
     if profile.google_calendar_connected:
         messages.info(request, "you are connected to calendar")
-        return redirect("providerdashboard")
+        return redirect("provider_dashboard")
     else:
         if request.method == "POST":
             return redirect("connect_google")
@@ -93,11 +91,12 @@ def connect_google(request):
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = (
         "1"  # tell google that no https , using http
     )
+    BASE_URL = os.getenv("BASE_URL")
 
     flow = Flow.from_client_secrets_file(  # load google auth clint credentials
         "credentials.json",
         scopes=["https://www.googleapis.com/auth/calendar"],
-        redirect_uri="http://127.0.0.1:8000/google/oauth2callback/",
+        redirect_uri=f"{BASE_URL}/google/oauth2callback/",
     )
     auth_url, _ = flow.authorization_url(
         access_type="offline",  # need it even when user is offline
@@ -117,10 +116,11 @@ def oauth2callback(request):
     the authorization code sent by google is exchanged for access and refresh tokens
     which are then stored in the ProvideProfile model columns to be used later
     """
+    BASE_URL = os.getenv("BASE_URL")
     flow = Flow.from_client_secrets_file(  # load google auth client credentils
         "credentials.json",
         scopes=["https://www.googleapis.com/auth/calendar"],
-        redirect_uri="http://127.0.0.1:8000/google/oauth2callback/",
+        redirect_uri=f"{BASE_URL}/google/oauth2callback/",
     )
 
     flow.fetch_token(

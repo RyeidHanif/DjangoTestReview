@@ -22,7 +22,7 @@ from django.contrib.auth import logout
 
 
 @login_required(login_url="/login/")
-def providerdashboard(request):
+def provider_dashboard(request):
     if request.method == "POST":
         if request.POST.get("myprofile"):
             return redirect("userprofile")
@@ -35,7 +35,7 @@ def providerdashboard(request):
         if request.POST.get("myavailability"):
             return redirect("myavailability")
 
-    return render(request, "provider/providerdashboard.html")
+    return render(request, "provider/provider_dashboard.html")
 
 
 @login_required(login_url="/login/")
@@ -181,7 +181,7 @@ def view_pending_appointments(request):
 
 
 
-def myavailability(request):
+def my_availability(request):
 
 
 
@@ -200,6 +200,7 @@ def myavailability(request):
             start_datetime_iso = start_datetime.isoformat()
             end_datetime_iso = end_datetime.isoformat()
             service = get_calendar_service(request.user)
+            # this is a test event , to see if calendar integration is woking properly
             event = {
                 "summary": "Unavailable",
                 "location": "NA",
@@ -218,17 +219,17 @@ def myavailability(request):
             }
             service.events().insert(calendarId="primary", body=event).execute()
             messages.success(request, "Added time block successfully")
-            return redirect("myavailability")
+            return redirect("my_availability")
 
     else:
         form = AvailabilityForm()
 
-    return render(request, "provider/myavailability.html", {"form": form})
+    return render(request, "provider/my_availability.html", {"form": form})
 
 
 
 @login_required(login_url="/login/")
-def viewanalytics(request):
+def view_analytics(request):
     revenue = 0
     myappointments = Appointment.objects.filter(provider=request.user)
     total_statuses = 0
@@ -261,7 +262,7 @@ def viewanalytics(request):
     
 
     
-    return render(request , "provider/viewanalytics.html" , {"customers": customers , "myappointments": myappointments , "statuses": statuses , "revenue": revenue,  "admin_cut": admin_cut, "percentage_statuses_dict":percentage_statuses_dict} )
+    return render(request , "provider/view_analytics.html" , {"customers": customers , "myappointments": myappointments , "statuses": statuses , "revenue": revenue,  "admin_cut": admin_cut, "percentage_statuses_dict":percentage_statuses_dict} )
         
 
 

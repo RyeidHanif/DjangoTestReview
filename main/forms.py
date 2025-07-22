@@ -17,11 +17,16 @@ class ProviderForm(forms.ModelForm):
             "duration_mins",
             "start_time",
             "end_time",
+<<<<<<< HEAD
             "rate",
             "buffer",
             "profile_photo",
         ]
         widgets = {
+=======
+        ]
+        widggets = {
+>>>>>>> origin/main
             "start_time": forms.TimeInput(attrs={"type": "time"}),
             "end_time": forms.TimeInput(attrs={"type": "time"}),
         }

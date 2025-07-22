@@ -25,30 +25,30 @@ from django.contrib.auth import logout
 @login_required(login_url="/login/")
 def customerdashboard(request):
     if request.method == "POST":
-        if request.POST.get("viewproviders"):
-            return redirect("viewproviders")
-        if request.POST.get("viewappointments"):
-            return redirect("viewappointments")
-        if request.POST.get("myprofile"):
+        if request.POST.get("view_providers"):
+            return redirect("view_providers")
+        if request.POST.get("view_appointments"):
+            return redirect("view_appointments")
+        if request.POST.get("my_profile"):
             return redirect("userprofile")
-        if request.POST.get("bookinghistory"):
-            return redirect("bookinghistory")
+        if request.POST.get("booking_history"):
+            return redirect("booking_history")
 
         if hasattr(request.user, 'providerprofile'):
-            if request.POST.get("providerside"):
-                return redirect("providerdashboard")
+            if request.POST.get("provider_side"):
+                return redirect("provider_dashboard")
         else:
-            if request.POST.get("providerside"):
+            if request.POST.get("provider_side"):
                 return redirect("profile_creation")
 
     display = "Go to provider Dashboard" if hasattr(request.user, 'providerprofile') else "Become a Service Provider"
-    return render(request, "customer/customerdashboard.html", {"user": request.user, "display": display})
+    return render(request, "customer/customer_dashboard.html", {"user": request.user, "display": display})
 
 
 
 
 @login_required(login_url="/login/")
-def viewproviders(request):
+def view_providers(request):
     query = request.GET.get('q')
     if query :
         providers = ProviderProfile.objects.filter(user__username__icontains= query).exclude(user=request.user)
@@ -61,11 +61,11 @@ def viewproviders(request):
         messages.info(
             request, "You are being redirected to the service providers schedule"
         )
-        return redirect("schedule", providerID=request.POST.get("bookappointment"))
+        return redirect("schedule", providerID=request.POST.get("book_appointment"))
 
     return render(
         request,
-        "customer/viewproviders.html",
+        "customer/view_providers.html",
         {"providers": providers, "categories": categories},
     )
 
@@ -89,15 +89,15 @@ def schedule(request, providerID):
         available_slots = get_available_slots(provider, slot_range)
 
 
-        if request.POST.get("addappointment"):
-            index = int(request.POST.get("addappointment"))
+        if request.POST.get("add_appointment"):
+            index = int(request.POST.get("add_appointment"))
             timeslot = available_slots[index]
             request.session["timeslot_tuple"] = (
                 timeslot[0].isoformat(),
                 timeslot[1].isoformat(),
             )
             
-            return redirect("addappointment", providerUserID=provider.id)
+            return redirect("add_appointment", providerUserID=provider.id)
 
     else:
         available_slots = get_available_slots(provider, slot_range)
@@ -135,7 +135,7 @@ def addappointment(request, providerUserID):
                 request,
                 "You already have an appointment with this provider. Cancel that one first.",
             )
-            return redirect("viewproviders")
+            return redirect("view_providers")
 
         if request.method == "POST":
             print(f"DEBUG : THE CURRENT MODE IS {mode}")
@@ -190,7 +190,7 @@ def addappointment(request, providerUserID):
         
         if not appointment:
             messages.error(request, "No existing appointment found for rescheduling.")
-            return redirect("viewappointments")
+            return redirect("view_appointments")
 
         if request.method == "POST":
             print(f"DEBUG : THE CURRENT MODE IS {mode}")
@@ -232,15 +232,15 @@ def addappointment(request, providerUserID):
 
                 request.session.pop("mode", None)
                 messages.success(request, "Appointment rescheduled successfully")
-                return redirect("viewappointments")
+                return redirect("view_appointments")
 
             elif request.POST.get("cancel"):
                 messages.info(request, "Reschedule cancelled")
-                return redirect("viewappointments")
+                return redirect("view_appointments")
 
     return render(
         request,
-        "customer/addappointment.html",
+        "customer/add_appointment.html",
         {
             "start": start_datetime,
             "end": end_datetime,
@@ -286,7 +286,7 @@ def viewappointments(request):
                 messages.error(
                     request, "sorry you cannot reschedule a non accepted appointment "
                 )
-                return redirect("viewappointments")
+                return redirect("view_appointments")
             else:
                 return redirect(
                     "reschedule", appointment_id=request.POST.get("reschedule")
@@ -307,9 +307,9 @@ def viewappointments(request):
                 return redirect("home")
             else:
                 messages.success(request, "Cancelled successfully ")
-                return redirect("viewappointments")
+                return redirect("view_appointments")
     return render(
-        request, "customer/viewappointments.html", {"appointments": myappointments}
+        request, "customer/view_appointments.html", {"appointments": myappointments}
     )
 
 
@@ -343,4 +343,4 @@ class BookingHistoryView(LoginRequiredMixin , ListView):
         return Appointment.objects.filter(customer=self.request.user).order_by("-date_added")
     
 
-bookinghistory = BookingHistoryView.as_view()
+booking_history = BookingHistoryView.as_view()

@@ -10,6 +10,8 @@ from django.utils.timezone import (activate, get_current_timezone, localdate,
                                    localtime, make_aware, now)
 from google.auth.exceptions import RefreshError
 from django.contrib import messages 
+import os 
+
 
 
 
@@ -17,9 +19,9 @@ from .models import ProviderProfile, Appointment
 
 with open("credentials.json", "r") as f:
     data = json.load(f)
+    clientID = os.getenv("client_id")
+    clientSecret = os.getenv("client_secret")
 
-    clientID = data["web"]["client_id"]
-    clientSecret = data["web"]["client_secret"]
 
 
 def get_calendar_service(user):

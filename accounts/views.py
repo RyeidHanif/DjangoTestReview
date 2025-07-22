@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMessage
+from django.contrib.auth import login
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
@@ -120,7 +121,7 @@ def password_change(request):
 
 
 @login_required(login_url="/login/")
-def userprofile(request):
+def user_profile(request):
 
     me = User.objects.get(id=request.user.id)
     my_provider_profile = ProviderProfile.objects.filter(user=me).first()
@@ -160,7 +161,7 @@ def userprofile(request):
 
     return render(
         request,
-        "accounts/userprofile.html",
+        "accounts/user_profile.html",
         {
             "me": me,
             "my_provider": my_provider_profile,
