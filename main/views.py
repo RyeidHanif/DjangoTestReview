@@ -198,7 +198,7 @@ class AdminDashboard(View, LoginRequiredMixin):
     def get(self, request, *args, **kwargs):
         admin_revenue = 0
         revenue = 0
-        users = User.objects.all()
+        users = User.objects.exclude(is_superuser =True)
         paginator = Paginator(users, 10)
         page_number = request.GET.get("page")
         page_obj = paginator.get_page(page_number)

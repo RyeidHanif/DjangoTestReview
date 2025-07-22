@@ -90,7 +90,7 @@ class ViewMyAppointments(View, LoginRequiredMixin):
     def post(self, request, *args, **kwargs):
 
         if request.POST.get("cancel"):
-
+        
             cancel_appointment = Appointment.objects.select_related(
                 "customer", "provider"
             ).get(id=request.POST.get("cancel"))
@@ -105,18 +105,20 @@ class ViewMyAppointments(View, LoginRequiredMixin):
             cancel_appointment.save()
             if customer.notification_settings.preferences == "all":
                 EmailCancelledAppointment(request, customer, provider, to_email)
-            count_cancel = cancellation(request.user, cancel_appointment)
-            if count_cancel >= 3:
-                request.user.is_active = False
-                request.user.save()
-                logout(request)
-                messages.warning(
-                    request,
-                    "you cancelled too many apointments after deadline in a short span of time ",
-                )
-                return redirect("home")
-            else:
-                return redirect("view_my_appointments")
+            if not request.user.is_superuser:
+                count_cancel = cancellation(request.user, cancel_appointment)
+                if count_cancel >= 3:
+                    request.user.is_active = False
+                    request.user.save()
+                    logout(request)
+                    messages.warning(
+                        request,
+                        "you cancelled too many apointments after deadline in a short span of time ",
+                    )
+                    return redirect("home")
+              
+            return redirect("view_my_appointments")
+
 
         if request.POST.get("markcompleted"):
 

@@ -359,7 +359,8 @@ class ViewAppointments(View, LoginRequiredMixin):
     def cancel(self, request, *args, **kwargs):
 
         appointment = Appointment.objects.get(id=self.appointmentID)
-        count_cancel = cancellation(request.user, appointment)
+        if not request.user.is_superuser:
+            count_cancel = cancellation(request.user, appointment)
         if appointment.status == "accepted":
             service = get_calendar_service(appointment.provider)
             service.events().delete(
