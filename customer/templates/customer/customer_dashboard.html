@@ -10,7 +10,7 @@
         <h1>Welcome to the Customer Dashboard </h1>
         <form class="form-group" method="POST" action="#">
             {% csrf_token %}
-            <button class ="btn btn-primary" type="submit" name="viewproviders" value = "viewproviders">View Providers</button>
+            <button class ="btn btn-primary" type="submit" name="view_providers" value = "view_providers">View Providers</button>
         </form>
     </div>
 </div>
@@ -18,7 +18,7 @@
 <div>
     <form class="form-group" method="POST" action="#">
         {% csrf_token %}
-    <button class="btn btn-outline-success" type="submit" name="providerside" value="providerside">{{display}} </button>
+    <button class="btn btn-outline-success" type="submit" name="provider_side" value="providerside">{{display}} </button>
 
     </form>
     

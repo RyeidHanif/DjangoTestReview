@@ -20,7 +20,7 @@
   {% csrf_token %}
   <input type="hidden" name="slot_range" value="{{ slot_range }}">
   <input type="hidden" name="slot_index" value="{{ forloop.counter0 }}">
-  <button class="btn btn-success" type="submit" name="addappointment" value="{{ forloop.counter0 }}">
+  <button class="btn btn-success" type="submit" name="add_appointment" value="{{ forloop.counter0 }}">
     Choose Slot
   </button>
 </form>
