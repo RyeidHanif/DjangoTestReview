@@ -23,6 +23,13 @@
     </div>
 </div>
 
+<div>
+    <form class="form-group" method="POST" action="#">
+        {% csrf_token %}
+        <button class="btn btn-primary" name="customerdashboard" value="customerdashboard"> go to customer dashboard </button>
+    </form>
+</div>
+
 
 
 {% endblock %}

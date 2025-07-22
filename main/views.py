@@ -27,53 +27,46 @@ def home(request):
 
 @login_required(login_url="/login/")
 def redirectiondashboard(request):
-    """temporary dashboard to redirect  different users to their respective places"""
-    user = request.user
-    prefs, created = NotificationPreferences.objects.get_or_create(user=request.user)
-    if hasattr(user, "customerprofile") and hasattr(user, "providerprofile"):
-        return render(request, "main/redirectdashboard.html")
-    elif hasattr(user, "customerprofile"):
+    '''temporary dashboard to redirect  different users to their respective places '''
+    user = request.user 
+    if hasattr(user, 'customerprofile' ) and hasattr(user , 'providerprofile'):
+        return redirect("connect_to_calendar")
+    elif hasattr(user , "customerprofile"):
         return redirect("customerdashboard")
     elif hasattr(user, "providerprofile"):
         return redirect("connect_to_calendar")
-    messages.error(request, "you do not have a profile , please create one ")
 
-    return redirect("profile_creation")
+    
+   
+ 
 
+@login_required(login_url='/login/')
+def profile_creation(request):
+    '''
+    profile creation system which uses the provider form and parameter n to divide choices 
 
-def profile_creation(request, n):
-    """
-    profile creation system which uses the provider form and parameter n to divide choices
-
-    user id and phone number are use from the session and then deleted
-    n is used to differentiate between users who want to be both and those
-    who want to be a provider
-    if n is given as "both" , then a customer profile for that user is also created
-    the user is then redirected to the login page
-    """
-    user_id = request.session.get("temp_user_id")
-    phone = request.session.get("temp_phone")
-    if not user_id:
-        return redirect("signup")
+    user id and phone number are use from the session and then deleted 
+    n is used to differentiate between users who want to be both and those 
+    who want to be a provider 
+    if n is given as "both" , then a customer profile for that user is also created 
+    the user is then redirected to the login page 
+    '''
+  
     if request.method == "POST":
         provider_form = ProviderForm(request.POST , request.FILES)
         if provider_form.is_valid():
 
-            user = User.objects.get(id=user_id)
+            user = request.user
 
             if ProviderProfile.objects.filter(user=user).exists():
-                return redirect("login")
+                return redirect("providerdashboard")
 
             profile = provider_form.save(commit=False)
             profile.user = user
-            profile.phone_number = phone
+            profile.phone_number = user.customerprofile.phone_number
             profile.save()
 
-            del request.session["temp_user_id"]
-            del request.session["temp_phone"]
-            if n == "both":
-                CustomerProfile.objects.create(user=user, phone_number=phone)
-            return redirect("login")
+            return redirect("redirectiondashboard")
 
     provider_form = ProviderForm()
     return render(request, "main/profile_creation.html", {"form": provider_form})

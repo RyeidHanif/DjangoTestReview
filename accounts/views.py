@@ -12,6 +12,8 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from main.forms import ProviderForm
 from main.models import CustomerProfile, ProviderProfile , NotificationPreferences
 
+from .forms import SignUpForm
+from django.contrib.auth import login
 from .forms import SetPasswordForm, SignUpForm ,ChangeNotificationPreferencesForm , ProfilePhotoForm
 from .tokens import account_activation_token
 
@@ -62,12 +64,16 @@ def signup(request):
     if request.method == "POST":
         suform = SignUpForm(request.POST)
         if suform.is_valid():
+            user = suform.save()
             user = suform.save(commit=False)
             user.is_acive = False
             user.save()
             activateEmail(request, user, suform.cleaned_data.get("email"))
             choice = suform.cleaned_data["profile_choice"]
             phone_number = suform.cleaned_data["phone_number"]
+            CustomerProfile.objects.create(user=user, phone_number=phone_number)
+            login(request , user )
+            return redirect("customerdashboard")
             request.session["profile_choice"] = choice
             request.session["temp_phone"] = phone_number
             return redirect("home")

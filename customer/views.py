@@ -33,7 +33,18 @@ def customerdashboard(request):
             return redirect("userprofile")
         if request.POST.get("bookinghistory"):
             return redirect("bookinghistory")
-    return render(request, "customer/customerdashboard.html")
+
+        if hasattr(request.user, 'providerprofile'):
+            if request.POST.get("providerside"):
+                return redirect("providerdashboard")
+        else:
+            if request.POST.get("providerside"):
+                return redirect("profile_creation")
+
+    display = "Go to provider Dashboard" if hasattr(request.user, 'providerprofile') else "Become a Service Provider"
+    return render(request, "customer/customerdashboard.html", {"user": request.user, "display": display})
+
+
 
 
 @login_required(login_url="/login/")
