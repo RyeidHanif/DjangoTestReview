@@ -89,3 +89,17 @@ class ViewAllProvidersSerializer(serializers.ModelSerializer):
             "rate",
             "pricing_model",
         ]
+
+
+
+class WelcomeSerializer(serializers.Serializer):
+    message = serializers.CharField()
+
+
+
+class SlotSerializer(serializers.Serializer):
+    start_date = serializers.DateField()
+    start_time = serializers.TimeField()
+    end_date = serializers.DateField()
+    end_time = serializers.TimeField()
+    timezone = serializers.CharField()

@@ -18,7 +18,7 @@ from main.models import AnalyticsApi, Appointment, ProviderProfile
 from .permissions import CustomHasProviderProfile
 from .serializers import (AppointmentSerializer, ProviderAnalyticsSerializer,
                           ProviderProfileSerializer, RegisterSerializer,
-                          ViewAllProvidersSerializer)
+                          ViewAllProvidersSerializer , WelcomeSerializer , SlotSerializer)
 
 
 
@@ -33,9 +33,13 @@ signupuser = SignUpUser.as_view()
 
 class WelcomeView(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = WelcomeSerializer
 
     def get(self, request):
-        return Response({"message": f"Welcome, {request.user.username}!"})
+        data = {"message": f"Welcome, {request.user.username}!"}
+        serializer = self.serializer_class(data)
+        return Response(serializer.data)
+        
 
 
 welcome = WelcomeView.as_view()
@@ -91,6 +95,7 @@ my_customer_appointments = MyCustomerAppointments.as_view()
 
 class APIProviderAvailability(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = SlotSerializer
 
     def get_slot_range(self, request):
         try:
@@ -126,7 +131,8 @@ class APIProviderAvailability(APIView):
             for slot in slots
         ]
 
-        return Response({"available_slots": formatted_slots})
+        serializer = self.serializer_class(formatted_slots , many=True)
+        return Response({"Available slots": serializer.data})
 
 
 API_provider_availability = APIProviderAvailability.as_view()
@@ -134,6 +140,7 @@ API_provider_availability = APIProviderAvailability.as_view()
 
 class APIProviderAnalytics(APIView):
     permission_classes = [IsAuthenticated, CustomHasProviderProfile]
+    serializer_class = ProviderAnalyticsSerializer
 
     def get(self, request, *args, **kwargs):
         provider = request.user
