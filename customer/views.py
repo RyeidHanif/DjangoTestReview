@@ -151,8 +151,8 @@ class AddAppointment(View, LoginRequiredMixin):
         self.start_datetime = datetime.fromisoformat(self.timeslot[0])
         self.end_datetime = datetime.fromisoformat(self.timeslot[1])
         self.total_price = calculate_total_price(self.provider)
-        self.recurrence_form = AppointmentRecurrenceForm()
         self.appointment = None
+        self.recurrence_form = AppointmentRecurrenceForm(appointment_date = self.start_datetime)
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
@@ -168,7 +168,7 @@ class AddAppointment(View, LoginRequiredMixin):
             return self.handle_reschedule_post(request, *args, **kwargs)
 
     def handle_normal_get(self, request, *args, **kwargs):
-        self.recurrence_form = AppointmentRecurrenceForm()
+        self.recurrence_form = AppointmentRecurrenceForm(appointment_date = self.start_datetime)
         if not check_appointment_exists(self.customer, self.provider_user):
             messages.warning(
                 request,
@@ -179,7 +179,7 @@ class AddAppointment(View, LoginRequiredMixin):
         return self.render_template(request)
 
     def handle_normal_post(self, request, *args, **kwargs):
-        self.recurrence_form = AppointmentRecurrenceForm(request.POST)
+        self.recurrence_form = AppointmentRecurrenceForm(request.POST ,appointment_date = self.start_datetime)
         if request.POST.get("confirm"):
             recurrence_frequency = None
             until_date = None
@@ -227,7 +227,8 @@ class AddAppointment(View, LoginRequiredMixin):
             initial={
                 "recurrence": self.appointment.recurrence_frequency,
                 "until_date": self.appointment.recurrence_until,
-            }
+            },
+            appointment_date = self.start_datetime
         )
         if not self.appointment:
             messages.error(request, "No existing appointment found for recheduling ")
@@ -235,7 +236,7 @@ class AddAppointment(View, LoginRequiredMixin):
         return self.render_template(request)
 
     def handle_reschedule_post(self, request, *args, **kwargs):
-        self.recurrence_form = AppointmentRecurrenceForm(request.POST)
+        self.recurrence_form = AppointmentRecurrenceForm(request.POST , appointment_date = self.start_datetime)
         if self.recurrence_form.is_valid():
             recurrence_frequency = self.recurrence_form.cleaned_data["recurrence"]
             until_date = self.recurrence_form.cleaned_data["until_date"]
