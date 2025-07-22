@@ -63,7 +63,7 @@ def view_my_appointments(request):
             cancel_appointment.save()
             if customer.notification_settings.preferences == "all":
                 EmailCancelledAppointment(request, customer, provider, to_email)
-            count_cancel = cancellation(request.user , cancel_appointment)
+            count_cancel = cancellation(request , request.user , cancel_appointment)
             if count_cancel >= 3 :
                 request.user.is_active = False
                 request.user.save()

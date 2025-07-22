@@ -16,7 +16,7 @@ from django.utils.timezone import (
 )
 from main.utils import get_calendar_service
 
-tz = get_current_timezone().zone
+tz = str(get_current_timezone())
 
 
 def create_calendar_appointment(
