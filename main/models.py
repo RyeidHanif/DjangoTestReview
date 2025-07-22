@@ -3,6 +3,7 @@ import uuid
 
 from django.contrib.auth.models import User
 from django.db import models
+import datetime
 
 SERVICE_CHOICES = [
     ("doctor", "Doctor"),
@@ -18,6 +19,8 @@ STATUS_CHOICES = [
     ("completed", "Completed"),
 ]
 
+default_start = datetime.time(9 , 0 ,0 )
+default_end = datetime.time(17, 0,0)
 
 class ProviderProfile(models.Model):
     '''
@@ -36,6 +39,8 @@ class ProviderProfile(models.Model):
     google_refresh_token = models.TextField(blank=True, null=True)
     google_token_expiry = models.DateTimeField(blank=True , null = True)
     google_calendar_connected = models.BooleanField(default=False)
+    start_time = models.TimeField(default=default_start)
+    end_time = models.TimeField(default = default_end)
 
     def __str__(self):
         return f"provider profile of user {self.user.username}"
@@ -62,7 +67,8 @@ class Appointment(models.Model):
     customer = models.ForeignKey(
         User, related_name="customer_appointments", on_delete=models.CASCADE
     )
-    date = models.DateTimeField()
+    date_start = models.DateTimeField()
+    date_end = models.DateTimeField()
     date_added = models.DateTimeField(auto_now_add=True)
     status = models.CharField(choices=STATUS_CHOICES, max_length=12, default="pending")
     event_id = models.TextField(blank=True , null = True)
