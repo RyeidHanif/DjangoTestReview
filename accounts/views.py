@@ -10,11 +10,14 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 
 from main.forms import ProviderForm
-from main.models import (CustomerProfile, NotificationPreferences,
-                         ProviderProfile)
+from main.models import CustomerProfile, NotificationPreferences, ProviderProfile
 
-from .forms import (ChangeNotificationPreferencesForm, ProfilePhotoForm,
-                    SetPasswordForm, SignUpForm)
+from .forms import (
+    ChangeNotificationPreferencesForm,
+    ProfilePhotoForm,
+    SetPasswordForm,
+    SignUpForm,
+)
 from .tokens import account_activation_token
 
 

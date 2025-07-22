@@ -5,11 +5,19 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
+from django.core.paginator import Paginator
 from django.db.models import Q
+
 # Create your views here.
 from django.shortcuts import redirect, render
-from django.utils.timezone import (activate, get_current_timezone, localdate,
-                                   localtime, make_aware, now)
+from django.utils.timezone import (
+    activate,
+    get_current_timezone,
+    localdate,
+    localtime,
+    make_aware,
+    now,
+)
 from django.views import View
 from django.views.generic import ListView
 
@@ -18,12 +26,17 @@ from main.models import Appointment, NotificationPreferences, ProviderProfile
 from main.utils import cancellation, get_calendar_service
 
 from .forms import AvailabilityForm, SendNoteForm
-from .utils import (EmailCancelledAppointment, EmailConfirmedAppointment,
-                    EmailDeclinedAppointment, EmailRescheduleDeclined,
-                    SendEmailRescheduleAccepted, create_google_calendar_event,
-                    reschedule_google_event)
+from .utils import (
+    EmailCancelledAppointment,
+    EmailConfirmedAppointment,
+    EmailDeclinedAppointment,
+    EmailRescheduleDeclined,
+    SendEmailRescheduleAccepted,
+    create_google_calendar_event,
+    reschedule_google_event,
+)
 
-from django.core.paginator import Paginator
+
 class ProviderDashboard(View, LoginRequiredMixin):
     login_url = "/login/"
 
@@ -52,22 +65,21 @@ class ViewMyAppointments(View, LoginRequiredMixin):
 
     def get(self, request, *args, **kwargs):
         query = request.GET.get("q")
-  
+
         if query:
             my_appointments = Appointment.objects.filter(
-                    provider=request.user,
-                    status="accepted",
-                    customer__username__icontains=query,
-                ).order_by("-date_added")
+                provider=request.user,
+                status="accepted",
+                customer__username__icontains=query,
+            ).order_by("-date_added")
         else:
             my_appointments = Appointment.objects.filter(
-                    provider=request.user, status="accepted"
-                ).order_by("-date_added")
-   
-        paginator= Paginator(my_appointments , 10 )
+                provider=request.user, status="accepted"
+            ).order_by("-date_added")
+
+        paginator = Paginator(my_appointments, 10)
         page_number = request.GET.get("page")
         page_obj = paginator.get_page(page_number)
-        
 
         return render(
             request,
@@ -76,9 +88,9 @@ class ViewMyAppointments(View, LoginRequiredMixin):
         )
 
     def post(self, request, *args, **kwargs):
-       
+
         if request.POST.get("cancel"):
-            
+
             cancel_appointment = Appointment.objects.select_related(
                 "customer", "provider"
             ).get(id=request.POST.get("cancel"))
@@ -107,7 +119,7 @@ class ViewMyAppointments(View, LoginRequiredMixin):
                 return redirect("view_my_appointments")
 
         if request.POST.get("markcompleted"):
-          
+
             appointment = Appointment.objects.get(id=request.POST.get("markcompleted"))
             current_datetime = now()
             if appointment.date_start > current_datetime:
@@ -131,18 +143,18 @@ class ViewPendingAppointments(View, LoginRequiredMixin):
 
     def get(self, request, *args, **kwargs):
         query = request.GET.get("q")
-        
+
         if query:
             my_appointments = Appointment.objects.filter(
-                    status__in=["pending", "rescheduled"],
-                    provider=request.user,
-                    customer__username__icontains=query,
-                )
+                status__in=["pending", "rescheduled"],
+                provider=request.user,
+                customer__username__icontains=query,
+            )
         else:
             my_appointments = Appointment.objects.filter(
-                    status__in=["pending", "rescheduled"], provider=request.user
-                )
-        
+                status__in=["pending", "rescheduled"], provider=request.user
+            )
+
         paginator = Paginator(my_appointments, 10)
         page_number = request.GET.get("page")
         page_obj = paginator.get_page(page_number)
@@ -164,7 +176,7 @@ class ViewPendingAppointments(View, LoginRequiredMixin):
             appointment = Appointment.objects.select_related(
                 "customer", "customer__notification_settings"
             ).get(id=request.POST.get("accept"))
-          
+
             return self.accept_appointment(request, appointment)
 
         return redirect("view_pending_appointments")
@@ -346,7 +358,7 @@ class ViewAnalytics(View, LoginRequiredMixin):
             "provider/viewanalytics.html",
             {
                 "customers": customers,
-                "appointments":myappointments,
+                "appointments": myappointments,
                 "statuses": statuses,
                 "revenue": revenue,
                 "admin_cut": admin_cut,

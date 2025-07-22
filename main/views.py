@@ -7,6 +7,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Permission, User
+from django.core.paginator import Paginator
 from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -16,11 +17,19 @@ from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import Flow
 
 from .forms import ProviderForm
-from .models import (Appointment, CustomerProfile,
-                      NotificationPreferences,
-                     ProviderProfile, User)
+from .models import (
+    Appointment,
+    CustomerProfile,
+    NotificationPreferences,
+    ProviderProfile,
+    User,
+)
 
-from django.core.paginator import Paginator
+from dotenv import load_dotenv
+
+import os 
+load_dotenv()
+
 
 # Create your views here.
 
@@ -109,11 +118,12 @@ def connect_google(request):
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = (
         "1"  # tell google that no https , using http
     )
+    BASE_URL = os.getenv("BASE_URL")
 
     flow = Flow.from_client_secrets_file(  # load google auth clint credentials
         "credentials.json",
         scopes=["https://www.googleapis.com/auth/calendar"],
-        redirect_uri="http://127.0.0.1:8000/google/oauth2callback/",
+        redirect_uri=f"{BASE_URL}/google/oauth2callback/",
     )
     auth_url, _ = flow.authorization_url(
         access_type="offline",  # need it even when user is offline
@@ -133,10 +143,11 @@ def oauth2callback(request):
     the authorization code sent by google is exchanged for access and refresh tokens
     which are then stored in the ProvideProfile model columns to be used later
     """
+    BASE_URL = os.getenv("BASE_URL")
     flow = Flow.from_client_secrets_file(  # load google auth client credentils
         "credentials.json",
         scopes=["https://www.googleapis.com/auth/calendar"],
-        redirect_uri="http://127.0.0.1:8000/google/oauth2callback/",
+        redirect_uri=f"{BASE_URL}/google/oauth2callback/",
     )
 
     flow.fetch_token(
@@ -187,7 +198,7 @@ class AdminDashboard(View, LoginRequiredMixin):
         admin_revenue = 0
         revenue = 0
         users = User.objects.all()
-        paginator = Paginator(users , 10)
+        paginator = Paginator(users, 10)
         page_number = request.GET.get("page")
         page_obj = paginator.get_page(page_number)
         appointments = Appointment.objects.select_related(

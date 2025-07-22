@@ -6,8 +6,14 @@ from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
-from django.utils.timezone import (activate, get_current_timezone, localdate,
-                                   localtime, make_aware, now)
+from django.utils.timezone import (
+    activate,
+    get_current_timezone,
+    localdate,
+    localtime,
+    make_aware,
+    now,
+)
 from googleapiclient.errors import HttpError
 
 from main.models import Appointment, ProviderProfile
@@ -178,31 +184,27 @@ def EmailPendingAppointment(
 def calculate_total_price(provider, **kwargs):
     start_date = localdate()
 
-
     if provider.pricing_model == "hourly":
-        price_per_appointment=  (int(provider.duration_mins) / 60) * provider.rate
+        price_per_appointment = (int(provider.duration_mins) / 60) * provider.rate
     else:
         price_per_appointment = provider.rate
-    occurrences = 1 
+    occurrences = 1
     if kwargs.get("recurrence_frequency") and kwargs.get("until_date"):
         recurrence_freq = kwargs["recurrence_frequency"]
         recurrence_until = kwargs["until_date"]
 
-        if recurrence_freq=="DAILY":
-            occurrences = (recurrence_until - start_date).days  + 1 
-        elif recurrence_freq =="WEEKLY":
-            occurrences = ((recurrence_until - start_date).days //7 ) +1 
+        if recurrence_freq == "DAILY":
+            occurrences = (recurrence_until - start_date).days + 1
+        elif recurrence_freq == "WEEKLY":
+            occurrences = ((recurrence_until - start_date).days // 7) + 1
         elif recurrence_freq == "MONTHLY":
-            occurrences =  (recurrence_until.year - start_date.year) * 12 + (recurrence_until.month - start_date.month) + 1
+            occurrences = (
+                (recurrence_until.year - start_date.year) * 12
+                + (recurrence_until.month - start_date.month)
+                + 1
+            )
 
-    return round(occurrences * price_per_appointment , 2 )
-
-
-
-
-        
-
-
+    return round(occurrences * price_per_appointment, 2)
 
 
 def create_and_save_appointment(
@@ -259,7 +261,13 @@ def reschedule_google_event(service, event_id, new_start, new_end):
 
 
 def change_and_save_appointment(
-    request, appointment, recurrence_frequency, until_date, start_datetime, end_datetime, total_price
+    request,
+    appointment,
+    recurrence_frequency,
+    until_date,
+    start_datetime,
+    end_datetime,
+    total_price,
 ):
     old_start = appointment.date_start
     old_end = appointment.date_end

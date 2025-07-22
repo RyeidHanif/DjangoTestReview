@@ -11,10 +11,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
-from datetime import datetime, timedelta
 
 # Load environment variables from the .env file
 load_dotenv()
@@ -52,7 +52,7 @@ INSTALLED_APPS = [
     "customer",
     "provider",
     "api",
-    'rest_framework',
+    "rest_framework",
 ]
 
 
@@ -131,12 +131,9 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 REST_FRAMEWORK = {
-   
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-       
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     )
-   
 }
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
@@ -199,5 +196,4 @@ STATIC_ROOT = os.path.join(
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=20),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=100),
-
 }

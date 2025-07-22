@@ -9,8 +9,7 @@ from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
-from django.utils.timezone import (get_current_timezone, localdate, localtime,
-                                   make_aware)
+from django.utils.timezone import get_current_timezone, localdate, localtime, make_aware
 from django.views import View
 from django.views.decorators.cache import cache_page
 from django.views.generic import ListView
@@ -20,11 +19,18 @@ from main.utils import cancellation, get_calendar_service
 
 # Create your views here.
 from .forms import AppointmentRecurrenceForm
-from .utils import (EmailPendingAppointment, EmailRescheduledAppointment,
-                    calculate_total_price, change_and_save_appointment,
-                    check_appointment_exists, create_and_save_appointment,
-                    create_calendar_appointment, create_google_calendar_event,
-                    get_available_slots, reschedule_google_event)
+from .utils import (
+    EmailPendingAppointment,
+    EmailRescheduledAppointment,
+    calculate_total_price,
+    change_and_save_appointment,
+    check_appointment_exists,
+    create_and_save_appointment,
+    create_calendar_appointment,
+    create_google_calendar_event,
+    get_available_slots,
+    reschedule_google_event,
+)
 
 
 class CustomerDashboard(View, LoginRequiredMixin):
@@ -56,14 +62,13 @@ class ViewProviders(ListView, LoginRequiredMixin):
 
     def get_queryset(self):
         query = self.request.GET.get("q")
-   
-       
+
         if query:
-                provider_list = ProviderProfile.objects.filter(
-                    user__username__icontains=query
-                ).exclude(user=self.request.user)
+            provider_list = ProviderProfile.objects.filter(
+                user__username__icontains=query
+            ).exclude(user=self.request.user)
         else:
-                provider_list = ProviderProfile.objects.exclude(user=self.request.user)
+            provider_list = ProviderProfile.objects.exclude(user=self.request.user)
 
         return provider_list
 
@@ -181,7 +186,11 @@ class AddAppointment(View, LoginRequiredMixin):
             if self.recurrence_form.is_valid():
                 recurrence_frequency = self.recurrence_form.cleaned_data["recurrence"]
                 until_date = self.recurrence_form.cleaned_data["until_date"]
-                self.total_price =  calculate_total_price(self.provider , recurrence_frequency= recurrence_frequency , until_date=until_date)
+                self.total_price = calculate_total_price(
+                    self.provider,
+                    recurrence_frequency=recurrence_frequency,
+                    until_date=until_date,
+                )
 
             self.special_requests = request.POST.get("special_requests", " ")
             appointment = create_and_save_appointment(
@@ -234,8 +243,12 @@ class AddAppointment(View, LoginRequiredMixin):
         else:
             recurrence_frequency = self.appointment.recurrence_frequency
             until_date = self.appointment.recurrence_until
-        
-        self.total_price = calculate_total_price(self.provider, recurrence_frequency=recurrence_frequency , until_date=until_date)
+
+        self.total_price = calculate_total_price(
+            self.provider,
+            recurrence_frequency=recurrence_frequency,
+            until_date=until_date,
+        )
 
         if request.POST.get("confirm"):
             self.appointment = Appointment.objects.filter(
@@ -284,14 +297,13 @@ class ViewAppointments(View, LoginRequiredMixin):
     def get(self, request, *args, **kwargs):
 
         self.myappointments = self.get_query(request, *args, **kwargs)
-        paginator = Paginator(self.myappointments , 10)
+        paginator = Paginator(self.myappointments, 10)
         page_number = request.GET.get("page")
         page_obj = paginator.get_page(page_number)
         return render(
             request,
             "customer/view_appointments.html",
-            {"appointments": self.myappointments,
-            "page_obj": page_obj},
+            {"appointments": self.myappointments, "page_obj": page_obj},
         )
 
     def post(self, request, *args, **kwargs):
@@ -306,31 +318,31 @@ class ViewAppointments(View, LoginRequiredMixin):
 
         query = request.GET.get("q")
         if query:
-                myappointments = (
-                    Appointment.objects.filter(
-                        customer=request.user, provider__username__icontains=query
-                    )
-                    .order_by("-date_added")
-                    .all()
-                    .exclude(status="rejected")
-                    .exclude(status="cancelled")
-                    .exclude(status="completed")
+            myappointments = (
+                Appointment.objects.filter(
+                    customer=request.user, provider__username__icontains=query
                 )
+                .order_by("-date_added")
+                .all()
+                .exclude(status="rejected")
+                .exclude(status="cancelled")
+                .exclude(status="completed")
+            )
         else:
 
-                myappointments = (
-                    Appointment.objects.filter(customer=request.user)
-                    .order_by("-date_added")
-                    .all()
-                    .exclude(status="rejected")
-                    .exclude(status="cancelled")
-                    .exclude(status="completed")
-                )
-        
+            myappointments = (
+                Appointment.objects.filter(customer=request.user)
+                .order_by("-date_added")
+                .all()
+                .exclude(status="rejected")
+                .exclude(status="cancelled")
+                .exclude(status="completed")
+            )
+
         return myappointments
 
     def reschedule(self, request, *args, **kwargs):
-       
+
         messages.warning(
             request,
             "This will change the status to Rescheduled but the event for now will remain in the calendar  because the provider will have to review the timings again ",
@@ -345,7 +357,7 @@ class ViewAppointments(View, LoginRequiredMixin):
             return redirect("reschedule", appointment_id=self.appointmentID)
 
     def cancel(self, request, *args, **kwargs):
-    
+
         appointment = Appointment.objects.get(id=self.appointmentID)
         count_cancel = cancellation(request.user, appointment)
         if appointment.status == "accepted":

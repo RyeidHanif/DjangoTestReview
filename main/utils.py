@@ -2,8 +2,14 @@
 import json
 from datetime import datetime, timedelta
 
-from django.utils.timezone import (activate, get_current_timezone, localdate,
-                                   localtime, make_aware, now)
+from django.utils.timezone import (
+    activate,
+    get_current_timezone,
+    localdate,
+    localtime,
+    make_aware,
+    now,
+)
 from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -11,11 +17,17 @@ from googleapiclient.discovery import build
 
 from .models import Cancellation, ProviderProfile
 
+from dotenv import load_dotenv
+
+import os 
+load_dotenv()
+
+
 with open("credentials.json", "r") as f:
     data = json.load(f)
 
-    clientID = data["web"]["client_id"]
-    clientSecret = data["web"]["client_secret"]
+    clientID = os.getenv("client_id")
+    clientSecret = os.getenv("client_secret")
 
 
 def get_calendar_service(user):
