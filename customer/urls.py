@@ -5,13 +5,13 @@ from . import views
 urlpatterns = [
     path("customer_dashboard/", views.customer_dashboard, name="customer_dashboard"),
     path(
-        "addappointment/<int:providerUserID>",
-        views.addappointment,
-        name="addappointment",
+        "add_appointment/<int:providerUserID>",
+        views.add_appointment,
+        name="add_appointment",
     ),
-    path("viewproviders", views.viewproviders, name="viewproviders"),
+    path("view_providers", views.view_providers, name="view_providers"),
     path("schedule/<int:providerID>", views.schedule, name="schedule"),
-    path("viewappointments", views.viewappointments, name="viewappointments"),
+    path("view_appointments", views.view_appointments, name="view_appointments"),
     path("reschedule/<appointment_id>", views.reschedule, name="reschedule"),
-    path("bookinghistory/", views.bookinghistory, name="bookinghistory"),
+    path("booking_history/", views.booking_history, name="booking_history"),
 ]

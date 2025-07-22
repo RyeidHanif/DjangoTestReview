@@ -34,14 +34,14 @@ class CustomerDashboard(View, LoginRequiredMixin):
         return render(request, "customer/customer_dashboard.html")
 
     def post(self, request, *args, **kwargs):
-        if request.POST.get("viewproviders"):
-            return redirect("viewproviders")
-        if request.POST.get("viewappointments"):
-            return redirect("viewappointments")
+        if request.POST.get("view_providers"):
+            return redirect("view_providers")
+        if request.POST.get("view_appointments"):
+            return redirect("view_appointments")
         if request.POST.get("myprofile"):
             return redirect("userprofile")
-        if request.POST.get("bookinghistory"):
-            return redirect("bookinghistory")
+        if request.POST.get("booking_history"):
+            return redirect("booking_history")
         else:
             return self.get(request)
 
@@ -51,7 +51,7 @@ customer_dashboard = CustomerDashboard.as_view()
 
 class ViewProviders(ListView, LoginRequiredMixin):
     model = ProviderProfile
-    template_name = "customer/viewproviders.html"
+    template_name = "customer/view_providers.html"
     context_object_name = "providers"
 
     def get_queryset(self):
@@ -81,7 +81,7 @@ class ViewProviders(ListView, LoginRequiredMixin):
         return context
 
 
-viewproviders = ViewProviders.as_view()
+view_providers = ViewProviders.as_view()
 
 
 class Schedule(View, LoginRequiredMixin):
@@ -110,15 +110,15 @@ class Schedule(View, LoginRequiredMixin):
 
         self.available_slots = get_available_slots(self.provider, self.slot_range)
 
-        if request.POST.get("addappointment"):
-            index = int(request.POST.get("addappointment"))
+        if request.POST.get("add_appointment"):
+            index = int(request.POST.get("add_appointment"))
             self.timeslot = self.available_slots[index]
             request.session["timeslot_tuple"] = (
                 self.timeslot[0].isoformat(),
                 self.timeslot[1].isoformat(),
             )
 
-            return redirect("addappointment", providerUserID=self.provider.id)
+            return redirect("add_appointment", providerUserID=self.provider.id)
         return self.render_schedule(self.available_slots)
 
     def render_schedule(self, *args, **kwargs):
@@ -169,7 +169,7 @@ class AddAppointment(View, LoginRequiredMixin):
                 request,
                 " You already have an appointment with this provider , Cancel or complete thatone first",
             )
-            return redirect("viewproviders")
+            return redirect("view_providers")
 
         return self.render_template(request)
 
@@ -222,7 +222,7 @@ class AddAppointment(View, LoginRequiredMixin):
         )
         if not self.appointment:
             messages.error(request, "No existing appointment found for recheduling ")
-            return redirect("viewappointments")
+            return redirect("view_appointments")
         return self.render_template(request)
 
     def handle_reschedule_post(self, request, *args, **kwargs):
@@ -253,10 +253,10 @@ class AddAppointment(View, LoginRequiredMixin):
             request.session.pop("mode", None)
             if self.appointment:
                 messages.success(request, " appointment reschedule successfully ")
-                return redirect("viewappointments")
+                return redirect("view_appointments")
             else:
                 messages.error(request, "invalid stuff added")
-                return redirect("viewappointments")
+                return redirect("view_appointments")
         if request.POST.get("cancel"):
             messages.info(request, "reschedule ancelled")
             return redirect("viewappoinments")
@@ -264,7 +264,7 @@ class AddAppointment(View, LoginRequiredMixin):
     def render_template(self, request, *args, **kwargs):
         return render(
             request,
-            "customer/addappointment.html",
+            "customer/add_appointment.html",
             {
                 "start": self.start_datetime,
                 "end": self.end_datetime,
@@ -275,7 +275,7 @@ class AddAppointment(View, LoginRequiredMixin):
         )
 
 
-addappointment = AddAppointment.as_view()
+add_appointment = AddAppointment.as_view()
 
 
 class ViewAppointments(View, LoginRequiredMixin):
@@ -289,7 +289,7 @@ class ViewAppointments(View, LoginRequiredMixin):
         page_obj = paginator.get_page(page_number)
         return render(
             request,
-            "customer/viewappointments.html",
+            "customer/view_appointments.html",
             {"appointments": self.myappointments,
             "page_obj": page_obj},
         )
@@ -340,7 +340,7 @@ class ViewAppointments(View, LoginRequiredMixin):
             messages.error(
                 request, "sorry you cannot reschedule a non accepted appointment "
             )
-            return redirect("viewappointments")
+            return redirect("view_appointments")
         else:
             return redirect("reschedule", appointment_id=self.appointmentID)
 
@@ -366,10 +366,10 @@ class ViewAppointments(View, LoginRequiredMixin):
             return redirect("home")
         else:
             messages.success(request, "Cancelled successfully ")
-            return redirect("viewappointments")
+            return redirect("view_appointments")
 
 
-viewappointments = ViewAppointments.as_view()
+view_appointments = ViewAppointments.as_view()
 
 
 # very simple . left this as FBV . doesnt fit in any generic CBVs and View CBV will just have more boilerplate
@@ -391,7 +391,7 @@ def reschedule(request, appointment_id):
 
 class BookingHistoryView(LoginRequiredMixin, ListView):
     model = Appointment
-    template_name = "customer/bookinghistory.html"
+    template_name = "customer/booking_history.html"
     context_object_name = "appointments"
     ordering = ["-date_added"]
     paginate_by = 5
@@ -403,4 +403,4 @@ class BookingHistoryView(LoginRequiredMixin, ListView):
         )
 
 
-bookinghistory = BookingHistoryView.as_view()
+booking_history = BookingHistoryView.as_view()
