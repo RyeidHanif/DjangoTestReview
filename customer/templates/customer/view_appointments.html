@@ -1,0 +1,62 @@
+{% extends 'main/base.html' %}
+
+{% block title %}View My Appointments{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="text-center mb-4">Here Are All Your Appointments</h1>
+
+    <form method="get" action="" class="mb-4">
+    <div class="input-group">
+      <input type="text" name="q" class="form-control rounded-start" placeholder="Search appointments by provider name..." value="{{ request.GET.q }}">
+      <button class="btn btn-outline-primary" type="submit">Search</button>
+    </div>
+  </form>
+
+  {% if appointments %}
+    <div class="row">
+      {% for appointment in appointments %}
+        <div class="col-md-6 mb-4">
+          <div class="card shadow-sm h-100">
+            <div class="card-body d-flex flex-column">
+              <h5 class="card-title">
+               
+                
+                Appointment with {{ appointment.provider.username }}
+               
+              </h5>
+              <p class="mb-1">
+                <strong>Status:</strong> {{ appointment.status|capfirst }}
+              </p>
+              <p class="mb-1">
+                <strong>Date:</strong> {{ appointment.date_start|date:"l, d F Y" }}
+              </p>
+              <p class="mb-3">
+                <strong>Time:</strong> {{ appointment.date_start|time:"h:i A" }} - {{ appointment.date_end|time:"h:i A" }}
+              </p>
+              <p class="mb-2">
+                <strong>Special Request:</strong> {{ appointment.special_requests|default:"None" }}
+              </p>
+              <p class="mb-3">
+                <strong>Recurrence:</strong> {{ appointment.recurrence_frequency|default:"None" }} 
+                {% if appointment.recurrence_until %}until {{ appointment.recurrence_until|date:"d M Y" }}{% endif %}
+              </p>
+              <form method="POST" action="#" class="mt-auto d-flex gap-2">
+                {% csrf_token %}
+                <button type="submit" name="reschedule" value="{{ appointment.id }}" class="btn btn-dark" {% if appointment.status == "pending" or appointment.status == "rescheduled" %} disabled{% endif %}>
+                  Reschedule
+                </button>
+                <button type="submit" name="cancel" value="{{ appointment.id }}" class="btn btn-danger">
+                  Cancel
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-center">No appointments found.</p>
+  {% endif %}
+</div>
+{% endblock %}

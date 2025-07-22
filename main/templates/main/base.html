@@ -7,10 +7,29 @@
   <title>{% block title %}{% endblock %}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
     integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous" />
+  <style>
+    body {
+      background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+      min-height: 100vh;
+      background-attachment: fixed;
+      background-size: cover;
+      animation: bgFade 15s ease-in-out infinite alternate;
+    }
+
+    @keyframes bgFade {
+      0% {
+        background-position: 0% 50%;
+      }
+
+      100% {
+        background-position: 100% 50%;
+      }
+    }
+  </style>
 </head>
 
 <body>
-  <nav class="navbar navbar-expand-lg bg-body-tertiary">
+  <nav class="navbar navbar-expand-lg bg-dark navbar-dark">
     <div class="container-fluid">
       <a class="navbar-brand" href="{% url 'home' %}">Home</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
@@ -30,14 +49,18 @@
           <li class="nav-item">
             <a class="nav-link" href="{% url 'redirectiondashboard' %}">Dashboard</a>
           </li>
+          {% if request.user.is_authenticated and request.user.is_superuser %}
           <li class="nav-item">
             <a class="nav-link" href="/admin/">Admin</a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/admin_dashboard/">Admin Analysis</a>
+          </li>
+          {% endif %}
         </ul>
       </div>
     </div>
   </nav>
-
 
   {% if messages %}
   <div class="container mt-3">
@@ -50,12 +73,12 @@
   </div>
   {% endif %}
 
-<div style="position: fixed; bottom: 10px; right: 10px; z-index: 1030;">
-  <form class="form-group" action="{% url 'logout' %}" method="POST">
-    {% csrf_token %}
-    <button class="btn btn-danger" type="submit">Logout</button>
-  </form>
-</div>
+  <div style="position: fixed; bottom: 10px; right: 10px; z-index: 1030;">
+    <form class="form-group" action="{% url 'logout' %}" method="POST">
+      {% csrf_token %}
+      <button class="btn btn-danger" type="submit">Logout</button>
+    </form>
+  </div>
 
   <div class="container-fluid">
     {% block content %}{% endblock %}

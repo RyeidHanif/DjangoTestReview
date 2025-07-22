@@ -1,0 +1,72 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Analytics{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4 text-center">Provider Analytics Dashboard</h1>
+
+    <!-- Revenue Section -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h3>Total Revenue & Admin Cut</h3>
+        </div>
+        <div class="card-body">
+            <p><strong>Total Revenue:</strong> {{ revenue }} PKR</p>
+            <p><strong>Admin Cut (5%):</strong> {{ admin_cut }} PKR</p>
+        </div>
+    </div>
+
+    <!-- Appointment Status Counts -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h3>Appointment Status Counts</h3>
+        </div>
+        <div class="card-body">
+            <ul class="list-group">
+                {% for key, value in statuses.items %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ key|capfirst }}</span>
+                    <span>{{ value }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Appointment Status Percentages -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h3>Appointment Status Percentages</h3>
+        </div>
+        <div class="card-body">
+            <ul class="list-group">
+                {% for key, percentage in percentage_statuses_dict.items %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ key|capfirst }}</span>
+                    <span>{{ percentage|floatformat:1 }}%</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Customers Section -->
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h3>Customers Who Have Made Appointments</h3>
+        </div>
+        <div class="card-body">
+            {% if customers %}
+                <ul class="list-group">
+                    {% for customer in customers %}
+                        <li class="list-group-item">{{ customer }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No customers found.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

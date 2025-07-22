@@ -3,17 +3,17 @@ import os
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Permission, User
 from django.shortcuts import redirect, render
 from dotenv import load_dotenv
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import Flow
 
 from .forms import ProviderForm
-from .models import CustomerProfile, ProviderProfile
+from .models import CustomerProfile, ProviderProfile, User, Appointment , NotificationPreferences 
+from django.contrib.admin.views.decorators import staff_member_required
 
-# Load environment variables from the .env file
-load_dotenv()
+
 
 
 # Create your views here.
@@ -51,7 +51,7 @@ def profile_creation(request):
     """
 
     if request.method == "POST":
-        provider_form = ProviderForm(request.POST)
+        provider_form = ProviderForm(request.POST , request.FILES)
         if provider_form.is_valid():
 
             user = request.user
@@ -136,3 +136,88 @@ def oauth2callback(request):
     profile.save()
     messages.success(request, "Your Google Calendar is successfully connected!")
     return redirect("providerdashboard")
+
+
+def cancellation_policy(request):
+    return render(request , "main/cancellationpolicy.html")
+
+
+
+@staff_member_required
+def admin_dashboard(request):
+    count = 0
+    revenue = 0
+    users = User.objects.all()
+    appointments = Appointment.objects.all()
+    providers = ProviderProfile.objects.all()
+    customers = CustomerProfile.objects.all()
+    for appointment in appointments :
+        if appointment.status in ["completed", "accepted"]:
+            revenue += appointment.total_price
+    admin_revenue = 0.05 * revenue
+    categories = {}
+    statuses = {}
+    provider_dict = {}
+    for appointment in appointments :
+        count +=1
+        category = appointment.provider.providerprofile.service_category 
+        if category in categories.keys():
+            categories[category] +=1
+        else:
+            categories[category] = 1 
+        if appointment.provider.username in provider_dict.keys():
+            provider_dict[appointment.provider.username] +=1
+        else :
+            provider_dict[appointment.provider.username] = 1
+        
+        if appointment.status in statuses.keys():
+            statuses[appointment.status] +=1
+        else :
+            statuses[appointment.status] =1
+    total_appointments = count 
+    provider_dict = dict(sorted(provider_dict.items(), key=lambda item: item[1], reverse=True))
+    categories= dict(sorted(categories.items(), key=lambda item: item[1], reverse=True ))
+
+    if request.method == "POST":
+        if request.POST.get("toggle_active"):
+            user_id = request.POST.get("toggle_active")
+            change_active_user = User.objects.get(id=user_id)
+            if change_active_user.is_active :
+                change_active_user.is_active = False 
+
+            else:
+                change_active_user.is_active= True
+            change_active_user.save()
+        if request.POST.get("delete"):
+            user_id = request.POST.get("delete")
+            user = User.objects.get(id=user_id)
+            if user :
+                user.delete()
+            else :
+                messages.error(request,"user does not exist")
+
+
+    
+
+    
+    return render(request , "main/admin_dashboard.html", {"revenue": revenue , "myrevenue": admin_revenue , "statuses": statuses , "all_appointments": appointments , "all_providers": providers, "all_customers": customers, "total_appointments" : total_appointments, "users":users , "provider_dict": provider_dict , "categories": categories})
+
+
+
+
+@staff_member_required
+def view_customer_profile(request , userID):
+    user = User.objects.get(id=userID)
+    user_customer_profile = CustomerProfile.objects.get(user=user)
+    appointments_customer = Appointment.objects.filter(customer=user).all()
+
+    return render(request , "main/view_customer_profile.html" , {"user": user, "user_customer_profile": user_customer_profile, "appointments_customer": appointments_customer})
+
+
+
+@staff_member_required
+def view_provider_profile(request , userID):
+    user = User.objects.get(id=userID)
+    user_provider_profile = ProviderProfile.objects.get(user=user)
+    appointments_provider = Appointment.objects.filter(provider=user).all()
+    return render(request,"main/view_provider_profile.html",  {"user" : user , "user_provider_profile": user_provider_profile , "appointments_provider": appointments_provider})

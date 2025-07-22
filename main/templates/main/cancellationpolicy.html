@@ -1,0 +1,90 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Cancellation Policy{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-body px-5 py-4">
+            <h1 class="text-center mb-4 display-5 fw-bold">Appointment Cancellation Policy</h1>
+            <p class="text-muted text-center mb-5">Effective as of July 2025</p>
+
+            <section class="mb-4">
+                <h4 class="fw-semibold">1. Purpose</h4>
+                <p>
+                    This cancellation policy exists to ensure reliability and respect for everyone’s time — both service providers and customers.
+                    Booking an appointment is a commitment, and last-minute cancellations or no-shows severely disrupt the system.
+                </p>
+            </section>
+
+            <section class="mb-4">
+                <h4 class="fw-semibold">2. Cancellation Deadlines</h4>
+                <ul class="list-group list-group-flush mb-3">
+                    <li class="list-group-item">
+                        Appointments must be cancelled at least <strong>24 hours</strong> before the scheduled start time.
+                    </li>
+                    <li class="list-group-item">
+                        Any cancellation made <strong>within 12 hours</strong> of the appointment will be considered a <span class="text-danger">late cancellation</span>.
+                    </li>
+                    <li class="list-group-item">
+                        No-shows are treated the same as late cancellations.
+                    </li>
+                </ul>
+            </section>
+
+            <section class="mb-4">
+                <h4 class="fw-semibold">3. Customer Ban Policy</h4>
+                <p>
+                    To prevent abuse, the following rules apply strictly to all customers:
+                </p>
+                <ul class="list-group list-group-flush mb-3">
+                    <li class="list-group-item">
+                        If a customer has <strong>more than 3 late cancellations or no-shows</strong> within any rolling <strong>30-day period</strong>,
+                        their account will be <span class="text-danger fw-bold">automatically and permanently banned</span>.
+                    </li>
+                    <li class="list-group-item">
+                        There are no warnings, no reviews — this is a zero-tolerance policy.
+                    </li>
+                </ul>
+            </section>
+
+            <section class="mb-4">
+                <h4 class="fw-semibold">4. Provider Ban Policy</h4>
+                <p>
+                    Service providers are held to an equal standard of responsibility:
+                </p>
+                <ul class="list-group list-group-flush mb-3">
+                    <li class="list-group-item">
+                        If a provider cancels or no-shows <strong>more than 3 times</strong> within any rolling <strong>30-day period</strong>,
+                        their account will be <span class="text-danger fw-bold">automatically banned</span> from the platform.
+                    </li>
+                    <li class="list-group-item">
+                        Customers rely on provider availability — inconsistency is not tolerated.
+                    </li>
+                </ul>
+            </section>
+
+            <section class="mb-4">
+                <h4 class="fw-semibold">5. Emergencies</h4>
+                <p>
+                    If you missed an appointment due to a legitimate emergency, you may contact support within 24 hours with documented proof.
+                    Exceptions are rare and granted only in verifiable circumstances.
+                </p>
+            </section>
+
+            <section class="mb-5">
+                <h4 class="fw-semibold">6. Final Note</h4>
+                <p>
+                    Repeated cancellations waste time, harm trust, and break the scheduling system for everyone. This policy is strictly enforced with no leniency.
+                    By using our platform, you agree to these terms.
+                </p>
+                <div class="alert alert-warning mt-4 rounded-3">
+                    <strong>Notice:</strong> Violations exceeding allowed limits will result in an <u>immediate permanent ban</u> without appeal.
+                </div>
+            </section>
+
+            <p class="text-muted text-center">For support, email <a href="mailto:support@example.com">hanifryeid@gmail.com</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

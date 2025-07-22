@@ -1,13 +1,36 @@
 {% extends 'main/base.html' %}
-
 {% block title %} Add Appointment  {% endblock %}
-
+{% load crispy_forms_tags %}
 
 {% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6 text-center">
+            <h2 class="mb-4">Your Appointment is Awaiting Provider Confirmation</h2>
+            <p class="lead mb-4">
+                <strong>{{ start|date:"l, d F Y" }}</strong><br>
+                From <strong>{{ start|time:"h:i A" }}</strong> to <strong>{{ end|time:"h:i A" }}</strong>
+            </p>
 
-<h1> Here is you adding an appointment </h1>
-<h3> Starting time is : {{timeslot_start}} </h3>
-<h3> Ending time is : {{timeslot_end}} </h3>
+            <form method="POST" class="p-4 border rounded shadow bg-light">
+                {% csrf_token %}
+                {{ form|crispy }}
 
+                <div class="form-group mb-3">
+                    <label for="special_requests" class="form-label fw-semibold">Special Requests</label>
+                    <textarea name="special_requests" id="special_requests" class="form-control" rows="4" placeholder="Let the provider know any specific needs...">{% if mode == "reschedule" and appointment %}{{ appointment.special_requests }}{% endif %}</textarea>
+                </div>
 
+                <div class="d-flex justify-content-between">
+                    <button type="submit" name="confirm" value="confirm" class="btn btn-success px-4">
+                        <i class="bi bi-check-circle"></i> Confirm
+                    </button>
+                    <button type="submit" name="cancel" value="cancel" class="btn btn-danger px-4">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}

@@ -7,10 +7,14 @@
 
 <div class="d-flex justify-content-center align-items-center vh-100">
     <div class="text-align-center">
-        <h1>Welcome to the Customer Dashboard </h1>
+        <h1>Welcome to the Customer Dashboard  {{user.username}} </h1>
         <form class="form-group" method="POST" action="#">
             {% csrf_token %}
-            <button class ="btn btn-primary" type="submit" name="view_providers" value = "view_providers">View Providers</button>
+            <button class ="btn btn-primary" type="submit" name="view_providers" value = "viewproviders">View Providers</button>
+            <button class ="btn btn-success" type="submit" name="view_appointments" value = "viewappointments">View Appointments</button>
+            <button class ="btn btn-dark" type="submit" name="my_profile" value = "myprofile">My Profile</button>
+            <button class ="btn btn-dark" type="submit" name="booking_history" value = "bookinghistory">Booking History </button>
+
         </form>
     </div>
 </div>

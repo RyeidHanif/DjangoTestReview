@@ -144,3 +144,26 @@ LOGIN_REDIRECT_URL = "/redirectiondashboard/"
 LOGOUT_REDIRECT_URL = "/"
 
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_FROM = "ryeidhanif@gmail.com"
+EMAIL_HOST_USER = "ryeidhanif@gmail.com"
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+PASSWORD_RESET_TIMEOUT = 14400  # how long the email is valid
+
+
+STATIC_URL = "static/" # The static folder ill use to  load static files onto the page
+MEDIA_URL= "/media/" # the url prefix for serving uploaded media 
+
+
+MEDIA_ROOT = os.path.join(BASE_DIR , "media") # the actual folder to which django writes the images to 
+
+
+STATICFILES_DIRS = [BASE_DIR / "static"] # tells django where to look for static files during dev
+
+STATIC_ROOT =  os.path.join(BASE_DIR, "staticfiles") # django collects all static files into this folder when we do collect static for prod 

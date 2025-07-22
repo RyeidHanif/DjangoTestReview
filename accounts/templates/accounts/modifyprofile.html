@@ -1,0 +1,23 @@
+
+{% extends "main/base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %} Modify profile  {% endblock  %}
+
+
+
+
+{% block content %}
+
+<form method="POST" action="#" class = "form-group">
+    {% csrf_token %}
+
+    {{ form | crispy }}  
+    <button type ="submit" name ="submitbutton" class = "btn btn-success">Confirm Modification </button>
+</form>
+
+
+
+
+{% endblock %}

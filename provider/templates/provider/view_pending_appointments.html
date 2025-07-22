@@ -1,0 +1,47 @@
+{% extends 'main/base.html' %}
+
+{% block title %}My Pending Appointments{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="mb-4 text-center">Here Are All Your Pending Appointments</h1>
+
+  <!-- Search Bar -->
+  <form method="get" action="" class="mb-4">
+    <div class="input-group">
+      <input type="text" name="q" class="form-control rounded-start" placeholder="Search pending appointments by customer name..." value="{{ request.GET.q }}">
+      <button class="btn btn-outline-primary" type="submit">Search</button>
+    </div>
+  </form>
+
+  {% if appointments %}
+    <div class="row g-4">
+      {% for appointment in appointments %}
+        <div class="col-md-6">
+          <div class="card shadow-sm h-100">
+            <div class="card-body d-flex flex-column">
+              <h4 class="card-title mb-3">Customer: {{ appointment.customer.username }}</h4>
+              <p class="mb-1"><strong>Date:</strong> {{ appointment.date_start|date:"l, d F Y" }}</p>
+              <p class="mb-1"><strong>Time:</strong> {{ appointment.date_start|time:"h:i A" }} — {{ appointment.date_end|time:"h:i A" }}</p>
+              <p class="mb-1"><strong>Status:</strong> <span class="text-capitalize">{{ appointment.status }}</span></p>
+              <p class="mb-2"><strong>Special Requests:</strong> {{ appointment.special_requests|default:"None" }}</p>
+              <p class="mb-3">
+                <strong>Recurrence:</strong> {{ appointment.recurrence_frequency|default:"None" }} 
+                {% if appointment.recurrence_until %} until {{ appointment.recurrence_until|date:"d M Y" }}{% endif %}
+              </p>
+
+              <form method="POST" action="#" class="mt-auto d-flex gap-2">
+                {% csrf_token %}
+                <button type="submit" name="reject" value="{{ appointment.id }}" class="btn btn-danger flex-fill">Reject</button>
+                <button type="submit" name="accept" value="{{ appointment.id }}" class="btn btn-success flex-fill">Accept</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-center fs-5">No pending appointments found.</p>
+  {% endif %}
+</div>
+{% endblock %}

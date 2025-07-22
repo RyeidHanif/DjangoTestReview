@@ -1,0 +1,66 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Customer Profile - {{ user.username }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4 text-center">Customer Profile: {{ user.username }}</h2>
+
+    <div class="card mx-auto mb-4" style="max-width: 500px;">
+        <div class="card-body text-center">
+            {% if user_customer_profile.profile_photo %}
+                <img src="{{ user_customer_profile.profile_photo.url }}" alt="Profile Photo" class="rounded-circle mb-3" style="width:120px; height:120px; object-fit:cover;">
+            {% else %}
+                <img src="{% static 'images/default_pic.jpeg' %}" alt="Default Profile Photo" class="rounded-circle mb-3" style="width:120px; height:120px; object-fit:cover;">
+            {% endif %}
+            <h5 class="card-title">User Details</h5>
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            <p><strong>Phone Number:</strong> {{ user_customer_profile.phone_number }}</p>
+
+            <hr>
+
+            <h5>Notification Preferences</h5>
+            {% if user.notification_settings %}
+                <p>{{ user.notification_settings.get_preferences_display }}</p>
+            {% else %}
+                <p class="text-muted">No notification preferences set.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card mx-auto" style="max-width: 900px;">
+        <div class="card-body">
+            <h4 class="mb-4 text-center">User's Appointments</h4>
+
+            {% if appointments_provider %}
+            <div class="row">
+                {% for appointment in appointments_provider %}
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">Appointment with {{ appointment.provider.username }}</h5>
+                            <p class="mb-1"><strong>Status:</strong> {{ appointment.status|capfirst }}</p>
+                            <p class="mb-1"><strong>Date:</strong> {{ appointment.date_start|date:"l, d F Y" }}</p>
+                            <p class="mb-3"><strong>Time:</strong> {{ appointment.date_start|time:"h:i A" }} - {{ appointment.date_end|time:"h:i A" }}</p>
+                            <p class="mb-2"><strong>Special Request:</strong> {{ appointment.special_requests|default:"None" }}</p>
+                            <p class="mb-3">
+                                <strong>Recurrence:</strong> {{ appointment.recurrence_frequency|default:"None" }}
+                                {% if appointment.recurrence_until %} until {{ appointment.recurrence_until|date:"d M Y" }}{% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+                <p class="text-center text-muted">No appointments found.</p>
+            {% endif %}
+
+            <div class="mt-4 text-center">
+                <a href="{% url 'admin_dashboard' %}" class="btn btn-primary">Back to Admin Dashboard</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

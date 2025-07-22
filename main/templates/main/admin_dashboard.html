@@ -1,0 +1,133 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4 text-center">Admin Dashboard</h1>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Total Revenue</h5>
+                    <p class="card-text">Rs. {{ revenue }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Admin Revenue (5%)</h5>
+                    <p class="card-text">Rs. {{ myrevenue }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-dark">
+                <div class="card-body">
+                    <h5 class="card-title">Total Appointments</h5>
+                    <p class="card-text">{{ total_appointments }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <h4>Appointment Status Breakdown</h4>
+        <ul class="list-group">
+            {% for status, count in statuses.items %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ status|capfirst }}
+                <span class="badge bg-secondary">{{ count }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+       <div class="mb-4">
+        <h4>Categories In order of popularity </h4>
+        <ul class="list-group">
+            {% for category , count  in categories.items %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ category|capfirst }}
+                <span class="badge bg-secondary">{{ count }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="mb-4">
+        <h4>Providers by Popularity</h4>
+        <ul class="list-group">
+            {% for provider, count in provider_dict.items %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ provider }}
+                <span class="badge bg-primary">{{ count }}</span>
+            </li>
+            {% empty %}
+            <li class="list-group-item">No providers found.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="mb-5">
+        <h4>All Users</h4>
+        <table class="table table-bordered table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Active</th>
+                    <th>Staff</th>
+                    <th>Actions</th>
+                    <th>Customer Profile</th>
+                    <th>Provider Profile</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>
+                        {% if user.is_active %}
+                            <span class="badge bg-success">Yes</span>
+                        {% else %}
+                            <span class="badge bg-danger">No</span>
+                        {% endif %}
+                    </td>
+                    <td>{% if user.is_staff %}✔{% else %}✖{% endif %}</td>
+                    <td>
+                        <form method="POST" action="#" class="d-inline">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-warning" name="toggle_active" value="{{ user.id }}">Toggle Active</button>
+                        </form>
+                        <form method="POST" action="#" class="d-inline ms-2">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-danger" name="delete" value="{{ user.id }}">Delete</button>
+                        </form>
+                    </td>
+                    <td>
+                        {% if user.customerprofile %}
+                            <a href="{% url 'view_customer_profile' user.id %}" class="btn btn-sm btn-info">View</a>
+                        {% else %}
+                            <span class="text-danger">✖</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.providerprofile %}
+                            <a href="{% url 'view_provider_profile' user.id %}" class="btn btn-sm btn-info">View</a>
+                        {% else %}
+                            <span class="text-danger">✖</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

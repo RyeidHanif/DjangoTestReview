@@ -1,8 +1,13 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import SetPasswordForm, UserCreationForm
 from django.contrib.auth.models import User
+from main.models import NotificationPreferences , ProviderProfile
 
-
+NOTIFICATION_CHOICES = [
+    ("all", "All"),
+    ("reminders","Reminders"),
+    ("none","None")
+]
 class SignUpForm(UserCreationForm):
     """
     Default User Creation Model form with extra fields
@@ -19,3 +24,24 @@ class SignUpForm(UserCreationForm):
 
         model = User
         fields = ["email", "username", "password1", "password2", "phone_number"]
+
+
+class SetPasswordForm(SetPasswordForm):
+    class Meta:
+        model = User
+        fields = ["new_password1", "new_password2"]
+
+
+
+class ChangeNotificationPreferencesForm(forms.ModelForm):
+    preferences = forms.ChoiceField(widget=forms.RadioSelect , choices=NOTIFICATION_CHOICES )
+    class Meta:
+        model = NotificationPreferences
+        fields = ["preferences"]
+
+
+
+class ProfilePhotoForm(forms.ModelForm):
+    class Meta:
+        model= ProviderProfile
+        fields = ["profile_photo"]

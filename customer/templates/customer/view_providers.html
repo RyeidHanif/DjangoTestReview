@@ -2,24 +2,49 @@
 
 {% block title %} Customer Dashboard {% endblock %}
 
-
 {% block content %}
-<h1>Here You can find all the service providers according to categories </h1>
-{% for category in categories %}
-   <h2>{{category}}</h2>
-   {% for provider in providers %}
-   {% if provider.service_category == category %}
-   <h4> | name : {{provider.user.username}}  | service name: {{provider.service_name}} | pricing model : {{provider.pricing_model}} | duration : {{provider.duration}} </h4>
-   <form method="post" action="#" class="form-group">
-    {% csrf_token %}
-    <button class="btn btn-success" type="submit" name="book_appointment" value="{{provider.user.id}}">Book Appointment</button>
-    </form>
+<div class="container py-4">
+  <h1 class="mb-4">Service Providers by Category</h1>
 
-   {% endif %}
-   {% endfor %}
+ <!-- Search Form simple Html-->
+  <form method="get" action="" class="mb-5">
+    <div class="input-group">
+      <input type="text" name="q" class="form-control" placeholder="Search providers by name..." value="{{ request.GET.q }}">
+      <button class="btn btn-outline-primary" type="submit">Search</button>
+    </div>
+  </form>
 
-{% endfor %}
-
-
-
+  {% for category in categories %}
+    <h2 class="mb-3 text-primary">{{ category|title }}</h2>
+    <div class="row">
+      {% for provider in providers %}
+        {% if provider.service_category == category %}
+          <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">
+                
+                    {{ provider.user.username }}
+                
+                </h5>
+                <p class="card-text mb-1"><strong>Service:</strong> {{ provider.service_name }}</p>
+                <p class="card-text mb-1"><strong>Pricing:</strong> {{ provider.pricing_model|capfirst }}, {{ provider.duration_mins }} mins</p>
+                <p class="card-text mb-3"><strong>Price:</strong> {{ provider.rate }} PKR</p>
+                <form method="post" action="#" class="mt-auto">
+                  {% csrf_token %}
+                  <button type="submit" name="book_appointment" value="{{ provider.id }}" class="btn btn-success w-100">
+                    Book Appointment
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% empty %}
+    <p>No providers found.</p>
+  {% endfor %}
+</div>
 {% endblock %}
+
