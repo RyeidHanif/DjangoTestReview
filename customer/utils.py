@@ -14,6 +14,7 @@ from main.utils import get_calendar_service
 from googleapiclient.errors import HttpError
 
 
+
 activate("Asia/Karachi")
 
 
@@ -144,17 +145,8 @@ def EmailRescheduledAppointment(
     originally :  {old_date_start} to {old_date_end}   and now shall be : {new_date_start} To {new_date_end} . If you wish to reject  the appointment please do so in your account . dont worry currently, the original date is 
     still there and here are the customer's Specil requests : {special_requests}"""
     email = EmailMessage(mail_subject, message, to=[to_email])
-    if email.send():
-        messages.success(
-            request,
-            f"Dear {customer.username} The email has been sent to the provider  . please do not Try to reschedule events unnecessarily as it created a lot of problems   ",
-        )
-    else:
-        messages.error(
-            request,
-            f"Problem sending confirmation email to {to_email}, check if you typed it correctly.",
-        )
-
+    SendEmail(request , email , to_email , customer)
+   
 
 
 def EmailPendingAppointment(
@@ -163,16 +155,8 @@ def EmailPendingAppointment(
     mail_subject = "Appointment Created - pending "
     message = f"Dear {provider.username} , {customer.username} has created an appointment with you from  {date_start} To {date_end} . The Status is currently pending . Please accept or reject it in your account  .These are some requests : {special_requests} "
     email = EmailMessage(mail_subject, message, to=[to_email])
-    if email.send():
-        messages.success(
-            request,
-            f"Dear {customer.username}, your email has been sent to the Provider . please prepare for the appointment accordingly ",
-        )
-    else:
-        messages.error(
-            request,
-            f"Problem sending confirmation email to {to_email}, check if you typed it correctly.",
-        )
+    SendEmail(request , email , to_email , customer)
+ 
 
 
 def calculate_total_price(provider):
@@ -209,3 +193,15 @@ def reschedule_google_event(service, event_id, new_start, new_end):
 
 
     
+
+def SendEmail(request , email , to_email , customer):
+    if email.send():
+        messages.success(
+            request,
+            f"Dear {customer.username}, your email has been sent to the customer . please prepare for the appointment accordingly ",
+        )
+    else:
+        messages.error(
+            request,
+            f"Problem sending confirmation email to {to_email}, check if you typed it correctly.",
+        )
