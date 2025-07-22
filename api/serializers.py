@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from main.models import ProviderProfile, Appointment
+
+from main.models import Appointment, ProviderProfile
 
 
 class RegisterSerializer(serializers.ModelSerializer):

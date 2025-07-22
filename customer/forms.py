@@ -3,7 +3,6 @@ from django import forms
 from main.models import Appointment, ProviderProfile
 
 
-
 class AppointmentRecurrenceForm(forms.Form):
     RECURRENCE_CHOICES = [
         ("NONE", "No Recurrence"),
@@ -18,7 +17,9 @@ class AppointmentRecurrenceForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        appointment_date = kwargs.pop('appointment_date', None)
+        appointment_date = kwargs.pop("appointment_date", None)
         super().__init__(*args, **kwargs)
         if appointment_date:
-            self.fields['until_date'].widget.attrs['min'] = appointment_date.strftime('%Y-%m-%d')
+            self.fields["until_date"].widget.attrs["min"] = appointment_date.strftime(
+                "%Y-%m-%d"
+            )

@@ -53,6 +53,8 @@ INSTALLED_APPS = [
     "provider",
     "api",
     "rest_framework",
+    'drf_spectacular',
+   
 ]
 
 
@@ -133,7 +135,8 @@ AUTH_PASSWORD_VALIDATORS = [
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-    )
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/

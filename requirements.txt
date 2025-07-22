@@ -8,3 +8,4 @@ python-dotenv
 six
 django-redis
 djangorestframework-simplejwt
+drf-spectacular

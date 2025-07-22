@@ -7,17 +7,10 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db.models import Q
-
 # Create your views here.
 from django.shortcuts import redirect, render
-from django.utils.timezone import (
-    activate,
-    get_current_timezone,
-    localdate,
-    localtime,
-    make_aware,
-    now,
-)
+from django.utils.timezone import (activate, get_current_timezone, localdate,
+                                   localtime, make_aware, now)
 from django.views import View
 from django.views.generic import ListView
 
@@ -26,15 +19,10 @@ from main.models import Appointment, NotificationPreferences, ProviderProfile
 from main.utils import cancellation, get_calendar_service
 
 from .forms import AvailabilityForm, SendNoteForm
-from .utils import (
-    EmailCancelledAppointment,
-    EmailConfirmedAppointment,
-    EmailDeclinedAppointment,
-    EmailRescheduleDeclined,
-    SendEmailRescheduleAccepted,
-    create_google_calendar_event,
-    reschedule_google_event,
-)
+from .utils import (EmailCancelledAppointment, EmailConfirmedAppointment,
+                    EmailDeclinedAppointment, EmailRescheduleDeclined,
+                    SendEmailRescheduleAccepted, create_google_calendar_event,
+                    reschedule_google_event)
 
 
 class ProviderDashboard(View, LoginRequiredMixin):
@@ -90,7 +78,7 @@ class ViewMyAppointments(View, LoginRequiredMixin):
     def post(self, request, *args, **kwargs):
 
         if request.POST.get("cancel"):
-        
+
             cancel_appointment = Appointment.objects.select_related(
                 "customer", "provider"
             ).get(id=request.POST.get("cancel"))
@@ -116,9 +104,8 @@ class ViewMyAppointments(View, LoginRequiredMixin):
                         "you cancelled too many apointments after deadline in a short span of time ",
                     )
                     return redirect("home")
-              
-            return redirect("view_my_appointments")
 
+            return redirect("view_my_appointments")
 
         if request.POST.get("markcompleted"):
 

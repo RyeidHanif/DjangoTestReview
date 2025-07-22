@@ -13,21 +13,13 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.cache import cache_page
 from django.views.generic import ListView, TemplateView
+from dotenv import load_dotenv
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import Flow
 
 from .forms import ProviderForm
-from .models import (
-    Appointment,
-    CustomerProfile,
-    NotificationPreferences,
-    ProviderProfile,
-    User,
-)
-
-from dotenv import load_dotenv
-
-import os
+from .models import (Appointment, CustomerProfile, NotificationPreferences,
+                     ProviderProfile, User)
 
 load_dotenv()
 
@@ -198,7 +190,7 @@ class AdminDashboard(View, LoginRequiredMixin):
     def get(self, request, *args, **kwargs):
         admin_revenue = 0
         revenue = 0
-        users = User.objects.exclude(is_superuser =True)
+        users = User.objects.exclude(is_superuser=True)
         paginator = Paginator(users, 10)
         page_number = request.GET.get("page")
         page_obj = paginator.get_page(page_number)

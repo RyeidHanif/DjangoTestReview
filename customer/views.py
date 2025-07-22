@@ -9,7 +9,8 @@ from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
-from django.utils.timezone import get_current_timezone, localdate, localtime, make_aware
+from django.utils.timezone import (get_current_timezone, localdate, localtime,
+                                   make_aware)
 from django.views import View
 from django.views.decorators.cache import cache_page
 from django.views.generic import ListView
@@ -19,18 +20,11 @@ from main.utils import cancellation, get_calendar_service
 
 # Create your views here.
 from .forms import AppointmentRecurrenceForm
-from .utils import (
-    EmailPendingAppointment,
-    EmailRescheduledAppointment,
-    calculate_total_price,
-    change_and_save_appointment,
-    check_appointment_exists,
-    create_and_save_appointment,
-    create_calendar_appointment,
-    create_google_calendar_event,
-    get_available_slots,
-    reschedule_google_event,
-)
+from .utils import (EmailPendingAppointment, EmailRescheduledAppointment,
+                    calculate_total_price, change_and_save_appointment,
+                    check_appointment_exists, create_and_save_appointment,
+                    create_calendar_appointment, create_google_calendar_event,
+                    get_available_slots, reschedule_google_event)
 
 
 class CustomerDashboard(View, LoginRequiredMixin):
@@ -152,7 +146,9 @@ class AddAppointment(View, LoginRequiredMixin):
         self.end_datetime = datetime.fromisoformat(self.timeslot[1])
         self.total_price = calculate_total_price(self.provider)
         self.appointment = None
-        self.recurrence_form = AppointmentRecurrenceForm(appointment_date = self.start_datetime)
+        self.recurrence_form = AppointmentRecurrenceForm(
+            appointment_date=self.start_datetime
+        )
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
@@ -168,7 +164,9 @@ class AddAppointment(View, LoginRequiredMixin):
             return self.handle_reschedule_post(request, *args, **kwargs)
 
     def handle_normal_get(self, request, *args, **kwargs):
-        self.recurrence_form = AppointmentRecurrenceForm(appointment_date = self.start_datetime)
+        self.recurrence_form = AppointmentRecurrenceForm(
+            appointment_date=self.start_datetime
+        )
         if not check_appointment_exists(self.customer, self.provider_user):
             messages.warning(
                 request,
@@ -179,7 +177,9 @@ class AddAppointment(View, LoginRequiredMixin):
         return self.render_template(request)
 
     def handle_normal_post(self, request, *args, **kwargs):
-        self.recurrence_form = AppointmentRecurrenceForm(request.POST ,appointment_date = self.start_datetime)
+        self.recurrence_form = AppointmentRecurrenceForm(
+            request.POST, appointment_date=self.start_datetime
+        )
         if request.POST.get("confirm"):
             recurrence_frequency = None
             until_date = None
@@ -228,7 +228,7 @@ class AddAppointment(View, LoginRequiredMixin):
                 "recurrence": self.appointment.recurrence_frequency,
                 "until_date": self.appointment.recurrence_until,
             },
-            appointment_date = self.start_datetime
+            appointment_date=self.start_datetime,
         )
         if not self.appointment:
             messages.error(request, "No existing appointment found for recheduling ")
@@ -236,7 +236,9 @@ class AddAppointment(View, LoginRequiredMixin):
         return self.render_template(request)
 
     def handle_reschedule_post(self, request, *args, **kwargs):
-        self.recurrence_form = AppointmentRecurrenceForm(request.POST , appointment_date = self.start_datetime)
+        self.recurrence_form = AppointmentRecurrenceForm(
+            request.POST, appointment_date=self.start_datetime
+        )
         if self.recurrence_form.is_valid():
             recurrence_frequency = self.recurrence_form.cleaned_data["recurrence"]
             until_date = self.recurrence_form.cleaned_data["until_date"]

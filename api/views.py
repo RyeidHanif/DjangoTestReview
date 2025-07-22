@@ -1,28 +1,26 @@
+from collections import Counter
+from datetime import datetime, timezone
+
 from django.contrib.auth.models import User
+from django.db.models import Sum
 from django.shortcuts import render
+from django.utils.timezone import localtime
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .permissions import CustomHasProviderProfile
+
 from customer.utils import get_available_slots
-from django.db.models import Sum
-from datetime import datetime, timezone
-from django.utils.timezone import localtime
-
-from rest_framework.exceptions import ValidationError
-
 # Create your views here.
-from main.models import AnalyticsApi, ProviderProfile, Appointment
+from main.models import AnalyticsApi, Appointment, ProviderProfile
 
-from .serializers import (
-    RegisterSerializer,
-    ProviderProfileSerializer,
-    AppointmentSerializer,
-    ProviderAnalyticsSerializer,
-    ViewAllProvidersSerializer,
-)
-from collections import Counter
+from .permissions import CustomHasProviderProfile
+from .serializers import (AppointmentSerializer, ProviderAnalyticsSerializer,
+                          ProviderProfileSerializer, RegisterSerializer,
+                          ViewAllProvidersSerializer)
+
+
 
 
 class SignUpUser(generics.CreateAPIView):
@@ -61,10 +59,10 @@ class MyProviderAppointments(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         return Appointment.objects.filter(provider=user)
-    
-    def list(self, request , *args , **kwargs):
-        queryset= self.get_queryset()
-        serializer= self.get_serializer(queryset , many=True)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
         wrapped_data = [{"appointment": piece} for piece in serializer.data]
         return Response(wrapped_data)
 
@@ -80,15 +78,16 @@ class MyCustomerAppointments(generics.ListAPIView):
         user = self.request.user
 
         return Appointment.objects.filter(provider=user)
-    
-    def list(self, request , *args , **kwargs):
-        queryset= self.get_queryset()
-        serializer= self.get_serializer(queryset , many=True)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
         wrapped_data = [{"appointment": piece} for piece in serializer.data]
         return Response(wrapped_data)
 
 
 my_customer_appointments = MyCustomerAppointments.as_view()
+
 
 class APIProviderAvailability(APIView):
     permission_classes = [IsAuthenticated]
@@ -177,11 +176,13 @@ class APIViewProviders(generics.ListAPIView):
 
     def get_queryset(self):
         return ProviderProfile.objects.all()
-    
+
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
-        wrapped_data = [{"provider": item} for item in serializer.data] # wrap each whole provider and their details under the provider key 
+        wrapped_data = [
+            {"provider": item} for item in serializer.data
+        ]  # wrap each whole provider and their details under the provider key
         return Response(wrapped_data)
 
 

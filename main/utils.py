@@ -1,25 +1,17 @@
 # extra utility functions needed for e.g refrehsing tokens ,getting calender service
 import json
+import os
 from datetime import datetime, timedelta
 
-from django.utils.timezone import (
-    activate,
-    get_current_timezone,
-    localdate,
-    localtime,
-    make_aware,
-    now,
-)
+from django.utils.timezone import (activate, get_current_timezone, localdate,
+                                   localtime, make_aware, now)
+from dotenv import load_dotenv
 from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
 from .models import Cancellation, ProviderProfile
-
-from dotenv import load_dotenv
-
-import os
 
 load_dotenv()
 
