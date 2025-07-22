@@ -20,17 +20,20 @@ from .serializers import (AppointmentSerializer, ProviderAnalyticsSerializer,
                           ProviderProfileSerializer, RegisterSerializer,
                           ViewAllProvidersSerializer , WelcomeSerializer , SlotSerializer)
 
+from drf_spectacular.utils import extend_schema
 
 
 
+@extend_schema(tags=['Registration'])
 class SignUpUser(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
 
 
-signupuser = SignUpUser.as_view()
+API_signupuser = SignUpUser.as_view()
 
 
+@extend_schema(tags=['Registration'])
 class WelcomeView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = WelcomeSerializer
@@ -42,10 +45,12 @@ class WelcomeView(APIView):
         
 
 
-welcome = WelcomeView.as_view()
+API_welcome = WelcomeView.as_view()
 
 
-class MyProfile(generics.RetrieveAPIView):
+
+@extend_schema(tags=["Personal"])
+class Profile(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated, CustomHasProviderProfile]
     serializer_class = ProviderProfileSerializer
 
@@ -53,10 +58,12 @@ class MyProfile(generics.RetrieveAPIView):
         return self.request.user.providerprofile
 
 
-my_profile = MyProfile.as_view()
+API_user_profile = Profile.as_view()
 
 
-class MyProviderAppointments(generics.ListAPIView):
+
+@extend_schema(tags=['Personal'])
+class ProviderAppointments(generics.ListAPIView):
     permission_classes = [IsAuthenticated, CustomHasProviderProfile]
     serializer_class = AppointmentSerializer
 
@@ -71,10 +78,12 @@ class MyProviderAppointments(generics.ListAPIView):
         return Response(wrapped_data)
 
 
-my_provider_appoinments = MyProviderAppointments.as_view()
+API_provider_appoinments = ProviderAppointments.as_view()
 
 
-class MyCustomerAppointments(generics.ListAPIView):
+
+@extend_schema(tags=['Personal'])
+class CustomerAppointments(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = AppointmentSerializer
 
@@ -90,9 +99,9 @@ class MyCustomerAppointments(generics.ListAPIView):
         return Response(wrapped_data)
 
 
-my_customer_appointments = MyCustomerAppointments.as_view()
+API_customer_appointments = CustomerAppointments.as_view()
 
-
+@extend_schema(tags=['Services'])
 class APIProviderAvailability(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = SlotSerializer
@@ -138,6 +147,7 @@ class APIProviderAvailability(APIView):
 API_provider_availability = APIProviderAvailability.as_view()
 
 
+@extend_schema(tags=['Services'])
 class APIProviderAnalytics(APIView):
     permission_classes = [IsAuthenticated, CustomHasProviderProfile]
     serializer_class = ProviderAnalyticsSerializer
@@ -177,6 +187,7 @@ class APIProviderAnalytics(APIView):
 API_provider_analytics = APIProviderAnalytics.as_view()
 
 
+@extend_schema(tags=['Services'])
 class APIViewProviders(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ViewAllProvidersSerializer

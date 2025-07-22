@@ -5,11 +5,11 @@ from rest_framework_simplejwt.views import (TokenObtainPairView,
 from . import views
 
 urlpatterns = [
-    path("register/", views.signupuser),
-    path("welcome/", views.welcome),
-    path("myprofile/", views.my_profile),
-    path("my_provider_appointments/", views.my_provider_appoinments),
-    path("my_customer_appointments/", views.my_customer_appointments),
+    path("register/", views.API_signupuser),
+    path("welcome/", views.API_welcome),
+    path("user_profile/", views.API_user_profile),
+    path("provider_appointments/", views.API_provider_appoinments),
+    path("customer_appointments/", views.API_customer_appointments),
     path("provider_availability/<int:providerID>", views.API_provider_availability),
     path("provider_analytics/", views.API_provider_analytics),
     path("view_providers/", views.API_view_providers),
