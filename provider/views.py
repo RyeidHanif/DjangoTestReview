@@ -152,7 +152,7 @@ class ViewPendingAppointments(View , LoginRequiredMixin):
             messages.success(request, " appointment rejected successfully")
             return redirect("view_pending_appointments")
         elif appointment.status == "rescheduled":
-                appointment.status ="cancelled"
+                appointment.status ="accepted"
                 appointment.save()
                 messages.info(request , "reschedule rejected successfully ")
                 if appointment.customer.notification_settings.preferences == "all":
