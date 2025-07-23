@@ -23,14 +23,14 @@ from django.contrib.auth import logout
 
 
 @login_required(login_url="/login/")
-def customerdashboard(request):
+def customer_dashboard(request):
     if request.method == "POST":
         if request.POST.get("view_providers"):
             return redirect("view_providers")
         if request.POST.get("view_appointments"):
             return redirect("view_appointments")
         if request.POST.get("my_profile"):
-            return redirect("userprofile")
+            return redirect("user_profile")
         if request.POST.get("booking_history"):
             return redirect("booking_history")
 
@@ -112,7 +112,7 @@ def schedule(request, providerID):
         },
     )
 @login_required(login_url="/login/")
-def addappointment(request, providerUserID):
+def add_appointment(request, providerUserID):
     mode = request.session.get("mode", "normal")
     print(f"DEBUG : THE CURRENT MODE IS {mode}")
     timeslot = request.session.get("timeslot_tuple", [])
@@ -174,11 +174,11 @@ def addappointment(request, providerUserID):
                     )
 
                 messages.success(request, "Appointment created successfully")
-                return redirect("customerdashboard")
+                return redirect("customer_dashboard")
 
             elif request.POST.get("cancel"):
                 messages.info(request, "Appointment was not created")
-                return redirect("customerdashboard")
+                return redirect("customer_dashboard")
 
     elif mode == "reschedule":
         print(f"DEBUG : THE CURRENT MODE IS {mode}")
@@ -254,7 +254,7 @@ def addappointment(request, providerUserID):
 
 
 @login_required(login_url="/login/")
-def viewappointments(request):
+def view_appointments(request):
     query =  request.GET.get("q")
     if query :
         myappointments = (

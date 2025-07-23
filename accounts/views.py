@@ -95,12 +95,13 @@ def activate(request, uidb64, token):
             "Thank you for your email confirmation. Now you can continue profile creation .",
         )
         login(request , user )
-        return redirect("customerdashboard")
+        create , _ = NotificationPreferences.objects.get_or_create(user=request.user)
+        return redirect("customer_dashboard")
 
     else:
         messages.error(request, "Activation link is invalid!")
 
-    return redirect("homepage")
+    return redirect("home")
 
 
 @login_required(login_url="/login/")
