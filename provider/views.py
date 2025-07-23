@@ -25,7 +25,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from main.calendar_client import GoogleCalendarClient
 
 
-class ProviderDashboard(LoginRequiredMixin , TemplateView):
+class ProviderDashboardView(LoginRequiredMixin , TemplateView):
     login_url = "/login/"
     template_name = "provider/providerdashboard.html"
 
@@ -44,13 +44,13 @@ class ProviderDashboard(LoginRequiredMixin , TemplateView):
                 return redirect(value)
         return self.get(request , *args , **kwargs)
 
-providerdashboard = ProviderDashboard.as_view()
+providerdashboard = ProviderDashboardView.as_view()
 
 
 
 
 
-class ViewMyAppointments(LoginRequiredMixin , View):
+class ListAcceptedAppointmentsView(LoginRequiredMixin , View):
 
     login_url = "/login/"
 
@@ -104,13 +104,13 @@ class ViewMyAppointments(LoginRequiredMixin , View):
                 messages.success(request, "marked successfully")
                 return redirect("view_my_appointments")
 
-view_my_appointments = ViewMyAppointments.as_view()
+view_my_appointments = ListAcceptedAppointmentsView.as_view()
 
 
 
 
 
-class ViewPendingAppointments(LoginRequiredMixin , View):
+class ListPendingAppointmentsView(LoginRequiredMixin , View):
     login_url= "/login/"
 
 
@@ -201,10 +201,10 @@ class ViewPendingAppointments(LoginRequiredMixin , View):
                 return redirect("view_pending_appointments")
 
   
-view_pending_appointments = ViewPendingAppointments.as_view()
+view_pending_appointments = ListPendingAppointmentsView.as_view()
 
 
-class MyAvailability(LoginRequiredMixin , View):
+class MyAvailabilityView(LoginRequiredMixin , View):
     def get(self , request , *args , **kwargs):
         self.form = AvailabilityForm()
 
@@ -228,7 +228,7 @@ class MyAvailability(LoginRequiredMixin , View):
             calendar_client.create_availability_block(request , request.user , cause , start_datetime_iso , end_datetime_iso)
             return redirect("myavailability")
 
-myavailability = MyAvailability.as_view()
+myavailability = MyAvailabilityView.as_view()
 
 
 

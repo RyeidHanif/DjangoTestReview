@@ -23,7 +23,7 @@ from django.views import View
 from main.calendar_client import GoogleCalendarClient
 
 
-class CustomerDashboard(LoginRequiredMixin , TemplateView):
+class CustomerDashboardView(LoginRequiredMixin , TemplateView):
     login_url = "/login/"
     template_name = "customer/customerdashboard.html"
     
@@ -41,10 +41,10 @@ class CustomerDashboard(LoginRequiredMixin , TemplateView):
             
         return self.get(request, *args , **kwargs)
     
-customerdashboard = CustomerDashboard.as_view()
+customerdashboard = CustomerDashboardView.as_view()
 
 
-class ViewProviders(LoginRequiredMixin , ListView):
+class ListProvidersView(LoginRequiredMixin , ListView):
     model = ProviderProfile
     template_name= "customer/viewproviders.html"
     context_object_name = "providers"
@@ -68,7 +68,7 @@ class ViewProviders(LoginRequiredMixin , ListView):
         context['categories'] = ["doctor", "consultant", "therapist", "counsellor"]
         return context
 
-viewproviders = ViewProviders.as_view()
+viewproviders = ListProvidersView.as_view()
         
 
 
@@ -77,7 +77,7 @@ viewproviders = ViewProviders.as_view()
 
 
 
-class Schedule(LoginRequiredMixin , View):
+class ScheduleView(LoginRequiredMixin , View):
     login_url = "/login/"
 
     def dispatch(self, request, *args , **kwargs):
@@ -122,7 +122,7 @@ class Schedule(LoginRequiredMixin , View):
 
         })
 
-schedule = Schedule.as_view()
+schedule = ScheduleView.as_view()
 
 
 
@@ -133,7 +133,7 @@ schedule = Schedule.as_view()
 
 
 
-class AddAppointment(LoginRequiredMixin,View ):
+class AddAppointmentView(LoginRequiredMixin,View ):
     def dispatch(self , request , *args , **kwargs):
         self.mode = request.session.get("mode", "normal")
         self.timeslot = request.session.get("timeslot_tuple", [])
@@ -244,13 +244,13 @@ class AddAppointment(LoginRequiredMixin,View ):
 
         })
     
-addappointment = AddAppointment.as_view()
+addappointment = AddAppointmentView.as_view()
 
 
 
 
 
-class ViewAppointments(LoginRequiredMixin , View):
+class ViewAppointmentsView(LoginRequiredMixin , View):
     login_url = "/login/"
 
     def get(self , request , *args , **kwargs):
@@ -314,7 +314,7 @@ class ViewAppointments(LoginRequiredMixin , View):
             messages.success(request, "Cancelled successfully ")
             return redirect("viewappointments")
 
-viewappointments = ViewAppointments.as_view()
+viewappointments = ViewAppointmentsView.as_view()
     
 
 
