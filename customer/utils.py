@@ -17,109 +17,6 @@ from googleapiclient.errors import HttpError
 activate("Asia/Karachi")
 
 
-def get_available_slots(provider, slot_range):
-
-    service = get_calendar_service(provider)
-    tz = get_current_timezone()
-    today = localdate()
-    current_datetime = now()
-
-    duration = provider.providerprofile.duration_mins
-    start_time = provider.providerprofile.start_time
-    end_time = provider.providerprofile.end_time
-    buffer = provider.providerprofile.buffer
-
-    available_slots = []
-
-    for day in range(slot_range):
-        day_start = make_aware(
-            datetime.combine(today + timedelta(days=day), start_time), timezone=tz
-        )
-        day_end = make_aware(
-            datetime.combine(today + timedelta(days=day), end_time), timezone=tz
-        )
-
-        if day == 0:
-
-            if current_datetime + timedelta(minutes=duration) > day_start:
-                day_start = current_datetime + timedelta(minutes=duration)
-
-        if day_start >= day_end:
-            continue
-       
-        events = (
-                service.freebusy()
-                .query(
-                    body={
-                        "timeMin": day_start.isoformat(),
-                        "timeMax": day_end.isoformat(),
-                        "timeZone": "Asia/Karachi",
-                        "items": [{"id": "primary"}],
-                    }
-                )
-                .execute()
-            )
-
-
-        busy_times = events["calendars"]["primary"]["busy"]
-
-        cursor = day_start
-
-        for i in range(len(busy_times)):
-            busy_start = datetime.fromisoformat(busy_times[i]["start"])
-            busy_end = datetime.fromisoformat(busy_times[i]["end"])
-
-            while (busy_start - cursor).total_seconds() >= duration * 60:
-                slot_end = cursor + timedelta(minutes=duration)
-                available_slots.append((cursor, slot_end))
-                cursor = slot_end + timedelta(minutes=buffer)
-
-            if cursor < busy_end:
-                cursor = busy_end
-
-        while (day_end - cursor).total_seconds() >= duration * 60:
-            slot_end = cursor + timedelta(minutes=duration)
-            available_slots.append((cursor, slot_end))
-            cursor = slot_end + timedelta(minutes=buffer)
-
-    return available_slots
-
-
-def create_calendar_appointment(start_date, end_date, summary, attendee_email ,recurrence_frequency , until_date):
-    event = {
-        "summary": summary,
-        "location": "My Office ",
-        "description": "Appointment",
-        "start": {
-            "dateTime": start_date,
-            "timeZone": "Asia/Karachi",
-        },
-        "end": {
-            "dateTime": end_date,
-            "timeZone": "Asia/Karachi",
-        },
-        "attendees": [
-            {"email": attendee_email},
-        ],
-        "reminders": {
-            "useDefault": False,
-            "overrides": [
-                {"method": "email", "minutes": 24 * 60},
-                {"method": "email", "minutes": 20},
-                {"method": "popup", "minutes": 10},
-            ],
-        },
-    }
-    if recurrence_frequency not in [None , "NONE"] and until_date != None :
-       
-        until_date = datetime(2025, 7, 25).date()  # Replace with your form field
-        until_utc = datetime.combine(until_date, time.min).replace(tzinfo=timezone.utc)
-        until_str = until_utc.strftime('%Y%m%dT%H%M%SZ')
-        recur = f"RRULE:FREQ={recurrence_frequency};UNTIL={until_str}"
-        event["recurrence"] = [recur]
-
-    return event
-
 
 def check_appointment_exists(customer, provider):
     return not Appointment.objects.filter(
@@ -194,17 +91,6 @@ def create_and_save_appointment(customer, provider_user, start, end, price, spec
     )
     appointment.save()
     return appointment
-
-def create_google_calendar_event(service, timeslot, summary, attendee_email, recurrence_frequency , until_date):
-    event_body = create_calendar_appointment(timeslot[0], timeslot[1], summary, attendee_email , recurrence_frequency , until_date)
-    return service.events().insert(calendarId="primary", body=event_body, sendUpdates="all").execute()
-
-def reschedule_google_event(service, event_id, new_start, new_end):
-    event = service.events().get(calendarId="primary", eventId=event_id).execute()
-    event["start"]["dateTime"] = new_start
-    event["end"]["dateTime"] = new_end
-    return service.events().update(calendarId="primary", eventId=event_id, body=event).execute()
-
 
 
 

@@ -18,7 +18,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 from django.utils.decorators import method_decorator
 from collections import Counter
-
+from main.calendar_client import GoogleCalendarClient
 
 
 # Create your views here.
@@ -104,23 +104,10 @@ def connect_to_calendar(request):
 
 def connect_google(request):
     """Creates the authorization url which the user is redirected to to allow for the connection"""
+    calendar_client = GoogleCalendarClient()
 
-    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = (
-        "1"  # tell google that no https , using http
-    )
-
-    flow = Flow.from_client_secrets_file(  # load google auth clint credentials
-        "credentials.json",
-        scopes=["https://www.googleapis.com/auth/calendar"],
-        redirect_uri="http://127.0.0.1:8000/google/oauth2callback/",
-    )
-    auth_url, _ = flow.authorization_url(
-        access_type="offline",  # need it even when user is offline
-        include_granted_scopes="true",  # all scopes ,rw
-        prompt="consent",  # ask for the consent every time
-    )
+    auth_url = calendar_client.create_auth_url()
     return redirect(auth_url)
-
 
 def oauth2callback(request):
     """authenticates the user ,stores credentials and redirects to dashboard
@@ -132,24 +119,8 @@ def oauth2callback(request):
     the authorization code sent by google is exchanged for access and refresh tokens
     which are then stored in the ProvideProfile model columns to be used later
     """
-    flow = Flow.from_client_secrets_file(  # load google auth client credentils
-        "credentials.json",
-        scopes=["https://www.googleapis.com/auth/calendar"],
-        redirect_uri="http://127.0.0.1:8000/google/oauth2callback/",
-    )
-
-    flow.fetch_token(
-        authorization_response=request.build_absolute_uri()
-    )  # exchange the auth code for tokens
-
-    creds = flow.credentials  # credentials object which contains the tokens and expiry
-    profile = ProviderProfile.objects.get(user=request.user)
-    profile.google_access_token = creds.token
-    profile.google_refresh_token = creds.refresh_token
-    profile.google_token_expiry = creds.expiry
-    profile.google_calendar_connected = True
-    profile.save()
-    messages.success(request, "Your Google Calendar is successfully connected!")
+    calendar_client = GoogleCalendarClient()
+    calendar_client.google_calendar_callback(request)
     return redirect("providerdashboard")
 
 class CancellationPolicy(TemplateView):

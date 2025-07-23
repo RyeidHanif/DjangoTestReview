@@ -12,7 +12,7 @@ from google.auth.exceptions import RefreshError
 
 
 
-from .models import ProviderProfile, Cancellation
+from .models import ProviderProfile, Appointment
 
 with open("credentials.json", "r") as f:
     data = json.load(f)
@@ -58,18 +58,15 @@ def get_calendar_service(user):
 
 
 
-
-def cancellation(user , appointment):
+def cancellation(request,  user , appointment):
     cutoff_date = now() - timedelta(days=30)
-    
     appointment_date = appointment.date_start.astimezone(get_current_timezone())
-    cancel_date =now()
+    appointment.cancelled_by = user
+    appointment.cancelled_at = now()
+    cancel_date =appointment.cancelled_at.astimezone(get_current_timezone())
     if appointment_date - cancel_date < timedelta(hours=12):
-        cancelled =Cancellation.objects.create(user=user, appointment=appointment)
-    
-    count__recent_cancelled = Cancellation.objects.filter(user=user, cancelled_at__gte = cutoff_date ).count()
-    return count__recent_cancelled
-
-
-
+        appointment.bad_cancel = True
+        appointment.save()
+    cancelled_count = Appointment.objects.filter(cancelled_by = user , date_start__gte=cutoff_date , status = "cancelled" ,bad_cancel = True ).count()
+    return cancelled_count
 

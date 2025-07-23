@@ -7,11 +7,10 @@ from django.utils.timezone import (activate, get_current_timezone, localdate,
                                    localtime, make_aware, now)
 
 from main.models import Appointment, ProviderProfile ,NotificationPreferences
-from main.utils import get_calendar_service
 
 from .forms import AvailabilityForm , SendNoteForm
 from .utils import (EmailCancelledAppointment, EmailConfirmedAppointment,
-                    EmailDeclinedAppointment, create_google_calendar_event , reschedule_google_event , SendEmailRescheduleAccepted ,EmailRescheduleDeclined)
+                    EmailDeclinedAppointment,  SendEmailRescheduleAccepted ,EmailRescheduleDeclined)
 from django.utils.timezone import localtime
 from datetime import datetime, time
 
@@ -21,27 +20,29 @@ from main.utils import cancellation
 from django.contrib.auth import logout
 from django.views import View
 
-from django.views.generic import ListView
+from django.views.generic import ListView , TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from main.calendar_client import GoogleCalendarClient
 
 
-
-class ProviderDashboard(View , LoginRequiredMixin):
+class ProviderDashboard(LoginRequiredMixin , TemplateView):
     login_url = "/login/"
-    def get(self , request , *args , **kwargs):
-        return render(request, "provider/providerdashboard.html")
-    
+    template_name = "provider/providerdashboard.html"
+
+    ACTION_MAPPING = {
+        "myprofile":"userprofile",
+        "viewanalytics":"viewanalytics",
+        "viewmyappointments":"view_my_appointments",
+        "viewpendingappointments":"view_pending_appointments",
+        "myavailability":"myavailability",
+    }
+
+
     def post(self , request , *args , **kwargs):
-        if request.POST.get("myprofile"):
-            return redirect("userprofile")
-        if request.POST.get("viewanalytics"):
-            return redirect("viewanalytics")
-        if request.POST.get("viewmyappointments"):
-            return redirect("view_my_appointments")
-        if request.POST.get("viewpendingappointments"):
-            return redirect("view_pending_appointments")
-        if request.POST.get("myavailability"):
-            return redirect("myavailability")
+        for key, value in self.ACTION_MAPPING.items():
+            if request.POST.get(key):
+                return redirect(value)
+        return self.get(request , *args , **kwargs)
 
 providerdashboard = ProviderDashboard.as_view()
 
@@ -49,7 +50,7 @@ providerdashboard = ProviderDashboard.as_view()
 
 
 
-class ViewMyAppointments(View, LoginRequiredMixin):
+class ViewMyAppointments(LoginRequiredMixin , View):
 
     login_url = "/login/"
 
@@ -67,20 +68,18 @@ class ViewMyAppointments(View, LoginRequiredMixin):
         return render(request, "provider/view_my_appointments.html", {"appointments": my_appointments})
     
     def post(self , request , *args , **kwargs):
+        calendar_client = GoogleCalendarClient()
         if request.POST.get("cancel"):
             cancel_appointment = Appointment.objects.get(id=request.POST.get("cancel"))
             to_email = cancel_appointment.customer.email
             customer = cancel_appointment.customer
             provider = cancel_appointment.provider
             cancel_appointment.status = "cancelled"
-            service = get_calendar_service(request.user)
-            service.events().delete(
-                calendarId="primary", eventId=cancel_appointment.event_id
-            ).execute()
+            calendar_client.delete_event(request.user , cancel_appointment.event_id)
             cancel_appointment.save()
             if customer.notification_settings.preferences == "all":
                 EmailCancelledAppointment(request, customer, provider, to_email)
-            count_cancel = cancellation(request.user , cancel_appointment)
+            count_cancel = cancellation(request , request.user , cancel_appointment)
             if count_cancel >= 3 :
                 request.user.is_active = False
                 request.user.save()
@@ -161,21 +160,20 @@ class ViewPendingAppointments(View , LoginRequiredMixin):
                 return redirect("view_pending_appointments")
     
     def accept_appointment(self, request , appointment):
+            calendar_client = GoogleCalendarClient()
             if appointment.status == "pending":
                 appointment.status = "accepted"
               
                 summary = f"Appointment with {appointment.customer.username}"
-                service = get_calendar_service(appointment.provider)
         
                 timeslot = (localtime(appointment.date_start).isoformat() , localtime(appointment.date_end).isoformat())
-                event = create_google_calendar_event(
-                    service,
+                event = calendar_client.create_google_calendar_event(
+                    appointment.provider,
                     timeslot,
                     summary,
                     appointment.customer.email,
                     appointment.recurrence_frequency,
                     appointment.recurrence_until,
-                    appointment,
                 )
 
                 appointment.event_id = event["id"]
@@ -193,9 +191,8 @@ class ViewPendingAppointments(View , LoginRequiredMixin):
                 return redirect("view_pending_appointments")
             elif appointment.status == "rescheduled":
                 appointment.status = "accepted"
-                service = get_calendar_service(request.user)
-                reschedule_google_event(
-                    service, appointment.event_id, localtime(appointment.date_start).isoformat(), localtime(appointment.date_end).isoformat() , appointment.recurrence_frequency , appointment.recurrence_until
+                calendar_client.reschedule_google_event(request.user ,
+                     appointment.event_id, localtime(appointment.date_start).isoformat(), localtime(appointment.date_end).isoformat() , appointment.recurrence_frequency , appointment.recurrence_until
                 )
                 if appointment.customer.notification_settings.preferences == "all":
                     SendEmailRescheduleAccepted(request, appointment.customer , appointment.provider , appointment.date_start ,appointment.date_end, appointment.customer.email)
@@ -214,6 +211,7 @@ class MyAvailability(View , LoginRequiredMixin):
         return render(request, "provider/myavailability.html", {"form": self.form})
     
     def post(self , request , *args , **kwargs):
+        calendar_client = GoogleCalendarClient()
         self.form = AvailabilityForm(request.POST)
         if self.form.is_valid():
             start_date = self.form.cleaned_data["start_date"]
@@ -227,25 +225,7 @@ class MyAvailability(View , LoginRequiredMixin):
             end_datetime = make_aware(datetime.combine(end_date, end_time), timezone=get_current_timezone())
             start_datetime_iso = start_datetime.isoformat()
             end_datetime_iso = end_datetime.isoformat()
-            service = get_calendar_service(request.user)
-            event = {
-                "summary": "Unavailable",
-                "location": "NA",
-                "description": cause,
-                "start": {
-                    "dateTime": start_datetime_iso,
-                    "timeZone": "Asia/Karachi",
-                },
-                "end": {
-                    "dateTime": end_datetime_iso,
-                    "timeZone": "Asia/Karachi",
-                },
-                "reminders": {
-                    "useDefault": True,
-                },
-            }
-            service.events().insert(calendarId="primary", body=event).execute()
-            messages.success(request, "Added time block successfully")
+            calendar_client.create_availability_block(request , request.user , cause , start_datetime_iso , end_datetime_iso)
             return redirect("myavailability")
 
 myavailability = MyAvailability.as_view()
