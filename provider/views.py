@@ -110,7 +110,7 @@ view_my_appointments = ViewMyAppointments.as_view()
 
 
 
-class ViewPendingAppointments(View , LoginRequiredMixin):
+class ViewPendingAppointments(LoginRequiredMixin , View):
     login_url= "/login/"
 
 
@@ -204,7 +204,7 @@ class ViewPendingAppointments(View , LoginRequiredMixin):
 view_pending_appointments = ViewPendingAppointments.as_view()
 
 
-class MyAvailability(View , LoginRequiredMixin):
+class MyAvailability(LoginRequiredMixin , View):
     def get(self , request , *args , **kwargs):
         self.form = AvailabilityForm()
 
@@ -235,7 +235,7 @@ myavailability = MyAvailability.as_view()
 
 
 
-class ViewAnalytics(View, LoginRequiredMixin):
+class ViewAnalytics(LoginRequiredMixin , View):
     login_url= "/login/"
     def get(self,  request , *args , **kwargs):
         revenue = 0

@@ -130,7 +130,7 @@ cancellation_policy = CancellationPolicy.as_view()
 
 
 @method_decorator(staff_member_required, name='dispatch')
-class AdminDashboard(View , LoginRequiredMixin):
+class AdminDashboard(LoginRequiredMixin, View):
     def get(self , request , *args , **kwargs):
         admin_revenue= 0
         revenue = 0
