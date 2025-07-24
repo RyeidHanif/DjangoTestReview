@@ -19,47 +19,6 @@ from django.shortcuts import get_object_or_404
 
 from .models import ProviderProfile, Appointment
 
-with open("credentials.json", "r") as f:
-    data = json.load(f)
-
-    clientID = data["web"]["client_id"]
-    clientSecret = data["web"]["client_secret"]
-
-
-def get_calendar_service(user):
-    """function to load user credentials and refresh them if required
-
-    returns an object which is used to perform CRUD operations on events in the calendar
-    usually referred to as service
-    """
-    profile = get_object_or_404(ProviderProfile, user=user)
-    creds = Credentials(
-        token=profile.google_access_token,
-        refresh_token=profile.google_refresh_token,
-        token_uri="https://oauth2.googleapis.com/token",
-        client_id=clientID,
-        client_secret=clientSecret,
-        scopes=["https://www.googleapis.com/auth/calendar"],
-    )
-
-       # Try refreshing only if token expired
-    if creds.expired and creds.refresh_token:
-        try:
-            creds.refresh(Request())
-            profile.google_access_token = creds.token
-            profile.google_refresh_token = creds.refresh_token
-            profile.google_token_expiry = creds.expiry
-            profile.save()
-        except RefreshError:
-            # Refresh token is invalid — handle re-auth here
-            profile.google_access_token = None
-            profile.google_refresh_token = None
-            profile.google_token_expiry = None
-            profile.google_calendar_connected = False
-            profile.save()
-            raise Exception("Google Calendar token expired. Please reconnect your calendar.")
-
-    return build("calendar", "v3", credentials=creds)
 
 
 
