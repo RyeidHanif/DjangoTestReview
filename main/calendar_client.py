@@ -60,23 +60,12 @@ class GoogleCalendarClient:
 
         # Try refreshing only if token expired
         if creds.expired and creds.refresh_token:
-            try:
                 creds.refresh(Request())
                 profile.google_access_token = creds.token
                 profile.google_refresh_token = creds.refresh_token
                 profile.google_token_expiry = creds.expiry
                 profile.save()
-            except RefreshError:
-                # Refresh token is invalid — handle re-auth here
-                profile.google_access_token = None
-                profile.google_refresh_token = None
-                profile.google_token_expiry = None
-                profile.google_calendar_connected = False
-                profile.save()
-                raise Exception(
-                    "Google Calendar token expired. Please reconnect your calendar."
-                )
-
+            
         return build("calendar", "v3", credentials=creds)
 
     def create_auth_url(self):

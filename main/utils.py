@@ -70,3 +70,12 @@ def cancellation(request,  user , appointment):
     cancelled_count = Appointment.objects.filter(cancelled_by = user , date_start__gte=cutoff_date , status = "cancelled" ,bad_cancel = True ).count()
     return cancelled_count
 
+
+
+def force_provider_calendar(provider):
+    profile = ProviderProfile.objects.get(user=provider)
+    profile.google_access_token = None
+    profile.google_refresh_token = None
+    profile.google_token_expiry = None
+    profile.google_calendar_connected = False
+    profile.save()

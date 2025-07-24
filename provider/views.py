@@ -23,6 +23,10 @@ from django.views import View
 from django.views.generic import ListView , TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from main.calendar_client import GoogleCalendarClient
+from google.auth.exceptions import RefreshError
+from googleapiclient.errors import HttpError
+from django.http import JsonResponse
+from main.utils import force_provider_calendar
 
 
 class ProviderDashboardView(LoginRequiredMixin , TemplateView):
@@ -75,7 +79,21 @@ class ListAcceptedAppointmentsView(LoginRequiredMixin , View):
             customer = cancel_appointment.customer
             provider = cancel_appointment.provider
             cancel_appointment.status = "cancelled"
-            calendar_client.delete_event(request.user , cancel_appointment.event_id)
+            try:
+                calendar_client.delete_event(request.user , cancel_appointment.event_id)
+               
+            except RefreshError as re:
+                force_provider_calendar(cancel_appointment.provider)
+                return JsonResponse(
+                    {
+                        "error": "refresh_token_expired",
+                        "message": "Provider's Google Calendar account has expired and must be renewed.",
+                    },
+                    status=400,
+                )
+            except HttpError as e:
+                return JsonResponse({"error": str(e)}, status=400)
+            
             cancel_appointment.save()
             if customer.notification_settings.preferences == "all":
                 EmailCancelledAppointment(request, customer, provider, to_email)
@@ -167,7 +185,9 @@ class ListPendingAppointmentsView(LoginRequiredMixin , View):
                 summary = f"Appointment with {appointment.customer.username}"
         
                 timeslot = (localtime(appointment.date_start).isoformat() , localtime(appointment.date_end).isoformat())
-                event = calendar_client.create_google_calendar_event(
+
+                try:
+                    event = calendar_client.create_google_calendar_event(
                     appointment.provider,
                     timeslot,
                     summary,
@@ -175,6 +195,19 @@ class ListPendingAppointmentsView(LoginRequiredMixin , View):
                     appointment.recurrence_frequency,
                     appointment.recurrence_until,
                 )
+               
+                except RefreshError as re:
+                    force_provider_calendar(appointment.provider)
+                    return JsonResponse(
+                        {
+                            "error": "refresh_token_expired",
+                            "message": "Provider's Google Calendar account has expired and must be renewed.",
+                        },
+                        status=400,
+                    )
+                except HttpError as e:
+                    return JsonResponse({"error": str(e)}, status=400)
+
 
                 appointment.event_id = event["id"]
                 appointment.save()
@@ -191,9 +224,24 @@ class ListPendingAppointmentsView(LoginRequiredMixin , View):
                 return redirect("view_pending_appointments")
             elif appointment.status == "rescheduled":
                 appointment.status = "accepted"
-                calendar_client.reschedule_google_event(request.user ,
+                try:
+                    calendar_client.reschedule_google_event(request.user ,
                      appointment.event_id, localtime(appointment.date_start).isoformat(), localtime(appointment.date_end).isoformat() , appointment.recurrence_frequency , appointment.recurrence_until
                 )
+                    
+                except RefreshError as re:
+                    force_provider_calendar(appointment.provider)
+                    return JsonResponse(
+                        {
+                            "error": "refresh_token_expired",
+                            "message": "Provider's Google Calendar account has expired and must be renewed.",
+                        },
+                        status=400,
+                    )
+                except HttpError as e:
+                    return JsonResponse({"error": str(e)}, status=400)
+
+                
                 if appointment.customer.notification_settings.preferences == "all":
                     SendEmailRescheduleAccepted(request, appointment.customer , appointment.provider , appointment.date_start ,appointment.date_end, appointment.customer.email)
                     appointment.save()
@@ -225,7 +273,21 @@ class MyAvailabilityView(LoginRequiredMixin , View):
             end_datetime = make_aware(datetime.combine(end_date, end_time), timezone=get_current_timezone())
             start_datetime_iso = start_datetime.isoformat()
             end_datetime_iso = end_datetime.isoformat()
-            calendar_client.create_availability_block(request , request.user , cause , start_datetime_iso , end_datetime_iso)
+            try:
+                calendar_client.create_availability_block(request , request.user , cause , start_datetime_iso , end_datetime_iso)
+            
+            except RefreshError as re:
+                    force_provider_calendar(request.user)
+                    return JsonResponse(
+                        {
+                            "error": "refresh_token_expired",
+                            "message": "Provider's Google Calendar account has expired and must be renewed.",
+                        },
+                        status=400,
+                    )
+            except HttpError as e:
+                    return JsonResponse({"error": str(e)}, status=400)
+
             return redirect("myavailability")
 
 myavailability = MyAvailabilityView.as_view()

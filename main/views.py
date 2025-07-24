@@ -19,8 +19,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.decorators import method_decorator
 from collections import Counter
 from main.calendar_client import GoogleCalendarClient
-
-
+from google.auth.exceptions import RefreshError
+from googleapiclient.errors import HttpError
+from django.http import JsonResponse
 # Create your views here.
 
 
@@ -106,7 +107,11 @@ def connect_google(request):
     """Creates the authorization url which the user is redirected to to allow for the connection"""
     calendar_client = GoogleCalendarClient()
 
-    auth_url = calendar_client.create_auth_url()
+    try :
+
+        auth_url = calendar_client.create_auth_url()
+    except Exception as e :
+        return JsonResponse({"error": e}, status = 400)
     return redirect(auth_url)
 
 def oauth2callback(request):
@@ -120,7 +125,10 @@ def oauth2callback(request):
     which are then stored in the ProvideProfile model columns to be used later
     """
     calendar_client = GoogleCalendarClient()
-    calendar_client.google_calendar_callback(request)
+    try : 
+        calendar_client.google_calendar_callback(request)
+    except Exception as e :
+        return JsonResponse({"Error occurred": e }, status = 400)
     return redirect("providerdashboard")
 
 class CancellationPolicy(TemplateView):
