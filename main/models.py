@@ -4,6 +4,7 @@ import uuid
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.utils.timezone import localtime
 
 SERVICE_CHOICES = [
     ("doctor", "Doctor"),
@@ -107,6 +108,9 @@ class Appointment(models.Model):
 
     objects = ActiveAppointmentManager()
     all_objects = models.Manager()
+
+    def __str__(self):
+        return f"Appointment by {self.customer.username} for {self.provider.username} on {localtime(self.date_start)}"
 
 
 class AnalyticsApi(models.Model):
