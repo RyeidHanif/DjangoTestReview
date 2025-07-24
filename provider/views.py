@@ -27,6 +27,7 @@ from google.auth.exceptions import RefreshError
 from googleapiclient.errors import HttpError
 from django.http import JsonResponse
 from main.utils import force_provider_calendar
+from django.shortcuts import get_object_or_404
 
 
 class ProviderDashboardView(LoginRequiredMixin , TemplateView):
@@ -74,7 +75,7 @@ class ListAcceptedAppointmentsView(LoginRequiredMixin , View):
     def post(self , request , *args , **kwargs):
         calendar_client = GoogleCalendarClient()
         if request.POST.get("cancel"):
-            cancel_appointment = Appointment.objects.get(id=request.POST.get("cancel"))
+            cancel_appointment = get_object_or_404(Appointment , id=request.POST.get("cancel"))
             to_email = cancel_appointment.customer.email
             customer = cancel_appointment.customer
             provider = cancel_appointment.provider
@@ -108,7 +109,7 @@ class ListAcceptedAppointmentsView(LoginRequiredMixin , View):
                 return redirect("view_my_appointments")
 
         if request.POST.get("markcompleted"):
-            appointment = Appointment.objects.get(id=request.POST.get("markcompleted"))
+            appointment = get_object_or_404(Appointment ,id=request.POST.get("markcompleted"))
             current_datetime = now()
             if appointment.date_start > current_datetime:
                 messages.warning(
@@ -144,12 +145,12 @@ class ListPendingAppointmentsView(LoginRequiredMixin , View):
 
     def post(self , request , *args , **kwargs):
         if request.POST.get("reject"):
-            appointment = Appointment.objects.get(id=request.POST.get("reject"))
+            appointment = get_object_or_404(Appointment, id=request.POST.get("reject"))
             return self.reject_appointment(request, appointment)
 
         if request.POST.get("accept") :
 
-            appointment = Appointment.objects.get(id=request.POST.get("accept"))
+            appointment = get_object_or_404(Appointment, id=request.POST.get("accept"))
             return self.accept_appointment(request , appointment)
         
         return redirect("view_pending_appointments")

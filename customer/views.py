@@ -8,7 +8,7 @@ from django.shortcuts import redirect, render
 from django.utils.timezone import get_current_timezone, localdate, localtime, make_aware
 
 from main.models import Appointment, ProviderProfile, NotificationPreferences
-from main.utils import cancellation, force_provider_calendar
+from main.utils import cancellation, force_provider_calendar, handle_exception
 
 from .utils import (
     EmailRescheduledAppointment,
@@ -30,6 +30,9 @@ from main.calendar_client import GoogleCalendarClient
 from google.auth.exceptions import RefreshError
 from googleapiclient.errors import HttpError
 from django.http import JsonResponse
+from django.core.exceptions import ValidationError , ObjectDoesNotExist,MultipleObjectsReturned
+from django.shortcuts import get_object_or_404
+
 
 
 class CustomerDashboardView(LoginRequiredMixin, TemplateView):
@@ -62,9 +65,14 @@ class ListProvidersView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         query = self.request.GET.get("q")
         if query:
-            return ProviderProfile.objects.filter(
-                user__username__icontains=query
-            ).exclude(user=self.request.user)
+            try :
+         
+                return ProviderProfile.objects.filter(
+                        user__username__icontains=query
+                    ).exclude(user=self.request.user)
+            except Exception as e :
+                return handle_exception(e)
+            
         else:
             return ProviderProfile.objects.exclude(user=self.request.user)
 
@@ -89,7 +97,7 @@ class ScheduleView(LoginRequiredMixin, View):
     login_url = "/login/"
 
     def dispatch(self, request, *args, **kwargs):
-        self.provider_profile = ProviderProfile.objects.get(id=kwargs["providerID"])
+        self.provider_profile =get_object_or_404(ProviderProfile, id=kwargs["providerID"])
         self.provider = self.provider_profile.user
         self.slot_range = 1
         self.google_client = GoogleCalendarClient()
@@ -155,7 +163,7 @@ class AddAppointmentView(LoginRequiredMixin, View):
     def dispatch(self, request, *args, **kwargs):
         self.mode = request.session.get("mode", "normal")
         self.timeslot = request.session.get("timeslot_tuple", [])
-        self.provider_user = User.objects.get(id=kwargs["providerUserID"])
+        self.provider_user = get_object_or_404(User, id=kwargs["providerUserID"])
         self.provider = ProviderProfile.objects.get(user=self.provider_user)
         self.customer = request.user
         self.start_datetime = datetime.fromisoformat(self.timeslot[0])
@@ -199,16 +207,19 @@ class AddAppointmentView(LoginRequiredMixin, View):
                 until_date = self.recurrence_form.cleaned_data["until_date"]
 
             self.special_requests = request.POST.get("special_requests", " ")
-            appointment = create_and_save_appointment(
-                self.customer,
-                self.provider_user,
-                self.start_datetime,
-                self.end_datetime,
-                self.total_price,
-                self.special_requests,
-                recurrence_frequency,
-                until_date,
-            )
+            try : 
+                appointment = create_and_save_appointment(
+                    self.customer,
+                    self.provider_user,
+                    self.start_datetime,
+                    self.end_datetime,
+                    self.total_price,
+                    self.special_requests,
+                    recurrence_frequency,
+                    until_date,
+                )
+            except Exception as e :
+                return handle_exception(e)
             if appointment.provider.notification_settings.preferences == "all":
                 EmailPendingAppointment(
                     request,
@@ -335,7 +346,7 @@ class ViewAppointmentsView(LoginRequiredMixin, View):
             request,
             "This will change the status to Rescheduled but the event for now will remain in the calendar  because the provider will have to review the timings again ",
         )
-        change_appointment = Appointment.objects.get(id=request.POST.get("reschedule"))
+        change_appointment = get_object_or_404(Appointment, id=request.POST.get("reschedule"))
         if change_appointment.status != "accepted":
             messages.error(
                 request, "sorry you cannot reschedule a non accepted appointment "
@@ -346,7 +357,7 @@ class ViewAppointmentsView(LoginRequiredMixin, View):
 
     def cancel(self, request, *args, **kwargs):
         calendar_client = GoogleCalendarClient()
-        appointment = Appointment.objects.get(id=self.appointmentID)
+        appointment =get_object_or_404( Appointment , id=self.appointmentID)
         count_cancel = cancellation(request, request.user, appointment)
         if appointment.status == "accepted":
             try:
@@ -390,7 +401,7 @@ viewappointments = ViewAppointmentsView.as_view()
 # very simple . left this as FBV . doesnt fit in any generic CBVs and View CBV will just have more boilerplate
 @login_required(login_url="/login/")
 def reschedule(request, appointment_id):
-    change_appointment = Appointment.objects.get(id=appointment_id)
+    change_appointment = get_object_or_404(Appointment , id=appointment_id)
     if request.method == "POST":
         if request.POST.get("checkschedule"):
             request.session["mode"] = "reschedule"

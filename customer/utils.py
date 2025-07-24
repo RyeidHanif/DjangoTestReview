@@ -14,6 +14,7 @@ from main.utils import get_calendar_service
 from googleapiclient.errors import HttpError
 
 
+
 activate("Asia/Karachi")
 
 
@@ -122,3 +123,4 @@ def change_and_save_appointment(request, appointment, recurrence_frequency , unt
             appointment.special_requests,
         )
     return appointment
+

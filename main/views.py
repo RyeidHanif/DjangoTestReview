@@ -22,6 +22,7 @@ from main.calendar_client import GoogleCalendarClient
 from google.auth.exceptions import RefreshError
 from googleapiclient.errors import HttpError
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 # Create your views here.
 
 
@@ -67,7 +68,7 @@ def profile_creation(request, n):
         provider_form = ProviderForm(request.POST , request.FILES)
         if provider_form.is_valid():
 
-            user = User.objects.get(id=user_id)
+            user = get_object_or_404(User, id=user_id)
 
             if ProviderProfile.objects.filter(user=user).exists():
                 return redirect("login")
@@ -92,7 +93,7 @@ def profile_creation(request, n):
 def connect_to_calendar(request):
     """Displays the page to allow the user to connect to their google calendar"""
     user = request.user
-    profile = ProviderProfile.objects.get(user=user)
+    profile = get_object_or_404(ProviderProfile, user=user)
     if profile.google_calendar_connected:
         messages.info(request, "you are connected to calendar")
         return redirect("providerdashboard")
@@ -170,7 +171,7 @@ class AdminDashboardView(LoginRequiredMixin, View):
     def post(self , request , *args , **kwargs):
         if request.POST.get("toggle_active"):
             user_id = request.POST.get("toggle_active")
-            current_user = User.objects.get(id=user_id)
+            current_user = get_object_or_404(User , id=user_id)
             if current_user.is_active:
                 current_user.is_active = False
             else:
@@ -178,7 +179,7 @@ class AdminDashboardView(LoginRequiredMixin, View):
             current_user.save()
         if request.POST.get("delete"):
             user_id = request.POST.get("delete")
-            user = User.objects.get(id=user_id)
+            user = get_object_or_404(User , id=user_id)
             if user :
                 user.delete()
             else :
@@ -199,9 +200,9 @@ class ViewCustomerProfile(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user = User.objects.get(id=kwargs['userID'])
+        user = get_object_or_404(User , id=kwargs['userID'])
         context["user"] = user
-        context["user_customer_profile"] = CustomerProfile.objects.get(user=user)
+        context["user_customer_profile"] = get_object_or_404(CustomerProfile,user=user)
         context["appointments_customer"] = Appointment.objects.filter(customer=user)
         return context
 
@@ -213,7 +214,7 @@ class ViewProviderProfile(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user = User.objects.get(id=kwargs['userID'])
+        user = get_object_or_404(User, id=kwargs['userID'])
         context["user"] = user
         context["user_provider_profile"] = ProviderProfile.objects.get(user=user)
         context["appointments_provider"] = Appointment.objects.filter(provider=user)

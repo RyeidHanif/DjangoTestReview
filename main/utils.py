@@ -9,6 +9,11 @@ from datetime import datetime , timedelta
 from django.utils.timezone import (activate, get_current_timezone, localdate,
                                    localtime, make_aware, now)
 from google.auth.exceptions import RefreshError
+from django.core.exceptions import ValidationError, PermissionDenied, ObjectDoesNotExist, FieldError
+from django.http import JsonResponse
+from django.db.utils import IntegrityError, OperationalError
+from django.http import Http404
+from django.shortcuts import get_object_or_404
 
 
 
@@ -27,7 +32,7 @@ def get_calendar_service(user):
     returns an object which is used to perform CRUD operations on events in the calendar
     usually referred to as service
     """
-    profile = ProviderProfile.objects.get(user=user)
+    profile = get_object_or_404(ProviderProfile, user=user)
     creds = Credentials(
         token=profile.google_access_token,
         refresh_token=profile.google_refresh_token,
@@ -79,3 +84,33 @@ def force_provider_calendar(provider):
     profile.google_token_expiry = None
     profile.google_calendar_connected = False
     profile.save()
+
+
+
+
+def handle_exception(exc):
+    """
+    Given an exception, return a JsonResponse with a suitable error message and status code.
+    Optionally pass `provider` to handle RefreshError with calendar re-auth logic.
+    """
+    
+
+    if isinstance(exc, ValidationError):
+        return JsonResponse({"error": exc.message_dict if hasattr(exc, 'message_dict') else str(exc)}, status=400)
+
+    if isinstance(exc, PermissionDenied):
+        return JsonResponse({"error": "permission_denied", "message": str(exc)}, status=403)
+
+    if isinstance(exc, Http404) or isinstance(exc, ObjectDoesNotExist):
+        return JsonResponse({"error": "not_found", "message": str(exc)}, status=404)
+
+    if isinstance(exc, FieldError):
+        return JsonResponse({"error": "field_error", "message": str(exc)}, status=400)
+
+    if isinstance(exc, IntegrityError):
+        return JsonResponse({"error": "integrity_error", "message": str(exc)}, status=400)
+
+    if isinstance(exc, OperationalError):
+        return JsonResponse({"error": "database_error", "message": "Database error occurred."}, status=500)
+
+    return JsonResponse({"error": "unknown_error", "message": str(exc)}, status=500)
