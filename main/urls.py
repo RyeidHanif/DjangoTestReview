@@ -23,4 +23,5 @@ urlpatterns = [
         views.view_provider_profile,
         name="view_provider_profile",
     ),
+    path("create_customer_profile/", views.create_customer_profile , name="create_customer_profile")
 ]

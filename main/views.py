@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import Flow
 
-from .forms import ProviderForm
+from .forms import ProviderForm , CreateCustomerProfileForm
 from .models import (Appointment, CustomerProfile, NotificationPreferences,
                      ProviderProfile, User)
 
@@ -26,8 +26,6 @@ load_dotenv()
 
 # Create your views here.
 
-
-@method_decorator(cache_page(60 * 5), name="dispatch")
 class Home(TemplateView):
     template_name = "main/home.html"
 
@@ -47,9 +45,10 @@ def redirectiondashboard(request):
         return redirect("customer_dashboard")
     elif hasattr(user, "providerprofile"):
         return redirect("connect_to_calendar")
-    messages.error(request, "you do not have a profile , please create one ")
+    else :
+        messages.info(request , "you must first create atleast a customer profile")
+        return redirect("create_customer_profile")
 
-    return redirect("profile_creation")
 
 
 def profile_creation(request, n):
@@ -293,3 +292,16 @@ class ViewProviderProfile(TemplateView):
 
 
 view_provider_profile = ViewProviderProfile.as_view()
+
+
+
+def create_customer_profile(request):
+    if request.method == "POST":
+        form = CreateCustomerProfileForm(request.POST)
+        if form.is_valid():
+            phone_number = form.cleaned_data["phone_number"]
+            CustomerProfile.objects.create(user = request.user , phone_number = phone_number)
+            messages.success(request , "Customer profile created successfully ")
+            return redirect("redirectiondashboard")
+    form = CreateCustomerProfileForm()
+    return render(request, "main/create_customer_profile.html", {"form":form})
