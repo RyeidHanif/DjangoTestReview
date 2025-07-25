@@ -16,6 +16,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+
 # Load environment variables from the .env file
 load_dotenv()
 
@@ -73,6 +74,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
      "allauth.account.middleware.AccountMiddleware",
+
 ]
 
 ROOT_URLCONF = "mysite.urls"
@@ -145,6 +147,7 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    
 }
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
@@ -210,6 +213,7 @@ SIMPLE_JWT = {
 }
 
 
+
 AUTHENTICATION_BACKENDS = [
     
     # Needed to login by username in Django admin, regardless of `allauth`
@@ -253,4 +257,7 @@ SOCIALACCOUNT_AUTO_SIGNUP = True  # auto create user if no match
 # This is the magic:
 SOCIALACCOUNT_ADAPTER = 'allauth.account.adapter.DefaultAccountAdapter'
 SOCIALACCOUNT_ADAPTER = 'accounts.adapter.SocialAccountAdapter'
+
+
+APPEND_SLASH = True
 

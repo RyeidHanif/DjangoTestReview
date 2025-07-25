@@ -6,7 +6,7 @@ from django.db.models import Sum
 from django.shortcuts import render
 from django.utils.timezone import localtime
 from rest_framework import generics
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -21,6 +21,7 @@ from .serializers import (AppointmentSerializer, ProviderAnalyticsSerializer,
                           ViewAllProvidersSerializer , WelcomeSerializer , SlotSerializer)
 
 from drf_spectacular.utils import extend_schema
+
 
 
 
@@ -119,7 +120,11 @@ class APIProviderAvailability(APIView):
     def get(self, request, providerID):
         slot_range = self.get_slot_range(request)
 
-        provider = User.objects.select_related("providerprofile").get(id=providerID)
+        try:
+            provider = User.objects.select_related("providerprofile").get(id=providerID)
+        except User.DoesNotExist:
+            raise NotFound("Provider with this ID does not exist.")
+
         if not hasattr(provider, "providerprofile"):
             return Response({"error": "Provider profile missing"}, status=400)
         elif not provider.providerprofile.google_calendar_connected:
