@@ -253,7 +253,7 @@ class AdminDashboard(View, LoginRequiredMixin):
         return self.get(request)
 
 
-admin_dashboard = AdminDashboard.as_view()
+admin_dashboard_analytics = AdminDashboard.as_view()
 
 
 @method_decorator(staff_member_required, name="dispatch")

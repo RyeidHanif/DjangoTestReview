@@ -22,10 +22,14 @@ from django.urls import include, path
 from rest_framework_simplejwt.views import (TokenObtainPairView,
                                             TokenRefreshView)
 from drf_spectacular.views import  SpectacularAPIView, SpectacularSwaggerView
+from main.views import admin_dashboard_analytics
+
 
 
 urlpatterns = [
+    path("admin/analytics/", admin.site.admin_view(admin_dashboard_analytics), name="admin-analytics"),
     path("admin/", admin.site.urls),
+
     path("", include("django.contrib.auth.urls")),  # django's default login and logout
     path("", include("main.urls")),
     path("", include("accounts.urls")),

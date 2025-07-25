@@ -12,7 +12,6 @@ urlpatterns = [
     path("connect-google/", views.connect_google, name="connect_google"),
     path("google/oauth2callback/", views.oauth2callback, name="oauth2callback"),
     path("cancellation/", views.cancellation_policy, name="cancellation_policy"),
-    path("admin_dashboard/", views.admin_dashboard, name="admin_dashboard"),
     path(
         "view_customer_profile/<int:userID>",
         views.view_customer_profile,

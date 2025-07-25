@@ -41,6 +41,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     "accounts",
+    'jazzmin',
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -259,5 +260,27 @@ SOCIALACCOUNT_ADAPTER = 'allauth.account.adapter.DefaultAccountAdapter'
 SOCIALACCOUNT_ADAPTER = 'accounts.adapter.SocialAccountAdapter'
 
 
+
+JAZZMIN_UI_TWEAKS = {
+   
+    "dark_mode_theme": "darkly",
+}
+
+
+JAZZMIN_SETTINGS = {
+
+
+
+    "topmenu_links": [
+        
+        {
+            "name": "Analytics",
+            "url": "admin-analytics",  
+        },
+    ]
+   
+}
+
 APPEND_SLASH = True
+
 

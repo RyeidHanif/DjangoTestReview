@@ -10,3 +10,4 @@ django-redis
 djangorestframework-simplejwt
 drf-spectacular
 django-allauth[socialaccount]
+django-jazzmin
