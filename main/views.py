@@ -107,14 +107,16 @@ def connect_to_calendar(request):
 def connect_google(request):
     """Creates the authorization url which the user is redirected to to allow for the connection"""
 
-    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = (
-        "1"  # tell google that no https , using http
-    )
+    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"  # tell google that no https , using http
+    
     BASE_URL = os.getenv("BASE_URL")
 
     flow = Flow.from_client_secrets_file(  # load google auth clint credentials
         "credentials.json",
-        scopes=["https://www.googleapis.com/auth/calendar"],
+        scopes=[    "https://www.googleapis.com/auth/calendar",
+    "openid",
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile"],
         redirect_uri=f"{BASE_URL}/google/oauth2callback/",
     )
     auth_url, _ = flow.authorization_url(
@@ -136,9 +138,13 @@ def oauth2callback(request):
     which are then stored in the ProvideProfile model columns to be used later
     """
     BASE_URL = os.getenv("BASE_URL")
+    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
     flow = Flow.from_client_secrets_file(  # load google auth client credentils
         "credentials.json",
-        scopes=["https://www.googleapis.com/auth/calendar"],
+        scopes=[ "https://www.googleapis.com/auth/calendar",
+    "openid",
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile", ],
         redirect_uri=f"{BASE_URL}/google/oauth2callback/",
     )
 
