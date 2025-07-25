@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import (AnalyticsApi, Appointment, Cancellation, CustomerProfile,
+from .models import (AnalyticsApi, Appointment, CustomerProfile,
                      NotificationPreferences, ProviderProfile)
 from django.core.mail import send_mail
 from django.utils.safestring import mark_safe
@@ -126,7 +126,7 @@ admin.site.register(CustomerProfile, CustomerProfileAdmin)
 admin.site.register(Appointment, AppointmentAdmin)
 admin.site.register(AnalyticsApi)
 admin.site.register(NotificationPreferences, NotificationPreferencesAdmin)
-admin.site.register(Cancellation)
+
 
 
 

@@ -94,7 +94,7 @@ class ViewMyAppointments(View, LoginRequiredMixin):
             if customer.notification_settings.preferences == "all":
                 EmailCancelledAppointment(request, customer, provider, to_email)
             if not request.user.is_superuser:
-                count_cancel = cancellation(request.user, cancel_appointment)
+                count_cancel = cancellation(request , request.user, cancel_appointment)
                 if count_cancel >= 3:
                     request.user.is_active = False
                     request.user.save()
