@@ -1,21 +1,109 @@
 {% extends 'main/base.html' %}
 {% load crispy_forms_tags %}
 
-
-{% block title %} My Availability  {% endblock %}
-
-
+{% block title %} My Availability {% endblock %}
 
 {% block content %}
+<style>
+  .availability-container {
+    background: rgba(30, 30, 40, 0.93);
+    border-radius: 2.2rem;
+    padding: 2.5rem 2rem 2rem 2rem;
+    box-shadow: 0 12px 48px 0 rgba(255, 107, 0, 0.13), 0 1.5px 24px 0 rgba(255, 213, 79, 0.08);
+    max-width: 480px;
+    margin: 3rem auto 2rem auto;
+    animation: fadeInHero 1.2s cubic-bezier(.77,0,.18,1) both;
+    position: relative;
+  }
+  @keyframes fadeInHero {
+    from { opacity: 0; transform: translateY(-40px) scale(0.98);}
+    to { opacity: 1; transform: translateY(0) scale(1);}
+  }
+  .availability-title {
+    font-size: 2.1rem;
+    font-weight: 800;
+    letter-spacing: 1.1px;
+    margin-bottom: 2rem;
+    color: #fffbe8;
+    background: linear-gradient(90deg, #ffd54f 30%, #ff6a00 70%, #ff1744 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 2px 24px #ffb30033, 0 1px 0 #ff6a00;
+    animation: textGlow 2.5s ease-in-out infinite alternate;
+    text-align: center;
+  }
+  @keyframes textGlow {
+    0% { text-shadow: 0 2px 24px #ffb30033, 0 1px 0 #ff6a00; }
+    100% { text-shadow: 0 6px 36px #ff174433, 0 2px 0 #ffd54f; }
+  }
+  .availability-form .form-group,
+  .availability-form .form-control,
+  .availability-form .form-check {
+    margin-bottom: 1.2rem;
+  }
+  .availability-form label {
+    font-weight: 600;
+    color: #ffd54f;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.4rem;
+  }
+  .availability-form input,
+  .availability-form select,
+  .availability-form textarea {
+    border-radius: 0.8rem !important;
+    border: 1.5px solid #ffd54f55 !important;
+    background: rgba(255,255,255,0.97) !important;
+    color: #222 !important;
+    font-size: 1.08rem !important;
+    box-shadow: 0 2px 8px #ffd54f11;
+    padding: 0.7rem 1rem !important;
+    transition: border 0.2s, box-shadow 0.2s;
+  }
+  .availability-form input:focus,
+  .availability-form select:focus,
+  .availability-form textarea:focus {
+    border-color: #ff6a00 !important;
+    box-shadow: 0 4px 16px #ffb34744;
+    outline: none;
+  }
+  .availability-form .btn-success {
+    font-size: 1.18rem;
+    font-weight: 700;
+    border-radius: 1.1rem;
+    padding: 0.9rem 1.7rem;
+    background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+    border: none;
+    color: #fff;
+    box-shadow: 0 4px 24px #43e97b33;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.15s;
+    margin-top: 0.7rem;
+    width: 100%;
+    letter-spacing: 0.5px;
+  }
+  .availability-form .btn-success:hover, .availability-form .btn-success:focus {
+    background: linear-gradient(90deg, #38f9d7 0%, #43e97b 100%);
+    color: #fff;
+    box-shadow: 0 8px 32px #43e97b33;
+    transform: translateY(-2px) scale(1.03);
+  }
+  @media (max-width: 600px) {
+    .availability-container {
+      padding: 1.2rem 0.5rem 1rem 0.5rem;
+      max-width: 98vw;
+    }
+    .availability-title {
+      font-size: 1.3rem;
+    }
+  }
+</style>
 
-<form class="form-group" method="POST" action="#">
+<div class="availability-container">
+  <div class="availability-title">Set Your Availability</div>
+  <form class="availability-form" method="POST" action="#">
     {% csrf_token %}
-    {{ form | crispy }}
-    <button class="btn btn-success" type="submit" name="addavailability">Add Time Block </button>
-</form>
-
-
-
-
-
+    {{ form|crispy }}
+    <button class="btn btn-success" type="submit" name="addavailability">Add Time Block</button>
+  </form>
+</div>
 {% endblock %}

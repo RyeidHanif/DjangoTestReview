@@ -1,34 +1,166 @@
 {% extends 'main/base.html' %}
 
-{% block title %}View Provider's Schedule {% endblock %}
-
+{% block title %}View Provider's Schedule{% endblock %}
 
 {% block content %}
+<style>
+  .schedule-hero {
+    background: rgba(30, 30, 40, 0.97);
+    border-radius: 2.2rem;
+    padding: 2.5rem 2rem 2rem 2rem;
+    box-shadow: 0 12px 48px 0 rgba(255, 107, 0, 0.13), 0 1.5px 24px 0 rgba(255, 213, 79, 0.08);
+    margin: 3rem auto 2rem auto;
+    animation: fadeInHero 1.2s cubic-bezier(.77,0,.18,1) both;
+    position: relative;
+    max-width: 600px;
+  }
+  @keyframes fadeInHero {
+    from { opacity: 0; transform: translateY(-40px) scale(0.98);}
+    to { opacity: 1; transform: translateY(0) scale(1);}
+  }
+  .schedule-title {
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: 1.1px;
+    color: #fffbe8;
+    text-shadow: 0 4px 32px #000a, 0 1px 0 #fff, 0 0 2px #000;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    animation: fadeInUp 1s both;
+  }
+  .schedule-subtitle {
+    color: #ffd54f;
+    font-size: 1.15rem;
+    font-weight: 700;
+    text-shadow: 0 2px 12px #000a;
+    margin-bottom: 2rem;
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+  .schedule-form {
+    display: flex;
+    justify-content: center;
+    gap: 1.2rem;
+    margin-bottom: 2.2rem;
+    flex-wrap: wrap;
+  }
+  .schedule-form .btn {
+    font-size: 1.08rem;
+    font-weight: 700;
+    border-radius: 1.1rem;
+    padding: 0.7rem 2.2rem;
+    box-shadow: 0 4px 24px #ffd54f33;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.15s;
+    letter-spacing: 0.5px;
+  }
+  .schedule-form .btn-primary {
+    background: linear-gradient(90deg, #ffd54f 0%, #ffb347 100%);
+    border: none;
+    color: #222;
+  }
+  .schedule-form .btn-primary:hover, .schedule-form .btn-primary:focus {
+    background: linear-gradient(90deg, #ffb347 0%, #ffd54f 100%);
+    color: #111;
+    box-shadow: 0 8px 32px #ffd54f33;
+    transform: translateY(-2px) scale(1.03);
+  }
+  .schedule-form .btn-success {
+    background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+    border: none;
+    color: #fff;
+  }
+  .schedule-form .btn-success:hover, .schedule-form .btn-success:focus {
+    background: linear-gradient(90deg, #38f9d7 0%, #43e97b 100%);
+    color: #fff;
+    box-shadow: 0 8px 32px #43e97b33;
+    transform: translateY(-2px) scale(1.03);
+  }
+  .slot-card {
+    background: rgba(255,255,255,0.97);
+    border-radius: 1.3rem;
+    box-shadow: 0 4px 24px #ffd54f22;
+    margin-bottom: 1.5rem;
+    padding: 1.2rem 1.5rem 1.2rem 1.5rem;
+    animation: fadeInUp 1s both;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.7rem;
+  }
+  .slot-date {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #ff6a00;
+    text-shadow: 0 1px 8px #ffd54f33;
+    margin-bottom: 0.2rem;
+  }
+  .slot-time {
+    font-size: 1.08rem;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 0.7rem;
+  }
+  .choose-slot-btn {
+    font-size: 1.08rem;
+    font-weight: 700;
+    border-radius: 0.9rem;
+    padding: 0.6rem 1.7rem;
+    background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+    border: none;
+    color: #fff;
+    box-shadow: 0 4px 16px #43e97b33;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.15s;
+    letter-spacing: 0.5px;
+  }
+  .choose-slot-btn:hover, .choose-slot-btn:focus {
+    background: linear-gradient(90deg, #38f9d7 0%, #43e97b 100%);
+    color: #fff;
+    box-shadow: 0 8px 32px #43e97b33;
+    transform: translateY(-2px) scale(1.03);
+  }
+  @media (max-width: 600px) {
+    .schedule-hero {
+      padding: 1.2rem 0.5rem 1rem 0.5rem;
+      max-width: 98vw;
+    }
+    .schedule-title {
+      font-size: 1.2rem;
+    }
+    .schedule-subtitle {
+      font-size: 1rem;
+    }
+    .slot-card {
+      padding: 1rem 0.7rem;
+    }
+  }
+</style>
 
-<h1>Here is {{provider.username}}'s schedule and free slots </h1>
+<div class="schedule-hero">
+  <h1 class="schedule-title">Here is <span style="color:#ffd54f;">{{provider.username}}</span>'s Schedule &amp; Free Slots</h1>
+  <h2 class="schedule-subtitle">Do you wish to view <span style="color:#fffbe8;">Today's</span> or <span style="color:#fffbe8;">This Week's</span> slots?</h2>
+  <form method="post" action="#" class="schedule-form mb-4">
+      {% csrf_token %}
+      <button class="btn btn-primary" type="submit" name="week" value="week">Week</button>
+      <button class="btn btn-success" type="submit" name="day" value="day">Day</button>
+  </form>
 
-<h2> do you wish to view Today's or this weeks slots  </h2>
-<form method="post" action="#" class ="form-group">
-    {% csrf_token %}
-    <button class="btn btn-primary" type="submit" name="week" value = "week">Week</button>
-    <button class="btn btn-success" type="submit" name="day" value = "day">Day</button>
-</form>
-
-{% for start, end in available_slots %}
-  <h3>{{ start|date:"l, d F Y" }} — from {{ start|time:"h:i A" }} to {{ end|time:"h:i A" }}</h3>
-  <form method="post" action="#">
-  {% csrf_token %}
-  <input type="hidden" name="slot_range" value="{{ slot_range }}">
-  <input type="hidden" name="slot_index" value="{{ forloop.counter0 }}">
-  <button class="btn btn-success" type="submit" name="add_appointment" value="{{ forloop.counter0 }}">
-    Choose Slot
-  </button>
-</form>
-
-
-{% endfor %}
-
-
-
-
+  {% if available_slots %}
+    {% for start, end in available_slots %}
+      <div class="slot-card animate__animated animate__fadeInUp">
+        <div class="slot-date">{{ start|date:"l, d F Y" }}</div>
+        <div class="slot-time">From <strong>{{ start|time:"h:i A" }}</strong> to <strong>{{ end|time:"h:i A" }}</strong></div>
+        <form method="post" action="#" class="w-100">
+          {% csrf_token %}
+          <input type="hidden" name="slot_range" value="{{ slot_range }}">
+          <input type="hidden" name="slot_index" value="{{ forloop.counter0 }}">
+          <button class="choose-slot-btn w-100" type="submit" name="add_appointment" value="{{ forloop.counter0 }}">
+            <i class="bi bi-calendar-plus"></i> Choose Slot
+          </button>
+        </form>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p class="text-center" style="color:#fffbe8; font-weight:600; text-shadow:0 2px 12px #000a;">No available slots found.</p>
+  {% endif %}
+</div>
 {% endblock %}

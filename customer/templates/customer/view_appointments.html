@@ -3,8 +3,128 @@
 {% block title %}View My Appointments{% endblock %}
 
 {% block content %}
+<style>
+  .appointments-title {
+    font-size: 2.2rem;
+    font-weight: 900;
+    letter-spacing: 1.1px;
+    color: #fffbe8;
+    text-shadow: 0 4px 32px #000a, 0 1px 0 #fff, 0 0 2px #000;
+    margin-bottom: 2.2rem;
+    text-align: center;
+    animation: fadeInUp 1s both;
+  }
+  .card {
+    border-radius: 1.5rem !important;
+    box-shadow: 0 8px 32px 0 rgba(255, 183, 77, 0.13), 0 2px 16px #ffb34722;
+    border: none;
+    overflow: hidden;
+    position: relative;
+    animation: fadeInUp 1s both;
+    background: rgba(255,255,255,0.97);
+    transition: transform 0.18s, box-shadow 0.18s;
+  }
+  .card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 16px 48px 0 #ffb34733, 0 2px 16px #ff174422;
+    z-index: 2;
+  }
+  .card-title {
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.7rem;
+    color: #ff6a00;
+    text-shadow: 0 1px 8px #ffd54f33;
+  }
+  .card-body p, .card-body span {
+    font-size: 1.08rem;
+    font-weight: 500;
+    color: #333;
+  }
+  .btn-danger, .btn-dark {
+    font-weight: 700;
+    border-radius: 0.8rem;
+    font-size: 1.08rem;
+    box-shadow: 0 2px 8px #ffd54f22;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.15s;
+  }
+  .btn-danger:hover, .btn-dark:hover {
+    box-shadow: 0 4px 16px #ffb34744;
+    opacity: 0.93;
+    transform: translateY(-2px) scale(1.03);
+  }
+  .btn-dark:disabled {
+    background: #bdbdbd !important;
+    color: #fff !important;
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+  .input-group .form-control {
+    border-radius: 1.2rem 0 0 1.2rem !important;
+    font-size: 1.08rem;
+    padding: 0.7rem 1rem;
+    border: 1.5px solid #ffd54f55;
+    background: rgba(255,255,255,0.97);
+    color: #222;
+    box-shadow: 0 2px 8px #ffd54f11;
+    transition: border 0.2s, box-shadow 0.2s;
+  }
+  .input-group .form-control:focus {
+    border-color: #ff6a00;
+    box-shadow: 0 4px 16px #ffb34744;
+    outline: none;
+  }
+  .btn-outline-primary {
+    border-radius: 0 1.2rem 1.2rem 0 !important;
+    font-size: 1.08rem;
+    font-weight: 700;
+    border: 2px solid #ffd54f;
+    color: #ff6a00;
+    background: #fffbe8;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  }
+  .btn-outline-primary:hover, .btn-outline-primary:focus {
+    background: linear-gradient(90deg, #ffd54f 0%, #ffb347 100%);
+    color: #222;
+    box-shadow: 0 4px 16px #ffd54f44;
+    border-color: #ffb347;
+  }
+  .pagination {
+    margin-top: 2rem;
+    text-align: center;
+    animation: fadeInUp 1.2s 0.3s both;
+  }
+  .pagination .page-link {
+    color: #ff6a00;
+    font-weight: 600;
+    margin: 0 0.3em;
+    padding: 0.6em 1.2em;
+    border-radius: 0.7em;
+    background: rgba(255,255,255,0.85);
+    box-shadow: 0 1px 6px #ffd54f22;
+    border: none;
+    transition: background 0.2s, color 0.2s;
+  }
+  .pagination .page-link:hover, .pagination .page-link:focus {
+    background: #ffd54f;
+    color: #222;
+  }
+  .pagination .page-item.disabled .page-link {
+    background: transparent;
+    color: #ff6a00;
+    font-weight: 700;
+    border: none;
+  }
+  @media (max-width: 991.98px) {
+    .appointments-title { font-size: 1.4rem; }
+    .card-title { font-size: 1rem; }
+    .card-body p, .card-body span { font-size: 0.97rem; }
+  }
+</style>
+
 <div class="container py-4">
-  <h1 class="text-center mb-4">Here Are All Your Appointments</h1>
+  <h1 class="appointments-title">Here Are All Your Appointments</h1>
 
   <form method="get" action="" class="mb-4">
     <div class="input-group">
@@ -17,13 +137,14 @@
     <div class="row">
       {% for appointment in page_obj %}
         <div class="col-md-6 mb-4">
-          <div class="card shadow-sm h-100">
+          <div class="card shadow-sm h-100 animate__animated animate__fadeInUp">
             <div class="card-body d-flex flex-column">
               <h5 class="card-title mb-2">
-                Appointment with <span class="text-primary">{{ appointment.provider.username }}</span>
+                Appointment with <span class="text-primary" style="color:#ff6a00 !important;">{{ appointment.provider.username }}</span>
               </h5>
               <p class="mb-1">
-                <strong>Status:</strong> {{ appointment.status|capfirst }}
+                <strong>Status:</strong>
+                <span style="color:#ff6a00; font-weight:600;">{{ appointment.status|capfirst }}</span>
               </p>
               <p class="mb-1">
                 <strong>Date:</strong> {{ appointment.date_start|date:"l, d F Y" }}
@@ -45,11 +166,11 @@
               </p>
               <form method="POST" action="#" class="mt-auto d-flex gap-2">
                 {% csrf_token %}
-                <button type="submit" name="reschedule" value="{{ appointment.id }}" class="btn btn-dark"
+                <button type="submit" name="reschedule" value="{{ appointment.id }}" class="btn btn-dark flex-fill"
                         {% if appointment.status == "pending" or appointment.status == "rescheduled" %} disabled{% endif %}>
                   Reschedule
                 </button>
-                <button type="submit" name="cancel" value="{{ appointment.id }}" class="btn btn-danger">
+                <button type="submit" name="cancel" value="{{ appointment.id }}" class="btn btn-danger flex-fill">
                   Cancel
                 </button>
               </form>
@@ -90,7 +211,7 @@
       </nav>
     </div>
   {% else %}
-    <p class="text-center text-muted">No appointments found.</p>
+    <p class="text-center text-muted fs-5" style="color:#fffbe8 !important; text-shadow:0 2px 12px #000a;">No appointments found.</p>
   {% endif %}
 </div>
 {% endblock %}

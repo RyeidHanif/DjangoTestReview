@@ -1,26 +1,91 @@
 {% extends 'main/base.html' %}
 
-{% block title %}Analytics{% endblock %}
+{% block title %} Analytics {% endblock %}
 
 {% block content %}
+<style>
+  .analytics-title {
+    font-size: 2.5rem;
+    font-weight: 900;
+    letter-spacing: 1.2px;
+    color: #fffbe8;
+    text-shadow: 0 4px 32px #000a, 0 1px 0 #fff, 0 0 2px #000;
+    margin-bottom: 2.2rem;
+    text-align: center;
+    animation: fadeInUp 1s both;
+  }
+  .card {
+    border-radius: 1.5rem !important;
+    box-shadow: 0 8px 32px 0 rgba(255, 183, 77, 0.13), 0 2px 16px #ffb34722;
+    border: none;
+    overflow: hidden;
+    position: relative;
+    animation: fadeInUp 1s both;
+    margin-bottom: 2rem;
+    background: rgba(255,255,255,0.97);
+  }
+  .card-header {
+    background: linear-gradient(90deg, #ffd54f 0%, #ff6a00 100%);
+    color: #222;
+    font-weight: 700;
+    font-size: 1.2rem;
+    letter-spacing: 0.5px;
+    border-bottom: none;
+    text-shadow: 0 1px 8px #ffd54f33;
+  }
+  .card-body p, .card-body li, .card-body span {
+    font-size: 1.13rem;
+    font-weight: 500;
+    color: #333;
+  }
+  .list-group-item {
+    border-radius: 0.7rem !important;
+    margin-bottom: 0.3rem;
+    background: rgba(255,255,255,0.92);
+    font-weight: 500;
+    color: #333;
+    box-shadow: 0 2px 8px #ffd54f11;
+    transition: background 0.2s, color 0.2s;
+    border: none;
+  }
+  .list-group-item span:last-child {
+    font-weight: 700;
+    color: #ff6a00;
+  }
+  .list-group-item:hover {
+    background: #fffbe8;
+    color: #ff6a00;
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(40px);}
+    to { opacity: 1; transform: translateY(0);}
+  }
+  /* Responsive tweaks */
+  @media (max-width: 991.98px) {
+    .analytics-title { font-size: 1.6rem; }
+    .card-header { font-size: 1rem; }
+    .card-body p, .card-body li, .card-body span { font-size: 1rem; }
+  }
+</style>
+
 <div class="container py-4">
-    <h1 class="mb-4 text-center">Provider Analytics Dashboard</h1>
+    <h1 class="analytics-title">Provider Analytics Dashboard</h1>
 
     <!-- Revenue Section -->
-    <div class="card shadow-sm mb-4">
+    <div class="card animate__animated animate__fadeInUp">
         <div class="card-header">
-            <h3>Total Revenue & Admin Cut</h3>
+            <i class="bi bi-cash-coin me-2"></i>Total Revenue & Admin Cut
         </div>
         <div class="card-body">
-            <p><strong>Total Revenue:</strong> {{ revenue }} PKR</p>
-            <p><strong>Admin Cut (5%):</strong> {{ admin_cut }} PKR</p>
+            <p><strong>Total Revenue:</strong> <span style="color:#43e97b;">{{ revenue }} PKR</span></p>
+            <p><strong>Admin Cut (5%):</strong> <span style="color:#ff1744;">{{ admin_cut }} PKR</span></p>
         </div>
     </div>
 
     <!-- Appointment Status Counts -->
-    <div class="card shadow-sm mb-4">
+    <div class="card animate__animated animate__fadeInUp animate__delay-1s">
         <div class="card-header">
-            <h3>Appointment Status Counts</h3>
+            <i class="bi bi-bar-chart-fill me-2"></i>Appointment Status Counts
         </div>
         <div class="card-body">
             <ul class="list-group">
@@ -35,9 +100,9 @@
     </div>
 
     <!-- Appointment Status Percentages -->
-    <div class="card shadow-sm mb-4">
+    <div class="card animate__animated animate__fadeInUp animate__delay-2s">
         <div class="card-header">
-            <h3>Appointment Status Percentages</h3>
+            <i class="bi bi-pie-chart-fill me-2"></i>Appointment Status Percentages
         </div>
         <div class="card-body">
             <ul class="list-group">
@@ -52,9 +117,9 @@
     </div>
 
     <!-- Customers Section -->
-    <div class="card shadow-sm">
+    <div class="card animate__animated animate__fadeInUp animate__delay-3s">
         <div class="card-header">
-            <h3>Customers Who Have Made Appointments</h3>
+            <i class="bi bi-people-fill me-2"></i>Customers Who Have Made Appointments
         </div>
         <div class="card-body">
             {% if customers %}

@@ -4,67 +4,133 @@
 
 {% block content %}
 <style>
-  body {
-    background: #f1f4f9;
-  }
-
   .hero-container {
-    background: linear-gradient(135deg, #4e54c8, #8f94fb);
-    color: #f9f9f9;
-    border-radius: 2rem;
-    padding: 4rem;
-    margin-top: 2rem;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    animation: fadeIn 1.2s ease-out;
+    background: rgba(30, 30, 40, 0.82);
+    border-radius: 2.5rem;
+    padding: 4rem 2rem 3rem 2rem;
+    margin-top: 2.5rem;
+    box-shadow: 0 12px 48px 0 rgba(255, 107, 0, 0.18), 0 1.5px 24px 0 rgba(255, 213, 79, 0.08);
+    animation: heroFadeIn 1.2s cubic-bezier(.77,0,.18,1) both;
     text-align: center;
+    position: relative;
+    overflow: hidden;
   }
-
+  .hero-container::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, #ffef8b44 0%, #ffb34733 40%, #ff6a0033 80%, #ff174422 100%);
+    z-index: 0;
+    border-radius: 2.5rem;
+    pointer-events: none;
+    animation: heroGlow 6s ease-in-out infinite alternate;
+  }
+  @keyframes heroGlow {
+    0% { box-shadow: 0 0 32px 8px #ffd54f44; }
+    100% { box-shadow: 0 0 64px 16px #ff6a0044; }
+  }
+  @keyframes heroFadeIn {
+    from { opacity: 0; transform: translateY(-40px) scale(0.98);}
+    to { opacity: 1; transform: translateY(0) scale(1);}
+  }
   .hero-title {
-    font-size: 3.5rem;
-    font-weight: 800;
-    margin-bottom: 1rem;
+    font-size: 3.2rem;
+    font-weight: 900;
+    margin-bottom: 1.1rem;
+    letter-spacing: 1.5px;
+    color: #fffbe8;
+    text-shadow: 0 4px 32px #ffb30044, 0 1px 0 #ff6a00;
+    background: linear-gradient(90deg, #ffd54f 30%, #ff6a00 70%, #ff1744 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 2px 12px #ffb30033);
+    animation: textGlow 2.5s ease-in-out infinite alternate;
+    z-index: 1;
+    position: relative;
   }
-
+  @keyframes textGlow {
+    0% { text-shadow: 0 4px 32px #ffb30044, 0 1px 0 #ff6a00; }
+    100% { text-shadow: 0 8px 48px #ff174444, 0 2px 0 #ffd54f; }
+  }
   .hero-subtitle {
-    font-size: 1.4rem;
-    opacity: 0.95;
+    font-size: 1.45rem;
+    font-weight: 500;
+    color: #fffbe8;
+    opacity: 0.97;
+    text-shadow: 0 2px 12px #ffb30033;
+    margin-bottom: 0;
+    z-index: 1;
+    position: relative;
+    animation: fadeInUp 1.5s 0.2s both;
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px);}
+    to { opacity: 1; transform: translateY(0);}
   }
 
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
+  .info-row {
+    margin-top: 3.5rem;
+    animation: fadeInUp 1.2s 0.5s both;
   }
-
   .info-box {
-    background-color: #ffffff;
-    border-radius: 1.5rem;
-    padding: 2rem;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    background: rgba(255,255,255,0.93);
+    border-radius: 1.7rem;
+    padding: 2.2rem 1.5rem 2rem 1.5rem;
+    box-shadow: 0 8px 32px 0 rgba(255, 183, 77, 0.13);
     text-align: center;
-    transition: all 0.3s ease;
+    transition: transform 0.25s cubic-bezier(.77,0,.18,1), box-shadow 0.25s, background 0.3s;
     height: 100%;
+    position: relative;
+    overflow: hidden;
+    border: 1.5px solid #ffe08233;
+    z-index: 1;
   }
-
   .info-box:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    transform: translateY(-8px) scale(1.025) rotate(-1deg);
+    box-shadow: 0 16px 48px 0 #ffb34733, 0 2px 16px #ff174422;
+    background: rgba(255,255,255,0.99);
+    border-color: #ffd54f88;
   }
-
   .info-icon {
-    font-size: 2.5rem;
-    color: #4e54c8;
-    margin-bottom: 1rem;
+    font-size: 2.7rem;
+    margin-bottom: 1.1rem;
+    color: #ff6a00;
+    filter: drop-shadow(0 2px 8px #ffd54f55);
+    animation: iconPulse 2.5s infinite alternate;
   }
-
+  @keyframes iconPulse {
+    0% { color: #ff6a00; filter: drop-shadow(0 2px 8px #ffd54f55);}
+    100% { color: #ff1744; filter: drop-shadow(0 4px 16px #ffb34788);}
+  }
   .info-title {
-    font-size: 1.25rem;
-    font-weight: 600;
+    font-size: 1.3rem;
+    font-weight: 700;
     margin-bottom: 0.5rem;
+    color: #ff6a00;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 8px #ffd54f33;
   }
-
   .info-text {
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     color: #444;
+    font-weight: 500;
+    opacity: 0.93;
+    margin-bottom: 0;
+  }
+  .btn-outline-primary {
+    border-color: #ff6a00;
+    color: #ff6a00;
+    font-weight: 600;
+    border-radius: 0.7rem;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px #ffd54f22;
+  }
+  .btn-outline-primary:hover, .btn-outline-primary:focus {
+    background: linear-gradient(90deg, #ffd54f 0%, #ff6a00 100%);
+    color: #222;
+    border-color: #ffd54f;
+    box-shadow: 0 4px 16px #ffb34744;
   }
 </style>
 
@@ -76,7 +142,7 @@
   </div>
 
   <!-- Info Boxes -->
-  <div class="row mt-5 g-4">
+  <div class="row info-row g-4">
     <div class="col-md-4">
       <div class="info-box h-100">
         <div class="info-icon"><i class="bi bi-exclamation-octagon-fill"></i></div>
