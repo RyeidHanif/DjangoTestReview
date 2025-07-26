@@ -1,5 +1,10 @@
 # extra utility functions needed for e.g refrehsing tokens ,getting calender service
 import json
+
+import os
+from datetime import datetime, timedelta
+
+
 from datetime import datetime, timedelta
 
 from django.core.exceptions import (FieldError, ObjectDoesNotExist,
@@ -9,9 +14,18 @@ from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils.timezone import (activate, get_current_timezone, localdate,
                                    localtime, make_aware, now)
+from dotenv import load_dotenv
 from google.auth.exceptions import RefreshError
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from .models import Appointment
+
+from .models import ProviderProfile
 
 from .models import Appointment, ProviderProfile
+
+load_dotenv()
 
 
 def cancellation(request, user, appointment):
@@ -76,3 +90,4 @@ def handle_exception(exc):
         )
 
     return JsonResponse({"error": "unknown_error", "message": str(exc)}, status=500)
+

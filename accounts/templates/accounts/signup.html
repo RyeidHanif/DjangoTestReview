@@ -1,19 +1,26 @@
-
 {% extends "main/base.html" %}
-
 {% load crispy_forms_tags %}
+{% load socialaccount %}
 
-{% block title %} Sign Up {% endblock  %}
-
+{% block title %} Sign Up {% endblock %}
 
 {% block content %}
-
-<form method="POST" action="#" class = "form-group">
+<div class="container mt-5" style="max-width: 400px;">
+  <form method="POST" action="#" class="form-group">
     {% csrf_token %}
+    {{ form|crispy }}
+    <button type="submit" name="submitbutton" class="btn btn-success w-100 my-3">Sign Up</button>
+  </form>
 
-    {{ form | crispy }}  
-    <button type ="submit" name ="submitbutton" class = "btn btn-success">Sign Up</button>
-</form>
+  <div class="text-center my-4">
+    <span>OR</span>
+  </div>
 
-
+  <a href="{% provider_login_url 'google' %}" class="btn btn-danger w-100 d-flex align-items-center justify-content-center gap-2">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-google" viewBox="0 0 16 16">
+      <path d="M8.159 6.517v2.266h3.357c-.135.913-.922 2.679-3.357 2.679-2.037 0-3.7-1.69-3.7-3.77s1.663-3.77 3.7-3.77c1.153 0 1.924.492 2.371.907l1.615-1.56C10.535 4.108 9.512 3.75 8.159 3.75c-3.375 0-6.109 2.757-6.109 6.15 0 3.393 2.734 6.15 6.109 6.15 3.523 0 5.857-2.466 5.857-5.94 0-.403-.04-.713-.092-1.02H8.16z"/>
+    </svg>
+    Sign Up with Google
+  </a>
+</div>
 {% endblock %}

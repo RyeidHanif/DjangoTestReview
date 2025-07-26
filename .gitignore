@@ -212,3 +212,4 @@ accounts/migrations/__pycache__
 
 .DS_Store
 credentials.json
+api/exception_handler.py

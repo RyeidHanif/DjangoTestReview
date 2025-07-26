@@ -4,6 +4,21 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+
+from django.core.cache import cache
+from django.core.paginator import Paginator
+from django.db.models import Q
+# Create your views here.
+from django.shortcuts import redirect, render
+from django.utils.timezone import (activate, get_current_timezone, localdate,
+                                   localtime, make_aware, now)
+from django.views import View
+from django.views.generic import ListView
+
+from logging_conf import logger
+from main.models import Appointment, NotificationPreferences, ProviderProfile
+from main.utils import cancellation
+
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 # Create your views here.
@@ -19,6 +34,7 @@ from logging_conf import logger
 from main.calendar_client import GoogleCalendarClient
 from main.models import Appointment, NotificationPreferences, ProviderProfile
 from main.utils import cancellation, force_provider_calendar
+
 
 from .forms import AvailabilityForm, SendNoteForm
 from .utils import (EmailCancelledAppointment, EmailConfirmedAppointment,
@@ -106,26 +122,24 @@ class ListAcceptedAppointmentsView(LoginRequiredMixin, View):
             cancel_appointment.save()
             if customer.notification_settings.preferences == "all":
                 EmailCancelledAppointment(request, customer, provider, to_email)
-            count_cancel = cancellation(request, request.user, cancel_appointment)
-            if count_cancel >= 3:
 
-                request.user.is_active = False
-                request.user.save()
-                logout(request)
-                messages.warning(
-                    request,
-                    "you cancelled too many apointments after deadline in a short span of time ",
-                )
-                return redirect("home")
-            else:
-                return redirect("view_my_appointments")
+            if not request.user.is_superuser:
+                count_cancel = cancellation(request , request.user, cancel_appointment)
+                if count_cancel >= 3:
+                    request.user.is_active = False
+                    request.user.save()
+                    logout(request)
+                    messages.warning(
+                        request,
+                        "you cancelled too many apointments after deadline in a short span of time ",
+                    )
+                    return redirect("home")
+
+            return redirect("view_my_appointments")
 
         if request.POST.get("markcompleted"):
 
-            appointment = get_object_or_404(
-                Appointment, id=request.POST.get("markcompleted")
-            )
-
+            appointment = Appointment.objects.get(id=request.POST.get("markcompleted"))
             current_datetime = now()
             if appointment.date_start > current_datetime:
                 messages.warning(
@@ -282,7 +296,6 @@ class ListPendingAppointmentsView(LoginRequiredMixin, View):
                 )
             except HttpError as e:
                 return JsonResponse({"error": str(e)}, status=400)
-
             if appointment.customer.notification_settings.preferences == "all":
                 SendEmailRescheduleAccepted(
                     request,
@@ -382,7 +395,9 @@ class ViewAnalytics(LoginRequiredMixin, View):
             percentage_statuses_dict[key] = percentage
         return render(
             request,
+
             "provider/view_analytics.html",
+
             {
                 "customers": customers,
                 "appointments": myappointments,
@@ -395,3 +410,4 @@ class ViewAnalytics(LoginRequiredMixin, View):
 
 
 view_analytics = ViewAnalytics.as_view()
+

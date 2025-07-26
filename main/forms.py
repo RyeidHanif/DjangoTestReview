@@ -25,3 +25,8 @@ class ProviderForm(forms.ModelForm):
             "start_time": forms.TimeInput(attrs={"type": "time"}),
             "end_time": forms.TimeInput(attrs={"type": "time"}),
         }
+
+
+class CreateCustomerProfileForm(forms.Form):
+    phone_number = forms.IntegerField()
+    
