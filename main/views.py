@@ -43,7 +43,7 @@ def redirectiondashboard(request):
     user = request.user
     prefs, created = NotificationPreferences.objects.get_or_create(user=request.user)
     if hasattr(user, "customerprofile") and hasattr(user, "providerprofile"):
-        return render(request, "main/redirectdashboard.html")
+        return redirect("connect_to_calendar")
     elif hasattr(user, "customerprofile"):
         return redirect("customer_dashboard")
     elif hasattr(user, "providerprofile"):
@@ -52,8 +52,8 @@ def redirectiondashboard(request):
 
     return redirect("profile_creation")
 
-
-def profile_creation(request, n):
+@login_required(login_url="/login/")
+def profile_creation(request):
     """
     profile creation system which uses the provider form and parameter n to divide choices
 
@@ -63,29 +63,22 @@ def profile_creation(request, n):
     if n is given as "both" , then a customer profile for that user is also created
     the user is then redirected to the login page
     """
-    user_id = request.session.get("temp_user_id")
-    phone = request.session.get("temp_phone")
-    if not user_id:
-        return redirect("signup")
+
     if request.method == "POST":
-        provider_form = ProviderForm(request.POST, request.FILES)
+        provider_form = ProviderForm(request.POST , request.FILES)
         if provider_form.is_valid():
 
-            user = get_object_or_404(User, id=user_id)
+            user = request.user
 
             if ProviderProfile.objects.filter(user=user).exists():
-                return redirect("login")
+                return redirect("providerdashboard")
 
             profile = provider_form.save(commit=False)
             profile.user = user
-            profile.phone_number = phone
+            profile.phone_number = user.customerprofile.phone_number
             profile.save()
 
-            del request.session["temp_user_id"]
-            del request.session["temp_phone"]
-            if n == "both":
-                CustomerProfile.objects.create(user=user, phone_number=phone)
-            return redirect("login")
+            return redirect("redirectiondashboard")
 
     provider_form = ProviderForm()
     return render(request, "main/profile_creation.html", {"form": provider_form})

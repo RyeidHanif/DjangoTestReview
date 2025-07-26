@@ -36,6 +36,7 @@ class ProviderDashboardView(LoginRequiredMixin, TemplateView):
         "view_my_appointments": "view_my_appointments",
         "view_pending_appointments": "view_pending_appointments",
         "my_availability": "my_availability",
+        "customer_side":"customer_dashboard",
     }
 
     def post(self, request, *args, **kwargs):

@@ -33,6 +33,7 @@ class CustomerDashboardView(LoginRequiredMixin, TemplateView):
     login_url = "/login/"
     template_name = "customer/customer_dashboard.html"
 
+
     ACTION_MAPPING = {
         "view_providers": "view_providers",
         "view_appointments": "view_appointments",
@@ -44,8 +45,18 @@ class CustomerDashboardView(LoginRequiredMixin, TemplateView):
         for action_key, value in self.ACTION_MAPPING.items():
             if request.POST.get(action_key):
                 return redirect(value)
+        if request.POST.get("provider_side"):
+            if hasattr(request.user, 'providerprofile'):
+                return redirect("provider_dashboard")
+            else :
+                return redirect("profile_creation")
 
         return self.get(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['display'] = display = "Go to provider Dashboard" if hasattr(self.request.user, 'providerprofile') else "Become a Service Provider"
+        return context
 
 
 customer_dashboard = CustomerDashboardView.as_view()
