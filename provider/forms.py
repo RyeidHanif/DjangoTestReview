@@ -18,4 +18,4 @@ class AvailabilityForm(forms.Form):
 
 
 class SendNoteForm(forms.Form):
-    note = forms.CharField(max_length = 100)
+    note = forms.CharField(max_length=100)

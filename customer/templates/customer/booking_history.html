@@ -1,26 +1,78 @@
 {% extends 'main/base.html' %}
 
-{% block title %}Booking history  {% endblock %}
-
+{% block title %}Booking History{% endblock %}
 
 {% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Your Bookings</h1>
 
-<div class="d-flex justify-content-center">
-    <div class="text-align-center">
-    <h1> Here Are All your Bookings  </h1>
-    {% for appointment in appointments %}
-    <div class="card">
-        <div class="card-body">
-    <h3> Appointment with  {{appointment.provider.username}}.  Status is {{appointment.status}} </h3>
-    <h4>{{ appointment.date_start|date:"l, d F Y" }} — from {{ appointment.date_start|time:"h:i A" }} to {{ appointment.date_end|time:"h:i A" }}</h4>
-    <h5> special request : {{appointment.special_requests}}</h5>
-    <h5> appointment Recurrence : {{appointment.recurrence_frequency}} will go on until : {{appointment.recurrence_until}}</h5>
-    </div>
-    </div>
-    </div>
+    {% if appointments %}
+        <div class="row row-cols-1 row-cols-md-2 g-4">
+            {% for appointment in appointments %}
+                <div class="col">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                Appointment with 
+                                <span class="text-primary">{{ appointment.provider.username }}</span>
+                            </h5>
+                            <p class="card-text">
+                                <strong>Status:</strong> 
+                                <span class="badge bg-info text-dark">{{ appointment.status }}</span>
+                            </p>
+                            <p class="card-text">
+                                <strong>Date:</strong> {{ appointment.date_start|date:"l, d F Y" }}<br>
+                                <strong>Time:</strong> {{ appointment.date_start|time:"h:i A" }} - {{ appointment.date_end|time:"h:i A" }}
+                            </p>
+                            {% if appointment.special_requests %}
+                            <p class="card-text">
+                                <strong>Special Request:</strong><br>
+                                {{ appointment.special_requests }}
+                            </p>
+                            {% endif %}
+                            {% if appointment.recurrence_frequency %}
+                            <p class="card-text">
+                                <strong>Recurs:</strong> {{ appointment.recurrence_frequency }}<br>
+                                <strong>Until:</strong> {{ appointment.recurrence_until }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="d-flex justify-content-center mt-5">
+            <nav>
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">&laquo; First</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                        </li>
+                    {% endif %}
+
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    {% else %}
+        <p class="text-center text-muted">No appointments found.</p>
+    {% endif %}
 </div>
-
-{% endfor %}
-
-
 {% endblock %}

@@ -6,3 +6,4 @@ flake8
 black
 python-dotenv
 six
+django-redis

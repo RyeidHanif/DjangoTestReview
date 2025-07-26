@@ -14,9 +14,9 @@
     </div>
   </form>
 
-  {% if appointments %}
+  {% if page_obj %}
     <div class="row g-4">
-      {% for appointment in appointments %}
+      {% for appointment in page_obj %}
         <div class="col-md-6">
           <div class="card shadow-sm h-100">
             <div class="card-body d-flex flex-column">
@@ -24,6 +24,7 @@
               <p class="mb-1"><strong>Date:</strong> {{ appointment.date_start|date:"l, d F Y" }}</p>
               <p class="mb-1"><strong>Time:</strong> {{ appointment.date_start|time:"h:i A" }} — {{ appointment.date_end|time:"h:i A" }}</p>
               <p class="mb-1"><strong>Status:</strong> <span class="text-capitalize">{{ appointment.status }}</span></p>
+              <p class="mb-2"><strong>Total Price : </strong> {{appointment.total_price }}</p>
               <p class="mb-2"><strong>Special Requests:</strong> {{ appointment.special_requests|default:"None" }}</p>
               <p class="mb-3">
                 <strong>Recurrence:</strong> {{ appointment.recurrence_frequency|default:"None" }} 
@@ -43,5 +44,22 @@
   {% else %}
     <p class="text-center fs-5">No pending appointments found.</p>
   {% endif %}
+  <div class="pagination">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page=1">&laquo; first</a>
+            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
+</div>
 </div>
 {% endblock %}
