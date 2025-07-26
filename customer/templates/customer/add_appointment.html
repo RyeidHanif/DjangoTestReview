@@ -3,34 +3,134 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6 text-center">
-            <h2 class="mb-4">Your Appointment is Awaiting Provider Confirmation</h2>
-            <p class="lead mb-4">
-                <strong>{{ start|date:"l, d F Y" }}</strong><br>
-                From <strong>{{ start|time:"h:i A" }}</strong> to <strong>{{ end|time:"h:i A" }}</strong>
-            </p>
+<style>
+  .appointment-hero {
+    background: rgba(30, 30, 40, 0.97);
+    border-radius: 2.2rem;
+    padding: 2.5rem 2rem 2rem 2rem;
+    box-shadow: 0 12px 48px 0 rgba(255, 107, 0, 0.13), 0 1.5px 24px 0 rgba(255, 213, 79, 0.08);
+    margin: 3rem auto 2rem auto;
+    animation: fadeInHero 1.2s cubic-bezier(.77,0,.18,1) both;
+    position: relative;
+    max-width: 520px;
+  }
+  @keyframes fadeInHero {
+    from { opacity: 0; transform: translateY(-40px) scale(0.98);}
+    to { opacity: 1; transform: translateY(0) scale(1);}
+  }
+  .appointment-title {
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: 1.1px;
+    color: #fffbe8;
+    text-shadow: 0 4px 32px #000a, 0 1px 0 #fff, 0 0 2px #000;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    animation: fadeInUp 1s both;
+  }
+  .appointment-lead {
+    color: #fffbe8;
+    font-size: 1.15rem;
+    font-weight: 600;
+    text-shadow: 0 2px 12px #000a;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+  .appointment-form label {
+    color: #ffd54f;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.4rem;
+  }
+  .appointment-form textarea,
+  .appointment-form input,
+  .appointment-form select {
+    border-radius: 0.8rem !important;
+    border: 1.5px solid #ffd54f55 !important;
+    background: rgba(255,255,255,0.97) !important;
+    color: #222 !important;
+    font-size: 1.08rem !important;
+    box-shadow: 0 2px 8px #ffd54f11;
+    padding: 0.7rem 1rem !important;
+    transition: border 0.2s, box-shadow 0.2s;
+  }
+  .appointment-form textarea:focus,
+  .appointment-form input:focus,
+  .appointment-form select:focus {
+    border-color: #ff6a00 !important;
+    box-shadow: 0 4px 16px #ffb34744;
+    outline: none;
+  }
+  .appointment-form .btn-success, .appointment-form .btn-danger {
+    font-size: 1.15rem;
+    font-weight: 700;
+    border-radius: 1.1rem;
+    padding: 0.8rem 2.2rem;
+    box-shadow: 0 4px 24px #43e97b33;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.15s;
+    letter-spacing: 0.5px;
+  }
+  .appointment-form .btn-success {
+    background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+    border: none;
+    color: #fff;
+  }
+  .appointment-form .btn-success:hover, .appointment-form .btn-success:focus {
+    background: linear-gradient(90deg, #38f9d7 0%, #43e97b 100%);
+    color: #fff;
+    box-shadow: 0 8px 32px #43e97b33;
+    transform: translateY(-2px) scale(1.03);
+  }
+  .appointment-form .btn-danger {
+    background: linear-gradient(90deg, #ff1744 0%, #ff6a00 100%);
+    border: none;
+    color: #fff;
+    box-shadow: 0 4px 24px #ff174433;
+  }
+  .appointment-form .btn-danger:hover, .appointment-form .btn-danger:focus {
+    background: linear-gradient(90deg, #ff6a00 0%, #ff1744 100%);
+    color: #fff;
+    box-shadow: 0 8px 32px #ff174433;
+    transform: translateY(-2px) scale(1.03);
+  }
+  @media (max-width: 600px) {
+    .appointment-hero {
+      padding: 1.2rem 0.5rem 1rem 0.5rem;
+      max-width: 98vw;
+    }
+    .appointment-title {
+      font-size: 1.2rem;
+    }
+    .appointment-lead {
+      font-size: 1rem;
+    }
+  }
+</style>
 
-            <form method="POST" class="p-4 border rounded shadow bg-light">
-                {% csrf_token %}
-                {{ form|crispy }}
+<div class="appointment-hero">
+    <h2 class="appointment-title">Your Appointment is Awaiting Provider Confirmation</h2>
+    <p class="appointment-lead">
+        <strong>{{ start|date:"l, d F Y" }}</strong><br>
+        From <strong>{{ start|time:"h:i A" }}</strong> to <strong>{{ end|time:"h:i A" }}</strong>
+    </p>
 
-                <div class="form-group mb-3">
-                    <label for="special_requests" class="form-label fw-semibold">Special Requests</label>
-                    <textarea name="special_requests" id="special_requests" class="form-control" rows="4" placeholder="Let the provider know any specific needs...">{% if mode == "reschedule" and appointment %}{{ appointment.special_requests }}{% endif %}</textarea>
-                </div>
+    <form method="POST" class="appointment-form p-3">
+        {% csrf_token %}
+        {{ form|crispy }}
 
-                <div class="d-flex justify-content-between">
-                    <button type="submit" name="confirm" value="confirm" class="btn btn-success px-4">
-                        <i class="bi bi-check-circle"></i> Confirm
-                    </button>
-                    <button type="submit" name="cancel" value="cancel" class="btn btn-danger px-4">
-                        <i class="bi bi-x-circle"></i> Cancel
-                    </button>
-                </div>
-            </form>
+        <div class="form-group mb-3">
+            <label for="special_requests" class="form-label">Special Requests</label>
+            <textarea name="special_requests" id="special_requests" class="form-control" rows="4" placeholder="Let the provider know any specific needs...">{% if mode == "reschedule" and appointment %}{{ appointment.special_requests }}{% endif %}</textarea>
         </div>
-    </div>
-</div>
+
+        <div class="d-flex justify-content-between gap-2">
+            <button type="submit" name="confirm" value="confirm" class="btn btn-success flex-fill">
+                <i class="bi bi-check-circle"></i> Confirm
+            </button>
+            <button type="submit" name="cancel" value="cancel" class="btn btn-danger flex-fill">
+                <i class="bi bi-x-circle"></i> Cancel
+            </button>
+        </div>
+    </form>
+
 {% endblock %}
