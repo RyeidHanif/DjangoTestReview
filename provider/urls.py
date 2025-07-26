@@ -12,6 +12,6 @@ urlpatterns = [
         views.view_pending_appointments,
         name="view_pending_appointments",
     ),
-    path("view-analytics", views.viewanalytics, name="viewanalytics"),
-    path("myavailability", views.myavailability, name="myavailability"),
+    path("view-analytics", views.view_analytics, name="view_analytics"),
+    path("my_availability", views.my_availability, name="my_availability"),
 ]

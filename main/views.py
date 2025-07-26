@@ -8,14 +8,22 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Permission, User
 from django.core.paginator import Paginator
-from django.shortcuts import redirect, render
+
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.cache import cache_page
 from django.views.generic import ListView, TemplateView
+
 from dotenv import load_dotenv
+
+from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import Flow
+from googleapiclient.errors import HttpError
+
 
 from .forms import ProviderForm , CreateCustomerProfileForm
 from .models import (Appointment, CustomerProfile, NotificationPreferences,
@@ -23,8 +31,19 @@ from .models import (Appointment, CustomerProfile, NotificationPreferences,
 
 load_dotenv()
 
+from main.calendar_client import GoogleCalendarClient
+
+from .forms import ProviderForm
+from .models import (Appointment, CustomerProfile, NotificationPreferences,
+                     ProviderProfile, User)
 
 # Create your views here.
+
+
+
+@method_decorator(cache_page(60 * 5), name="dispatch")
+class Home(TemplateView):
+    template_name = "main/home.html"
 
 class Home(TemplateView):
     template_name = "main/home.html"
@@ -40,7 +59,7 @@ def redirectiondashboard(request):
     user = request.user
     prefs, created = NotificationPreferences.objects.get_or_create(user=request.user)
     if hasattr(user, "customerprofile") and hasattr(user, "providerprofile"):
-        return render(request, "main/redirectdashboard.html")
+        return redirect("connect_to_calendar")
     elif hasattr(user, "customerprofile"):
         return redirect("customer_dashboard")
     elif hasattr(user, "providerprofile"):
@@ -50,8 +69,8 @@ def redirectiondashboard(request):
         return redirect("create_customer_profile")
 
 
-
-def profile_creation(request, n):
+@login_required(login_url="/login/")
+def profile_creation(request):
     """
     profile creation system which uses the provider form and parameter n to divide choices
 
@@ -61,29 +80,22 @@ def profile_creation(request, n):
     if n is given as "both" , then a customer profile for that user is also created
     the user is then redirected to the login page
     """
-    user_id = request.session.get("temp_user_id")
-    phone = request.session.get("temp_phone")
-    if not user_id:
-        return redirect("signup")
+
     if request.method == "POST":
         provider_form = ProviderForm(request.POST, request.FILES)
         if provider_form.is_valid():
 
-            user = User.objects.get(id=user_id)
+            user = request.user
 
             if ProviderProfile.objects.filter(user=user).exists():
-                return redirect("login")
+                return redirect("provider_dashboard")
 
             profile = provider_form.save(commit=False)
             profile.user = user
-            profile.phone_number = phone
+            profile.phone_number = user.customerprofile.phone_number
             profile.save()
 
-            del request.session["temp_user_id"]
-            del request.session["temp_phone"]
-            if n == "both":
-                CustomerProfile.objects.create(user=user, phone_number=phone)
-            return redirect("login")
+            return redirect("redirectiondashboard")
 
     provider_form = ProviderForm()
     return render(request, "main/profile_creation.html", {"form": provider_form})
@@ -93,7 +105,7 @@ def profile_creation(request, n):
 def connect_to_calendar(request):
     """Displays the page to allow the user to connect to their google calendar"""
     user = request.user
-    profile = ProviderProfile.objects.get(user=user)
+    profile = get_object_or_404(ProviderProfile, user=user)
     if profile.google_calendar_connected:
         messages.info(request, "you are connected to calendar")
         return redirect("provider_dashboard")
@@ -106,24 +118,14 @@ def connect_to_calendar(request):
 
 def connect_google(request):
     """Creates the authorization url which the user is redirected to to allow for the connection"""
+    calendar_client = GoogleCalendarClient()
 
-    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"  # tell google that no https , using http
-    
-    BASE_URL = os.getenv("BASE_URL")
+    try:
 
-    flow = Flow.from_client_secrets_file(  # load google auth clint credentials
-        "credentials.json",
-        scopes=[    "https://www.googleapis.com/auth/calendar",
-    "openid",
-    "https://www.googleapis.com/auth/userinfo.email",
-    "https://www.googleapis.com/auth/userinfo.profile"],
-        redirect_uri=f"{BASE_URL}/google/oauth2callback/",
-    )
-    auth_url, _ = flow.authorization_url(
-        access_type="offline",  # need it even when user is offline
-        include_granted_scopes="true",  # all scopes ,rw
-        prompt="consent",  # ask for the consent every time
-    )
+        auth_url = calendar_client.create_auth_url()
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
     return redirect(auth_url)
 
 
@@ -137,30 +139,14 @@ def oauth2callback(request):
     the authorization code sent by google is exchanged for access and refresh tokens
     which are then stored in the ProvideProfile model columns to be used later
     """
-    BASE_URL = os.getenv("BASE_URL")
-    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-    flow = Flow.from_client_secrets_file(  # load google auth client credentils
-        "credentials.json",
-        scopes=[ "https://www.googleapis.com/auth/calendar",
-    "openid",
-    "https://www.googleapis.com/auth/userinfo.email",
-    "https://www.googleapis.com/auth/userinfo.profile", ],
-        redirect_uri=f"{BASE_URL}/google/oauth2callback/",
-    )
+    calendar_client = GoogleCalendarClient()
+    try:
+        calendar_client.google_calendar_callback(request)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
 
-    flow.fetch_token(
-        authorization_response=request.build_absolute_uri()
-    )  # exchange the auth code for tokens
-
-    creds = flow.credentials  # credentials object which contains the tokens and expiry
-    profile = ProviderProfile.objects.get(user=request.user)
-    profile.google_access_token = creds.token
-    profile.google_refresh_token = creds.refresh_token
-    profile.google_token_expiry = creds.expiry
-    profile.google_calendar_connected = True
-    profile.save()
-    messages.success(request, "Your Google Calendar is successfully connected!")
     return redirect("provider_dashboard")
+
 
 
 @method_decorator(cache_page(60 * 5), name="dispatch")
@@ -176,7 +162,7 @@ cancellation_policy = CancellationPolicy.as_view()
 
 
 @method_decorator(staff_member_required, name="dispatch")
-class AdminDashboard(View, LoginRequiredMixin):
+class AdminDashboardView(LoginRequiredMixin , View):
     """
     Provides Analytics data for staff members and admins
 
@@ -243,7 +229,9 @@ class AdminDashboard(View, LoginRequiredMixin):
     def post(self, request, *args, **kwargs):
         if request.POST.get("toggle_active"):
             user_id = request.POST.get("toggle_active")
-            current_user = User.objects.get(id=user_id)
+
+            current_user = get_object_or_404(User, id=user_id)
+
             if current_user.is_active:
                 current_user.is_active = False
             else:
@@ -251,7 +239,9 @@ class AdminDashboard(View, LoginRequiredMixin):
             current_user.save()
         if request.POST.get("delete"):
             user_id = request.POST.get("delete")
-            user = User.objects.get(id=user_id)
+
+            user = get_object_or_404(User, id=user_id)
+
             if user:
                 user.delete()
             else:
@@ -259,7 +249,7 @@ class AdminDashboard(View, LoginRequiredMixin):
         return self.get(request)
 
 
-admin_dashboard_analytics = AdminDashboard.as_view()
+admin_dashboard_analytics = AdminDashboardView.as_view()
 
 
 @method_decorator(staff_member_required, name="dispatch")
@@ -272,9 +262,12 @@ class ViewCustomerProfile(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user = User.objects.get(id=kwargs["userID"])
+
+        user = get_object_or_404(User, id=kwargs["userID"])
+
         context["user"] = user
-        context["user_customer_profile"] = CustomerProfile.objects.get(user=user)
+        context["user_customer_profile"] = get_object_or_404(CustomerProfile, user=user)
+
         context["appointments_customer"] = Appointment.objects.filter(customer=user)
         return context
 
@@ -290,7 +283,8 @@ class ViewProviderProfile(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user = User.objects.get(id=kwargs["userID"])
+
+        user = get_object_or_404(User, id=kwargs["userID"])
         context["user"] = user
         context["user_provider_profile"] = ProviderProfile.objects.get(user=user)
         context["appointments_provider"] = Appointment.objects.filter(provider=user)
@@ -298,7 +292,6 @@ class ViewProviderProfile(TemplateView):
 
 
 view_provider_profile = ViewProviderProfile.as_view()
-
 
 
 def create_customer_profile(request):

@@ -16,6 +16,7 @@ class AppointmentRecurrenceForm(forms.Form):
         required=False, widget=forms.DateInput(attrs={"type": "date"})
     )
 
+
     def __init__(self, *args, **kwargs):
         appointment_date = kwargs.pop("appointment_date", None)
         super().__init__(*args, **kwargs)

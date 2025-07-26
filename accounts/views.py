@@ -46,19 +46,6 @@ def activateEmail(request, user, to_email):
 
 
 def signup(request):
-    """
-    create new user object and send user to profile creation system
-
-    the view uses the user creation form to create a user object ,
-    use the profile choice given in the form to redirect the user according
-    to their choice :
-    - for customer : creates a customer profile object in place .
-    - for provider or both : redirects user to profile creation view.
-
-    adds 2 items to the session which will be sent to the profile creation view
-    - phone number to prevent repettion
-    - user id  so that the user can be identified in the profile view (since not logged in )
-    """
 
     if request.method == "POST":
         suform = SignUpForm(request.POST)
@@ -67,17 +54,16 @@ def signup(request):
             user.is_acive = False
             user.save()
             activateEmail(request, user, suform.cleaned_data.get("email"))
-            choice = suform.cleaned_data["profile_choice"]
             phone_number = suform.cleaned_data["phone_number"]
-            request.session["profile_choice"] = choice
-            request.session["temp_phone"] = phone_number
-            return redirect("home")
+            CustomerProfile.objects.create(user=user, phone_number=phone_number)
+            return redirect("activate")
         else:
             for error in list(suform.errors.values()):
                 messages.error(request, error)
 
     suform = SignUpForm()
     return render(request, "accounts/signup.html", {"form": suform})
+
 
 
 def activate(request, uidb64, token):
@@ -90,18 +76,14 @@ def activate(request, uidb64, token):
     if user is not None and account_activation_token.check_token(user, token):
         user.is_active = True
         user.save()
-        choice = request.session.get("profile_choice")
-        phone_number = request.session.get("temp_phone")
         messages.success(
             request,
             "Thank you for your email confirmation. Now you can continue profile creation .",
         )
-        if choice == "customer":
-            CustomerProfile.objects.create(user=user, phone_number=phone_number)
-            return redirect("customer_dashboard")
-        elif choice == "provider" or choice == "both":
-            request.session["temp_user_id"] = user.id
-            return redirect("profile_creation", n=choice)
+        login(request , user )
+        create , _ = NotificationPreferences.objects.get_or_create(user=request.user)
+        return redirect("customer_dashboard")
+
 
     else:
         messages.error(request, "Activation link is invalid!")
@@ -127,7 +109,7 @@ def password_change(request):
 
 
 @login_required(login_url="/login/")
-def userprofile(request):
+def user_profile(request):
 
     me = User.objects.get(id=request.user.id)
     my_provider_profile = ProviderProfile.objects.filter(user=me).first()
@@ -148,14 +130,17 @@ def userprofile(request):
                 obj.preferences = preference
                 obj.save()
 
-        if request.POST.get("modifyprofile"):
-            return redirect("modifyprofile")
-        if request.POST.get("deleteaccount"):
+        if request.POST.get("modify_profile"):
+            return redirect("modify_profile")
+        if request.POST.get("delete_account"):
             messages.warning(
                 request,
                 "All your data will be lost . Are you sure you wish to delete your account ? ",
             )
-            return redirect("deleteaccount")
+
+
+            return redirect("delete_account")
+
 
         if request.POST.get("change_pfp"):
             if change_profile_form.is_valid():
@@ -164,14 +149,14 @@ def userprofile(request):
         elif request.POST.get("remove_pfp") and my_provider_profile:
             my_provider_profile.profile_photo.delete(save=True)
             messages.success(request, "Profile picture removed.")
-            return redirect("userprofile")
+            return redirect("user_profile")
 
     user_pref = NotificationPreferences.objects.filter(user=request.user).first()
     notiform = ChangeNotificationPreferencesForm(instance=user_pref)
 
     return render(
         request,
-        "accounts/userprofile.html",
+        "accounts/user_profile.html",
         {
             "me": me,
             "my_provider": my_provider_profile,
@@ -183,7 +168,7 @@ def userprofile(request):
 
 
 @login_required(login_url="/login/")
-def modifyprofile(request):
+def modify_profile(request):
     provider_profile = ProviderProfile.objects.filter(user=request.user).first()
     if request.method == "POST":
         form = ProviderForm(request.POST, instance=provider_profile)
@@ -191,23 +176,23 @@ def modifyprofile(request):
             form.save()
 
             messages.success(request, "Details changed successfully ")
-            return redirect("userprofile")
+            return redirect("user_profile")
         else:
             messages.warning(request, form.errors)
-            return redirect("modifyprofile")
+            return redirect("modify_profile")
     else:
 
         form = ProviderForm(instance=provider_profile)
 
-    return render(request, "accounts/modifyprofile.html", {"form": form})
+    return render(request, "accounts/modify_profile.html", {"form": form})
 
 
 @login_required(login_url="/login/")
-def deleteaccount(request):
+def delete_account(request):
     if request.method == "POST":
         request.user.delete()
 
         logout(request)
         messages.info(request, " Account deleted successfully ")
         return redirect("home")
-    return render(request, "accounts/deleteaccount.html")
+    return render(request, "accounts/delete_account.html")

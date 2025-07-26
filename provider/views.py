@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+
 from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -16,38 +17,55 @@ from django.views.generic import ListView
 
 from logging_conf import logger
 from main.models import Appointment, NotificationPreferences, ProviderProfile
-from main.utils import cancellation, get_calendar_service
+from main.utils import cancellation
+
+from django.core.paginator import Paginator
+from django.http import JsonResponse
+# Create your views here.
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.timezone import (activate, get_current_timezone, localdate,
+                                   localtime, make_aware, now)
+from django.views import View
+from django.views.generic import ListView, TemplateView
+from google.auth.exceptions import RefreshError
+from googleapiclient.errors import HttpError
+
+from logging_conf import logger
+from main.calendar_client import GoogleCalendarClient
+from main.models import Appointment, NotificationPreferences, ProviderProfile
+from main.utils import cancellation, force_provider_calendar
+
 
 from .forms import AvailabilityForm, SendNoteForm
 from .utils import (EmailCancelledAppointment, EmailConfirmedAppointment,
                     EmailDeclinedAppointment, EmailRescheduleDeclined,
-                    SendEmailRescheduleAccepted, create_google_calendar_event,
-                    reschedule_google_event)
+                    SendEmailRescheduleAccepted)
 
 
-class ProviderDashboard(View, LoginRequiredMixin):
+class ProviderDashboardView(LoginRequiredMixin, TemplateView):
     login_url = "/login/"
+    template_name = "provider/provider_dashboard.html"
 
-    def get(self, request, *args, **kwargs):
-        return render(request, "provider/provider_dashboard.html")
+    ACTION_MAPPING = {
+        "my_profile": "user_profile",
+        "view_analytics": "view_analytics",
+        "view_my_appointments": "view_my_appointments",
+        "view_pending_appointments": "view_pending_appointments",
+        "my_availability": "my_availability",
+        "customer_side":"customer_dashboard",
+    }
 
     def post(self, request, *args, **kwargs):
-        if request.POST.get("myprofile"):
-            return redirect("userprofile")
-        if request.POST.get("viewanalytics"):
-            return redirect("viewanalytics")
-        if request.POST.get("viewmyappointments"):
-            return redirect("view_my_appointments")
-        if request.POST.get("viewpendingappointments"):
-            return redirect("view_pending_appointments")
-        if request.POST.get("myavailability"):
-            return redirect("myavailability")
+        for key, value in self.ACTION_MAPPING.items():
+            if request.POST.get(key):
+                return redirect(value)
+        return self.get(request, *args, **kwargs)
 
 
-provider_dashboard = ProviderDashboard.as_view()
+provider_dashboard = ProviderDashboardView.as_view()
 
 
-class ViewMyAppointments(View, LoginRequiredMixin):
+class ListAcceptedAppointmentsView(LoginRequiredMixin, View):
 
     login_url = "/login/"
 
@@ -76,23 +94,35 @@ class ViewMyAppointments(View, LoginRequiredMixin):
         )
 
     def post(self, request, *args, **kwargs):
-
+        calendar_client = GoogleCalendarClient()
         if request.POST.get("cancel"):
+            cancel_appointment = get_object_or_404(
+                Appointment, id=request.POST.get("cancel")
+            )
 
-            cancel_appointment = Appointment.objects.select_related(
-                "customer", "provider"
-            ).get(id=request.POST.get("cancel"))
             to_email = cancel_appointment.customer.email
             customer = cancel_appointment.customer
             provider = cancel_appointment.provider
             cancel_appointment.status = "cancelled"
-            service = get_calendar_service(request.user)
-            service.events().delete(
-                calendarId="primary", eventId=cancel_appointment.event_id
-            ).execute()
+            try:
+                calendar_client.delete_event(request.user, cancel_appointment.event_id)
+
+            except RefreshError as re:
+                force_provider_calendar(cancel_appointment.provider)
+                return JsonResponse(
+                    {
+                        "error": "refresh_token_expired",
+                        "message": "Provider's Google Calendar account has expired and must be renewed.",
+                    },
+                    status=400,
+                )
+            except HttpError as e:
+                return JsonResponse({"error": str(e)}, status=400)
+
             cancel_appointment.save()
             if customer.notification_settings.preferences == "all":
                 EmailCancelledAppointment(request, customer, provider, to_email)
+
             if not request.user.is_superuser:
                 count_cancel = cancellation(request , request.user, cancel_appointment)
                 if count_cancel >= 3:
@@ -124,10 +154,10 @@ class ViewMyAppointments(View, LoginRequiredMixin):
                 return redirect("view_my_appointments")
 
 
-view_my_appointments = ViewMyAppointments.as_view()
+view_my_appointments = ListAcceptedAppointmentsView.as_view()
 
 
-class ViewPendingAppointments(View, LoginRequiredMixin):
+class ListPendingAppointmentsView(LoginRequiredMixin, View):
     login_url = "/login/"
 
     def get(self, request, *args, **kwargs):
@@ -155,17 +185,14 @@ class ViewPendingAppointments(View, LoginRequiredMixin):
 
     def post(self, request, *args, **kwargs):
         if request.POST.get("reject"):
-            appointment = Appointment.objects.select_related(
-                "customer", "customer__notification_settings"
-            ).get(id=request.POST.get("reject"))
+
+            appointment = get_object_or_404(Appointment, id=request.POST.get("reject"))
+
             return self.reject_appointment(request, appointment)
 
         if request.POST.get("accept"):
 
-            appointment = Appointment.objects.select_related(
-                "customer", "customer__notification_settings"
-            ).get(id=request.POST.get("accept"))
-
+            appointment = get_object_or_404(Appointment, id=request.POST.get("accept"))
             return self.accept_appointment(request, appointment)
 
         return redirect("view_pending_appointments")
@@ -185,7 +212,7 @@ class ViewPendingAppointments(View, LoginRequiredMixin):
             messages.success(request, " appointment rejected successfully")
             return redirect("view_pending_appointments")
         elif appointment.status == "rescheduled":
-            appointment.status = "cancelled"
+            appointment.status = "accepted"
             appointment.save()
             messages.info(request, "reschedule rejected successfully ")
             if appointment.customer.notification_settings.preferences == "all":
@@ -200,25 +227,38 @@ class ViewPendingAppointments(View, LoginRequiredMixin):
             return redirect("view_pending_appointments")
 
     def accept_appointment(self, request, appointment):
+        calendar_client = GoogleCalendarClient()
         if appointment.status == "pending":
             appointment.status = "accepted"
 
             summary = f"Appointment with {appointment.customer.username}"
-            service = get_calendar_service(appointment.provider)
 
             timeslot = (
                 localtime(appointment.date_start).isoformat(),
                 localtime(appointment.date_end).isoformat(),
             )
-            event = create_google_calendar_event(
-                service,
-                timeslot,
-                summary,
-                appointment.customer.email,
-                appointment.recurrence_frequency,
-                appointment.recurrence_until,
-                appointment,
-            )
+
+            try:
+                event = calendar_client.create_google_calendar_event(
+                    appointment.provider,
+                    timeslot,
+                    summary,
+                    appointment.customer.email,
+                    appointment.recurrence_frequency,
+                    appointment.recurrence_until,
+                )
+
+            except RefreshError as re:
+                force_provider_calendar(appointment.provider)
+                return JsonResponse(
+                    {
+                        "error": "refresh_token_expired",
+                        "message": "Provider's Google Calendar account has expired and must be renewed.",
+                    },
+                    status=400,
+                )
+            except HttpError as e:
+                return JsonResponse({"error": str(e)}, status=400)
 
             appointment.event_id = event["id"]
             appointment.save()
@@ -235,15 +275,27 @@ class ViewPendingAppointments(View, LoginRequiredMixin):
             return redirect("view_pending_appointments")
         elif appointment.status == "rescheduled":
             appointment.status = "accepted"
-            service = get_calendar_service(request.user)
-            reschedule_google_event(
-                service,
-                appointment.event_id,
-                localtime(appointment.date_start).isoformat(),
-                localtime(appointment.date_end).isoformat(),
-                appointment.recurrence_frequency,
-                appointment.recurrence_until,
-            )
+            try:
+                calendar_client.reschedule_google_event(
+                    request.user,
+                    appointment.event_id,
+                    localtime(appointment.date_start).isoformat(),
+                    localtime(appointment.date_end).isoformat(),
+                    appointment.recurrence_frequency,
+                    appointment.recurrence_until,
+                )
+
+            except RefreshError as re:
+                force_provider_calendar(appointment.provider)
+                return JsonResponse(
+                    {
+                        "error": "refresh_token_expired",
+                        "message": "Provider's Google Calendar account has expired and must be renewed.",
+                    },
+                    status=400,
+                )
+            except HttpError as e:
+                return JsonResponse({"error": str(e)}, status=400)
             if appointment.customer.notification_settings.preferences == "all":
                 SendEmailRescheduleAccepted(
                     request,
@@ -258,16 +310,17 @@ class ViewPendingAppointments(View, LoginRequiredMixin):
             return redirect("view_pending_appointments")
 
 
-view_pending_appointments = ViewPendingAppointments.as_view()
+view_pending_appointments = ListPendingAppointmentsView.as_view()
 
 
-class MyAvailability(View, LoginRequiredMixin):
+class MyAvailabilityView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         self.form = AvailabilityForm()
 
-        return render(request, "provider/myavailability.html", {"form": self.form})
+        return render(request, "provider/my_availability.html", {"form": self.form})
 
     def post(self, request, *args, **kwargs):
+        calendar_client = GoogleCalendarClient()
         self.form = AvailabilityForm(request.POST)
         if self.form.is_valid():
             start_date = self.form.cleaned_data["start_date"]
@@ -284,32 +337,30 @@ class MyAvailability(View, LoginRequiredMixin):
             )
             start_datetime_iso = start_datetime.isoformat()
             end_datetime_iso = end_datetime.isoformat()
-            service = get_calendar_service(request.user)
-            event = {
-                "summary": "Unavailable",
-                "location": "NA",
-                "description": cause,
-                "start": {
-                    "dateTime": start_datetime_iso,
-                    "timeZone": "Asia/Karachi",
-                },
-                "end": {
-                    "dateTime": end_datetime_iso,
-                    "timeZone": "Asia/Karachi",
-                },
-                "reminders": {
-                    "useDefault": True,
-                },
-            }
-            service.events().insert(calendarId="primary", body=event).execute()
-            messages.success(request, "Added time block successfully")
-            return redirect("myavailability")
+            try:
+                calendar_client.create_availability_block(
+                    request, request.user, cause, start_datetime_iso, end_datetime_iso
+                )
+
+            except RefreshError as re:
+                force_provider_calendar(request.user)
+                return JsonResponse(
+                    {
+                        "error": "refresh_token_expired",
+                        "message": "Provider's Google Calendar account has expired and must be renewed.",
+                    },
+                    status=400,
+                )
+            except HttpError as e:
+                return JsonResponse({"error": str(e)}, status=400)
+
+            return redirect("my_availability")
 
 
-myavailability = MyAvailability.as_view()
+my_availability = MyAvailabilityView.as_view()
 
 
-class ViewAnalytics(View, LoginRequiredMixin):
+class ViewAnalytics(LoginRequiredMixin, View):
     login_url = "/login/"
 
     def get(self, request, *args, **kwargs):
@@ -344,7 +395,9 @@ class ViewAnalytics(View, LoginRequiredMixin):
             percentage_statuses_dict[key] = percentage
         return render(
             request,
-            "provider/viewanalytics.html",
+
+            "provider/view_analytics.html",
+
             {
                 "customers": customers,
                 "appointments": myappointments,
@@ -356,4 +409,5 @@ class ViewAnalytics(View, LoginRequiredMixin):
         )
 
 
-viewanalytics = ViewAnalytics.as_view()
+view_analytics = ViewAnalytics.as_view()
+

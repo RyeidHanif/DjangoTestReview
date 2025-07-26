@@ -11,7 +11,8 @@ from django.utils.timezone import (activate, get_current_timezone, localdate,
 from googleapiclient.errors import HttpError
 
 from main.models import Appointment, ProviderProfile
-from main.utils import get_calendar_service
+
+
 
 
 def create_calendar_appointment(
@@ -130,54 +131,6 @@ def EmailCancelledAppointment(
             request,
             f"Problem sending confirmation email to {to_email}, check if you typed it correctly.",
         )
-
-
-def create_google_calendar_event(
-    service,
-    timeslot,
-    summary,
-    attendee_email,
-    recurrence_frequency,
-    until_date,
-    appointment,
-):
-    event_body = create_calendar_appointment(
-        timeslot[0],
-        timeslot[1],
-        summary,
-        attendee_email,
-        recurrence_frequency,
-        until_date,
-        appointment,
-    )
-    return (
-        service.events()
-        .insert(calendarId="primary", body=event_body, sendUpdates="all")
-        .execute()
-    )
-
-
-def reschedule_google_event(
-    service, event_id, new_start, new_end, recurrence_frequency, recurrence_until
-):
-    event = service.events().get(calendarId="primary", eventId=event_id).execute()
-    event["start"]["dateTime"] = new_start
-    event["end"]["dateTime"] = new_end
-
-    if recurrence_frequency and recurrence_until:
-        until_utc = datetime.combine(recurrence_until, time.min).replace(
-            tzinfo=timezone.utc
-        )
-        until_str = until_utc.strftime("%Y%m%dT%H%M%SZ")
-        event["recurrence"] = [f"RRULE:FREQ={recurrence_frequency};UNTIL={until_str}"]
-    else:
-        event.pop("recurrence", None)
-
-    return (
-        service.events()
-        .update(calendarId="primary", eventId=event_id, body=event)
-        .execute()
-    )
 
 
 def SendEmailRescheduleAccepted(

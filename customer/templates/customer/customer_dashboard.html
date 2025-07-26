@@ -10,10 +10,12 @@
         <h1>Welcome to the Customer Dashboard  {{user.username}} </h1>
         <form class="form-group" method="POST" action="#">
             {% csrf_token %}
-            <button class ="btn btn-primary" type="submit" name="view_providers" value = "view_providers">View Providers</button>
-            <button class ="btn btn-success" type="submit" name="view_appointments" value = "view_appointments">View Appointments</button>
-            <button class ="btn btn-dark" type="submit" name="myprofile" value = "myprofile">My Profile</button>
-            <button class ="btn btn-dark" type="submit" name="booking_history" value = "booking_history">Booking History </button>
+
+            <button class ="btn btn-primary" type="submit" name="view_providers" value = "viewproviders">View Providers</button>
+            <button class ="btn btn-success" type="submit" name="view_appointments" value = "viewappointments">View Appointments</button>
+            <button class ="btn btn-dark" type="submit" name="my_profile" value = "myprofile">My Profile</button>
+            <button class ="btn btn-dark" type="submit" name="booking_history" value = "bookinghistory">Booking History </button>
+            <button class="btn btn-outline-success" type="submit" name="provider_side" value="provider_Side">{{display}}</button>
 
         </form>
     </div>

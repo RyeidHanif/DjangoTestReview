@@ -140,10 +140,12 @@ class NotificationPreferences(models.Model):
     preferences : the actual user choice , defaulting to all
     """
 
+
     user = models.OneToOneField(
         User, related_name="notification_settings", on_delete=models.CASCADE
     )
     preferences = models.CharField(
         max_length=11, choices=NOTIFICATION_CHOICES, default="all"
     )
+
 

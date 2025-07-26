@@ -2,8 +2,10 @@ from django.contrib import admin
 
 from .models import (AnalyticsApi, Appointment, CustomerProfile,
                      NotificationPreferences, ProviderProfile)
+
 from django.core.mail import send_mail
 from django.utils.safestring import mark_safe
+
 
 from django.utils.timezone import (activate, get_current_timezone, localdate,
                                    localtime, make_aware, now)
@@ -126,8 +128,6 @@ admin.site.register(CustomerProfile, CustomerProfileAdmin)
 admin.site.register(Appointment, AppointmentAdmin)
 admin.site.register(AnalyticsApi)
 admin.site.register(NotificationPreferences, NotificationPreferencesAdmin)
-
-
 
 
 # Register your models here.

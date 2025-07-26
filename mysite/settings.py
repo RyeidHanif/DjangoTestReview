@@ -194,6 +194,7 @@ STATIC_URL = "static/"  # The static folder ill use to  load static files onto t
 MEDIA_URL = "/media/"  # the url prefix for serving uploaded media
 
 
+
 MEDIA_ROOT = os.path.join(
     BASE_DIR, "media"
 )  # the actual folder to which django writes the images to
@@ -215,10 +216,12 @@ SIMPLE_JWT = {
 
 
 
+
 AUTHENTICATION_BACKENDS = [
     
     # Needed to login by username in Django admin, regardless of `allauth`
     'django.contrib.auth.backends.ModelBackend',
+
 
     # `allauth` specific authentication methods, such as login by email
     'allauth.account.auth_backends.AuthenticationBackend',
@@ -281,6 +284,9 @@ JAZZMIN_SETTINGS = {
    
 }
 
+
 APPEND_SLASH = True
+
+
 
 
