@@ -9,9 +9,10 @@ from django.utils.safestring import mark_safe
 
 from django.utils.timezone import (activate, get_current_timezone, localdate,
                                    localtime, make_aware, now)
-from customer.utils import get_available_slots
 from django.core import serializers
 from django.http import HttpResponse
+from main.calendar_client import GoogleCalendarClient
+
 
 
 
@@ -34,9 +35,9 @@ class ProviderProfileAdmin(admin.ModelAdmin):
 
         provider = queryset.first()
         provider_user = provider.user
-
+        calendar_client = GoogleCalendarClient()
         
-        slots = get_available_slots(provider_user, 1)  
+        slots = calendar_client.get_available_slots(provider_user, 1)  
 
         if not slots:
             self.message_user(request, "No available slots for today.")

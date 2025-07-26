@@ -34,6 +34,11 @@
         <div class="card-body">
             <h4 class="card-title">Customer Profile</h4>
             <p><strong>Phone Number:</strong> {{ my_customer.phone_number }}</p>
+            <form method="POST" class="mt-3">
+                        {% csrf_token %}
+                        <button class="btn btn-danger" type="submit" name="delete_account" value="delete_account">Delete Account</button>
+                    </form>
+
         </div>
     </div>
     {% endif %}

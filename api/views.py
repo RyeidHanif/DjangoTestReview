@@ -10,8 +10,6 @@ from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from customer.utils import get_available_slots
 # Create your views here.
 from main.models import AnalyticsApi, Appointment, ProviderProfile
 
@@ -21,6 +19,7 @@ from .serializers import (AppointmentSerializer, ProviderAnalyticsSerializer,
                           ViewAllProvidersSerializer , WelcomeSerializer , SlotSerializer)
 
 from drf_spectacular.utils import extend_schema
+from main.calendar_client import GoogleCalendarClient
 
 
 
@@ -131,8 +130,8 @@ class APIProviderAvailability(APIView):
             raise ValidationError(
                 {"Unavailable": "Google Calendar of the provider is not connected"}
             )
-
-        slots = get_available_slots(provider, slot_range)
+        calendar_client = GoogleCalendarClient()
+        slots = calendar_client.get_available_slots(provider, slot_range)
 
         formatted_slots = [
             {

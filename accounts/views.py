@@ -59,7 +59,7 @@ def signup(request):
             activateEmail(request, user, suform.cleaned_data.get("email"))
             phone_number = suform.cleaned_data["phone_number"]
             CustomerProfile.objects.create(user=user, phone_number=phone_number)
-            return redirect("activate")
+            return redirect("home")
         else:
             for error in list(suform.errors.values()):
                 messages.error(request, error)
@@ -83,8 +83,17 @@ def activate(request, uidb64, token):
             request,
             "Thank you for your email confirmation. Now you can continue profile creation .",
         )
-        login(request , user )
-        create , _ = NotificationPreferences.objects.get_or_create(user=request.user)
+        print("User logged in:", user)
+        print("Is Authenticated:", user.is_authenticated)
+        user.backend =  'django.contrib.auth.backends.ModelBackend'
+        login(request, user)
+        print("User logged in:", request.user)
+        print("Is Authenticated:", request.user.is_authenticated)
+        print("Session ID:", request.session.session_key)
+        print("Creating notification preferences ")
+        create , _ = NotificationPreferences.objects.get_or_create(user=user)
+        print("Created")
+        print("Redirecting to customer dqshboard")
         return redirect("customer_dashboard")
 
 
