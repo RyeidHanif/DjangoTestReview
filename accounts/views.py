@@ -10,11 +10,14 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 
 from main.forms import ProviderForm
-from main.models import (CustomerProfile, NotificationPreferences,
-                         ProviderProfile)
+from main.models import CustomerProfile, NotificationPreferences, ProviderProfile
 
-from .forms import (ChangeNotificationPreferencesForm, ProfilePhotoForm,
-                    SetPasswordForm, SignUpForm)
+from .forms import (
+    ChangeNotificationPreferencesForm,
+    ProfilePhotoForm,
+    SetPasswordForm,
+    SignUpForm,
+)
 from .tokens import account_activation_token
 
 
@@ -51,7 +54,7 @@ def signup(request):
         suform = SignUpForm(request.POST)
         if suform.is_valid():
             user = suform.save(commit=False)
-            user.is_acive = False
+            user.is_active = False
             user.save()
             activateEmail(request, user, suform.cleaned_data.get("email"))
             phone_number = suform.cleaned_data["phone_number"]

@@ -2,34 +2,36 @@ from datetime import datetime, time, timedelta
 
 from django.contrib import messages
 from django.contrib.auth import logout
-from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.models import Permission, User
-from django.core.cache import cache
-
-from django.core.exceptions import (MultipleObjectsReturned,
-                                    ObjectDoesNotExist, ValidationError)
+from django.contrib.auth.models import User
 from django.core.paginator import Paginator
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.utils.timezone import (get_current_timezone, localdate, localtime,
-                                   make_aware)
+from django.utils.timezone import localdate, make_aware
 from django.views import View
 from django.views.generic import ListView, TemplateView
+
 from google.auth.exceptions import RefreshError
 from googleapiclient.errors import HttpError
 
 from main.calendar_client import GoogleCalendarClient
 from main.models import Appointment, NotificationPreferences, ProviderProfile
-from main.utils import cancellation, force_provider_calendar, handle_exception
+from main.utils import (
+    cancellation,
+    force_provider_calendar,
+    handle_exception,
+)
 
-
-# Create your views here.
 from .forms import AppointmentRecurrenceForm
-from .utils import (EmailPendingAppointment, EmailRescheduledAppointment,
-                    calculate_total_price, change_and_save_appointment,
-
-                    check_appointment_exists, create_and_save_appointment)
+from .utils import (
+    EmailPendingAppointment,
+    EmailRescheduledAppointment,
+    calculate_total_price,
+    change_and_save_appointment,
+    check_appointment_exists,
+    create_and_save_appointment,
+)
 
 
 class CustomerDashboardView(LoginRequiredMixin, TemplateView):
@@ -58,7 +60,7 @@ class CustomerDashboardView(LoginRequiredMixin, TemplateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['display'] = display = "Go to provider Dashboard" if hasattr(self.request.user, 'providerprofile') else "Become a Service Provider"
+        context['display'] = "Go to provider Dashboard" if hasattr(self.request.user, 'providerprofile') else "Become a Service Provider"
         return context
 
 
@@ -233,7 +235,7 @@ class AddAppointmentView(LoginRequiredMixin, View):
             self.total_price = calculate_total_price(
                     self.provider,
                     recurrence_frequency=recurrence_frequency,
-                    until_date=until_date,
+                    until_date=until_date,)
 
 
             self.special_requests = request.POST.get("special_requests", " ")
@@ -320,7 +322,7 @@ class AddAppointmentView(LoginRequiredMixin, View):
                 return redirect("view_appointments")
         if request.POST.get("cancel"):
             messages.info(request, "reschedule ancelled")
-            return redirect("viewappoinments")
+            return redirect("view_appoinments")
 
     def render_template(self, request, *args, **kwargs):
         return render(
