@@ -26,6 +26,15 @@ from main.calendar_client import GoogleCalendarClient
 
 @extend_schema(tags=['Registration'])
 class SignUpUser(generics.CreateAPIView):
+    '''
+    Allows the user to sign up 
+    
+    The User Sends a POST request with the following details to this endpoint :
+     - username 
+     - email 
+     - password 
+      
+    if the user does not already exist , a new user is created  '''
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
 
@@ -35,6 +44,9 @@ API_signupuser = SignUpUser.as_view()
 
 @extend_schema(tags=['Registration'])
 class WelcomeView(APIView):
+    '''simple welcome view to allow a logged in user  to access the API
+    only accepts GET methods 
+    '''
     permission_classes = [IsAuthenticated]
     serializer_class = WelcomeSerializer
 
@@ -51,6 +63,9 @@ API_welcome = WelcomeView.as_view()
 
 @extend_schema(tags=["Personal"])
 class Profile(generics.RetrieveAPIView):
+    '''
+    endpoint to allow an authenticated user to view their own service provider profile 
+    only accepts GET method '''
     permission_classes = [IsAuthenticated, CustomHasProviderProfile]
     serializer_class = ProviderProfileSerializer
 
@@ -64,6 +79,10 @@ API_user_profile = Profile.as_view()
 
 @extend_schema(tags=['Personal'])
 class ProviderAppointments(generics.ListAPIView):
+    '''
+    Allows user to access all their own appointments 
+    only accepts GET method 
+    '''
     permission_classes = [IsAuthenticated, CustomHasProviderProfile]
     serializer_class = AppointmentSerializer
 
@@ -84,6 +103,10 @@ API_provider_appoinments = ProviderAppointments.as_view()
 
 @extend_schema(tags=['Personal'])
 class CustomerAppointments(generics.ListAPIView):
+    '''
+    allows a customer to view their own appointments 
+    Only Accepts GET Method 
+    '''
     permission_classes = [IsAuthenticated]
     serializer_class = AppointmentSerializer
 
@@ -103,6 +126,15 @@ API_customer_appointments = CustomerAppointments.as_view()
 
 @extend_schema(tags=['Services'])
 class APIProviderAvailability(APIView):
+    '''
+    Allows a user to get a provider's available slots 
+    
+    the User sends a GET request with the following url parameters :
+    - the id of the provider 
+    - the slot range which must be an integer between 1 and 7 
+    this allows the user to get all the  available slots of that provider 
+    for 1 - 7 days 
+    '''
     permission_classes = [IsAuthenticated]
     serializer_class = SlotSerializer
 
@@ -153,6 +185,9 @@ API_provider_availability = APIProviderAvailability.as_view()
 
 @extend_schema(tags=['Services'])
 class APIProviderAnalytics(APIView):
+    '''
+    Provider Accesses this endpoint to view analytics data regarding their appointments 
+    '''
     permission_classes = [IsAuthenticated, CustomHasProviderProfile]
     serializer_class = ProviderAnalyticsSerializer
 
@@ -193,6 +228,9 @@ API_provider_analytics = APIProviderAnalytics.as_view()
 
 @extend_schema(tags=['Services'])
 class APIViewProviders(generics.ListAPIView):
+    '''
+    Allows any logged in user to view all the service providers in the applicatios 
+    '''
     permission_classes = [IsAuthenticated]
     serializer_class = ViewAllProvidersSerializer
 

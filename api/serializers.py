@@ -5,6 +5,8 @@ from main.models import Appointment, ProviderProfile
 
 
 class RegisterSerializer(serializers.ModelSerializer):
+    '''
+    Model Serializer based on the default Django User Class to create a new user '''
     password = serializers.CharField(write_only=True)
 
     class Meta:
@@ -21,12 +23,19 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    '''
+    Basic Model Serializer meant to be used as a nested serializer in other serializers
+    to show user data 
+    '''
     class Meta:
         model = User
         fields = ["id", "username", "email"]
 
 
 class ProviderProfileSerializer(serializers.ModelSerializer):
+    '''
+    Model Serializer based on the provider profile containing all the fields for the user to see 
+    '''
 
     user = UserSerializer(read_only=True)
 
@@ -47,6 +56,10 @@ class ProviderProfileSerializer(serializers.ModelSerializer):
 
 
 class AppointmentSerializer(serializers.ModelSerializer):
+    '''
+    Model Serializer based on the appointment model 
+    It has Provider and Customer as nested user serializers to show data about each user 
+    '''
     provider = UserSerializer(read_only=True)
     customer = UserSerializer(read_only=True)
 
@@ -68,6 +81,9 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
 
 class ProviderAnalyticsSerializer(serializers.Serializer):
+    '''
+    Normal Serializer which gets data in the ApiView and displays analytics data to the user
+    '''
     provider = serializers.CharField(source="provider.username")
     appointments = AppointmentSerializer(many=True, read_only=True)
     total_appointments = serializers.IntegerField()
@@ -77,6 +93,10 @@ class ProviderAnalyticsSerializer(serializers.Serializer):
 
 
 class ViewAllProvidersSerializer(serializers.ModelSerializer):
+    '''
+    Model Serialier based on provider profile with many set to True in the API view to allow 
+    all the providers and their profiles to be seen 
+    '''
     user = UserSerializer(read_only=True)
 
     class Meta:
@@ -93,11 +113,16 @@ class ViewAllProvidersSerializer(serializers.ModelSerializer):
 
 
 class WelcomeSerializer(serializers.Serializer):
+    '''
+    Serializer required forthis simple function for it to be displayed properly in the API documentation by drf-spectacular
+    '''
     message = serializers.CharField()
 
 
 
 class SlotSerializer(serializers.Serializer):
+    '''
+    allows for the slots to be displayed in an organized matter ,separated dates and times '''
     start_date = serializers.DateField()
     start_time = serializers.TimeField()
     end_date = serializers.DateField()

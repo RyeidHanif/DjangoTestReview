@@ -23,6 +23,9 @@ from .tokens import account_activation_token
 
 # Create your views here.
 def activateEmail(request, user, to_email):
+    '''
+    Sends The Verification Email to the user after forming the redirect url
+    '''
     mail_subject = "Activate your user account."
     message = render_to_string(
         "accounts/template_activate_account.html",
@@ -49,6 +52,14 @@ def activateEmail(request, user, to_email):
 
 
 def signup(request):
+    '''
+    Allow the user to signup using Django's Authentication System
+    
+    The SignupForm is a model form with  an added field of phone number 
+    The Customer profile of the user is created here , immediately after signup 
+    since every user must be a customer .
+    The user is then redirected to the homepage where they recieve a notification to verify their email 
+    '''
 
     if request.method == "POST":
         suform = SignUpForm(request.POST)
@@ -70,6 +81,9 @@ def signup(request):
 
 
 def activate(request, uidb64, token):
+    '''
+    Verifies the user email , Creates the Notification Preferences object for the user and logs them in 
+    '''
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
@@ -105,6 +119,8 @@ def activate(request, uidb64, token):
 
 @login_required(login_url="/login/")
 def password_change(request):
+    '''
+    Allows the user to change their password using a form '''
     user = request.user
     if request.method == "POST":
         form = SetPasswordForm(user, request.POST)
@@ -122,7 +138,19 @@ def password_change(request):
 
 @login_required(login_url="/login/")
 def user_profile(request):
-
+    '''
+    Allows the user to view and change their profile .
+    
+    The following details of each user are showng :
+    - username 
+    -email
+    - phone number
+    - customer profile details 
+    - provider profile details 
+    - profile picture 
+    - option to change or delete profile photo 
+    - option to modify profile which leads to another page 
+    '''
     me = User.objects.get(id=request.user.id)
     my_provider_profile = ProviderProfile.objects.filter(user=me).first()
     my_customer_profile = CustomerProfile.objects.filter(user=me).first()
@@ -181,6 +209,9 @@ def user_profile(request):
 
 @login_required(login_url="/login/")
 def modify_profile(request):
+    '''
+    Uses a form to allow the user to changed whatever details they want in their profile and submit them 
+    '''
     provider_profile = ProviderProfile.objects.filter(user=request.user).first()
     if request.method == "POST":
         form = ProviderForm(request.POST, instance=provider_profile)
@@ -201,6 +232,9 @@ def modify_profile(request):
 
 @login_required(login_url="/login/")
 def delete_account(request):
+    '''
+    Allows the user to delete their account 
+    '''
     if request.method == "POST":
         request.user.delete()
 

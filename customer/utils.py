@@ -6,8 +6,14 @@ from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
-from django.utils.timezone import (activate, get_current_timezone, localdate,
-                                   localtime, make_aware, now)
+from django.utils.timezone import (
+    activate,
+    get_current_timezone,
+    localdate,
+    localtime,
+    make_aware,
+    now,
+)
 from googleapiclient.errors import HttpError
 
 from main.models import Appointment, ProviderProfile
@@ -16,8 +22,11 @@ from main.models import Appointment, ProviderProfile
 activate("Asia/Karachi")
 
 
-
 def check_appointment_exists(customer, provider):
+    """
+    Used to check if an appointment exists between a customer and a provider which is currently in the works
+    this is done to prevent one customer from having multiple simultaneous appointments with the same provider
+    """
     return not Appointment.objects.filter(
         customer=customer,
         provider=provider,
@@ -36,6 +45,10 @@ def EmailRescheduledAppointment(
     to_email,
     special_requests,
 ):
+    """
+    Send an Email from the customer to the provider requesting them to accept the new rescheduled version of the appointment
+    """
+
     mail_subject = "Appointment Reschedule Request"
     message = f"""Dear {provider.username} , Mr. {customer.username} wishes to reschedule the appointment from the original date and time which was
     originally :  {old_date_start} to {old_date_end}   and now shall be : {new_date_start} To {new_date_end} . If you wish to reject  the appointment please do so in your account . dont worry currently, the original date is 
@@ -56,6 +69,9 @@ def EmailRescheduledAppointment(
 def EmailPendingAppointment(
     request, customer, provider, date_start, date_end, to_email, special_requests
 ):
+    """
+    Sends an email from the customer to the provider to tell them that a new appointment has been created
+    """
     mail_subject = "Appointment Created - pending "
     message = f"Dear {provider.username} , {customer.username} has created an appointment with you from  {date_start} To {date_end} . The Status is currently pending . Please accept or reject it in your account  .These are some requests : {special_requests} "
     email = EmailMessage(mail_subject, message, to=[to_email])
@@ -72,6 +88,13 @@ def EmailPendingAppointment(
 
 
 def calculate_total_price(provider, **kwargs):
+    """
+    This Function calculates the total price for an appointment , whether it be recurring or simple
+    First checks the pricing model of the provider which can either be hourly or fixed
+    in the case of hourly , performs a calculation to change the price according to the time of the appointment
+    if there is recurrence in the appointment , it calculated the total price by finding out the
+    number of recurrences and multiplying that by the price previously calculated for all 3 recurrence types
+    """
     start_date = localdate()
 
     if provider.pricing_model == "hourly":
@@ -96,6 +119,7 @@ def calculate_total_price(provider, **kwargs):
 
     return round(occurrences * price_per_appointment, 2)
 
+
 def create_and_save_appointment(
     customer,
     provider_user,
@@ -106,6 +130,9 @@ def create_and_save_appointment(
     recurrence_frequency,
     until_date,
 ):
+    """
+    Creates and Saves a new appointment. it has been separated to prevent repetition and shorten the AddAppointment view
+    """
     appointment = Appointment(
         provider=provider_user,
         customer=customer,
@@ -120,7 +147,6 @@ def create_and_save_appointment(
     return appointment
 
 
-
 def change_and_save_appointment(
     request,
     appointment,
@@ -130,6 +156,9 @@ def change_and_save_appointment(
     end_datetime,
     total_price,
 ):
+    """
+    Used in the AddAppointmentview in the case that the appointment is being rescheduled
+    """
     old_start = appointment.date_start
     old_end = appointment.date_end
 

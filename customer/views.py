@@ -35,9 +35,12 @@ from .utils import (
 
 
 class CustomerDashboardView(LoginRequiredMixin, TemplateView):
+    """
+    Generic Template Vieww to allow user with customer profile to navigate the Application
+    """
+
     login_url = "/login/"
     template_name = "customer/customer_dashboard.html"
-
 
     ACTION_MAPPING = {
         "view_providers": "view_providers",
@@ -51,16 +54,21 @@ class CustomerDashboardView(LoginRequiredMixin, TemplateView):
             if request.POST.get(action_key):
                 return redirect(value)
         if request.POST.get("provider_side"):
-            if hasattr(request.user, 'providerprofile'):
+            if hasattr(request.user, "providerprofile"):
                 return redirect("provider_dashboard")
-            else :
+            else:
                 return redirect("profile_creation")
 
         return self.get(request, *args, **kwargs)
-    
+
     def get_context_data(self, **kwargs):
+        """Changes the Display of the provider dashboard redirection button depending on whether the user already has a provider profile or not"""
         context = super().get_context_data(**kwargs)
-        context['display'] = "Go to provider Dashboard" if hasattr(self.request.user, 'providerprofile') else "Become a Service Provider"
+        context["display"] = (
+            "Go to provider Dashboard"
+            if hasattr(self.request.user, "providerprofile")
+            else "Become a Service Provider"
+        )
         return context
 
 
@@ -68,11 +76,14 @@ customer_dashboard = CustomerDashboardView.as_view()
 
 
 class ListProvidersView(LoginRequiredMixin, ListView):
+    """Generic List View to List All providers registered with the application"""
+
     model = ProviderProfile
     template_name = "customer/view_providers.html"
     context_object_name = "providers"
 
     def get_queryset(self):
+        """Allows the searh bar to be used to search for a provider by their username"""
         query = self.request.GET.get("q")
 
         if query:
@@ -87,7 +98,6 @@ class ListProvidersView(LoginRequiredMixin, ListView):
         else:
             return ProviderProfile.objects.exclude(user=self.request.user)
 
-
     def post(self, request, *args, **kwargs):
         messages.info(
             request, "You are being redirected to the service providers schedule"
@@ -95,6 +105,7 @@ class ListProvidersView(LoginRequiredMixin, ListView):
         return redirect("schedule", providerID=request.POST.get("book_appointment"))
 
     def get_context_data(self, **kwargs):
+        """Sends  Category Data to the template to allow the providers to be displayed , divided by category"""
         context = super().get_context_data(
             **kwargs
         )  # first get the context then add stuff to it  to pass to the template
@@ -102,14 +113,19 @@ class ListProvidersView(LoginRequiredMixin, ListView):
         return context
 
 
-
 view_providers = ListProvidersView.as_view()
 
 
 class ScheduleView(LoginRequiredMixin, View):
+    """
+    Allows the user to view a specific provider's schedule .
+    The URL includes a keyword argument for the provider profile ID of a user
+    """
+
     login_url = "/login/"
 
     def dispatch(self, request, *args, **kwargs):
+        """send data to both get and post functions"""
         self.provider_profile = get_object_or_404(
             ProviderProfile, id=kwargs["providerID"]
         )
@@ -119,6 +135,7 @@ class ScheduleView(LoginRequiredMixin, View):
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
+        """Use The Google Client to get a provider's available slots . in case of any error , return a JSON error response"""
         try:
             self.available_slots = self.google_client.get_available_slots(
                 self.provider, self.slot_range
@@ -137,6 +154,7 @@ class ScheduleView(LoginRequiredMixin, View):
         return self.render_schedule(self.available_slots)
 
     def post(self, request, *args, **kwargs):
+        """Allow the user to choose between seeing the availabiliy of a provider for the current day or week"""
         if request.POST.get("week"):
             self.slot_range = 7
         elif request.POST.get("day"):
@@ -147,7 +165,6 @@ class ScheduleView(LoginRequiredMixin, View):
         self.available_slots = self.google_client.get_available_slots(
             self.provider, self.slot_range
         )
-
 
         if request.POST.get("add_appointment"):
             index = int(request.POST.get("add_appointment"))
@@ -176,7 +193,15 @@ schedule = ScheduleView.as_view()
 
 
 class AddAppointmentView(LoginRequiredMixin, View):
+    """
+    Allows the User to Create and Reschedule Appointments depending upon the mode
+    - Normal Mode signifies the user is creating an appointment and will call on all the functions related to creation
+    - Reschedule Mode signifies the user is rescheduling an appointment and will call on all the rescheduling function
+    It has been divided into 4 parts each dealing with one method of each mode
+    """
+
     def dispatch(self, request, *args, **kwargs):
+        """Sends data which is required by all or greater than 1 of the methods"""
         self.mode = request.session.get("mode", "normal")
         self.timeslot = request.session.get("timeslot_tuple", [])
         self.provider_user = get_object_or_404(User, id=kwargs["providerUserID"])
@@ -186,25 +211,29 @@ class AddAppointmentView(LoginRequiredMixin, View):
         self.end_datetime = datetime.fromisoformat(self.timeslot[1])
         self.total_price = calculate_total_price(self.provider)
 
-        self.recurrence_form = AppointmentRecurrenceForm(appointment_date=self.start_datetime
+        self.recurrence_form = AppointmentRecurrenceForm(
+            appointment_date=self.start_datetime
         )
         self.appointment = None
         self.google_client = GoogleCalendarClient()
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
+        """checks between the modes and calls functions accordingly"""
         if self.mode == "normal":
             return self.handle_normal_get(request, *args, **kwargs)
         elif self.mode == "reschedule":
             return self.handle_reschedule_get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        """checks between the modes and calls functions accordingly"""
         if self.mode == "normal":
             return self.handle_normal_post(request, *args, **kwargs)
         elif self.mode == "reschedule":
             return self.handle_reschedule_post(request, *args, **kwargs)
 
     def handle_normal_get(self, request, *args, **kwargs):
+        """displays the appointment recurrence form with the recurrence date limit and checks if an appointment already exists"""
         self.recurrence_form = AppointmentRecurrenceForm(
             appointment_date=self.start_datetime
         )
@@ -217,10 +246,17 @@ class AddAppointmentView(LoginRequiredMixin, View):
 
             return redirect("view_providers")
 
-
         return self.render_template(request)
 
     def handle_normal_post(self, request, *args, **kwargs):
+        """
+        Creates a new appointment from the customer to the provider with the Pending Status
+        - Confirm button is  pressed after completing the recurrence form and adding special requests if needed
+        - total price is calculated
+        - special requests are gotten from the user
+        - the utility function for create_and_save_appointment is called and parameters passed
+        - an email is sent to the provider that a new appointment has been created depending on their notification settings
+        """
         self.recurrence_form = AppointmentRecurrenceForm(
             request.POST, appointment_date=self.start_datetime
         )
@@ -233,10 +269,10 @@ class AddAppointmentView(LoginRequiredMixin, View):
                 until_date = self.recurrence_form.cleaned_data["until_date"]
 
             self.total_price = calculate_total_price(
-                    self.provider,
-                    recurrence_frequency=recurrence_frequency,
-                    until_date=until_date,)
-
+                self.provider,
+                recurrence_frequency=recurrence_frequency,
+                until_date=until_date,
+            )
 
             self.special_requests = request.POST.get("special_requests", " ")
             appointment = create_and_save_appointment(
@@ -266,6 +302,7 @@ class AddAppointmentView(LoginRequiredMixin, View):
             return redirect("customer_dashboard")
 
     def handle_reschedule_get(self, request, *args, **kwargs):
+        """Creates a prefilled recurrence form with original details and checks if the appointment exists or not"""
         self.appointment = Appointment.objects.filter(
             customer=self.customer, provider=self.provider_user
         ).first()
@@ -282,6 +319,15 @@ class AddAppointmentView(LoginRequiredMixin, View):
         return self.render_template(request)
 
     def handle_reschedule_post(self, request, *args, **kwargs):
+        """
+        creates the recurrence form with post data and the recurrence date limit
+        - if the recurrence has been changed then it is used , other wise original appoinmtnet details are used
+        - total price is recalculated in case of any changes
+        - once the confirm button is pressed the appointment is officially changed in the database and its status changed to rescheduled
+        the rescheduled appointment appears with the pending appointments for the provider . in the case that it is rejected , the status
+        is changed to accepted with the original date and time
+        - After the rescheduling is done , the mode is popped from the session to prevent conflicts later
+        """
         self.recurrence_form = AppointmentRecurrenceForm(
             request.POST, appointment_date=self.start_datetime
         )
@@ -297,7 +343,6 @@ class AddAppointmentView(LoginRequiredMixin, View):
             self.provider,
             recurrence_frequency=recurrence_frequency,
             until_date=until_date,
-
         )
 
         if request.POST.get("confirm"):
@@ -337,14 +382,17 @@ class AddAppointmentView(LoginRequiredMixin, View):
             },
         )
 
+
 add_appointment = AddAppointmentView.as_view()
 
 
 class ViewAppointmentsView(LoginRequiredMixin, View):
+    """Allows the customer to view all their appointments"""
 
     login_url = "/login/"
 
     def get(self, request, *args, **kwargs):
+        """paginates the results  by 10 appointments per page"""
 
         self.myappointments = self.get_query(request, *args, **kwargs)
         paginator = Paginator(self.myappointments, 10)
@@ -357,6 +405,7 @@ class ViewAppointmentsView(LoginRequiredMixin, View):
         )
 
     def post(self, request, *args, **kwargs):
+
         if request.POST.get("reschedule"):
             self.appointmentID = request.POST.get("reschedule")
             return self.reschedule(request, *args, **kwargs)
@@ -365,19 +414,18 @@ class ViewAppointmentsView(LoginRequiredMixin, View):
             return self.cancel(request, *args, **kwargs)
 
     def get_query(self, request, *args, **kwargs):
+        """Allows the use of a search bar to search using the provider's username"""
 
         query = request.GET.get("q")
 
         EXCLUDED_STATUES = ["rejected", "cancelled", "completed"]
         if query:
             return (
-
                 Appointment.objects.filter(
                     customer=request.user, provider__username__icontains=query
                 )
                 .order_by("-date_added")
                 .all()
-
                 .exclude(status__in=EXCLUDED_STATUES)
             )
         else:
@@ -390,6 +438,11 @@ class ViewAppointmentsView(LoginRequiredMixin, View):
             )
 
     def reschedule(self, request, *args, **kwargs):
+        """
+        once the reschedule button is pressed for an appointment , this method is called
+        -Displays a warning to the user to ensure they know that the status will change
+        - forbid the user from rescheduling any appointment that has not been accepted
+        """
         messages.warning(
             request,
             "This will change the status to Rescheduled but the event for now will remain in the calendar  because the provider will have to review the timings again ",
@@ -408,6 +461,12 @@ class ViewAppointmentsView(LoginRequiredMixin, View):
             return redirect("reschedule", appointment_id=self.appointmentID)
 
     def cancel(self, request, *args, **kwargs):
+        """
+        When the cancel button is pressed this method is called to cancel the appointment
+        - uses the calendar client to erase the event from google calendar if it was there in the first place
+        - Checks if the user has cancelled more than 3 appointments within 12 hours of appointment time within the last 30 days
+        - if yes , the user is set to inactive and hence cannot perform any actions .
+        - if not , one cancellation is added by calling the cancellation utility"""
         calendar_client = GoogleCalendarClient()
         appointment = get_object_or_404(Appointment, id=self.appointmentID)
         count_cancel = cancellation(request, request.user, appointment)
@@ -433,18 +492,18 @@ class ViewAppointmentsView(LoginRequiredMixin, View):
         appointment.status = "cancelled"
         appointment.save()
         if not request.user.is_superuser:
-          if count_cancel >= 3:
-              request.user.is_active = False
-              request.user.save()
-              logout(request)
-              messages.warning(
-                  request,
-                  "You have cancelled too many appointments in a shot span , your account has been deactivated ",
-              )
+            if count_cancel >= 3:
+                request.user.is_active = False
+                request.user.save()
+                logout(request)
+                messages.warning(
+                    request,
+                    "You have cancelled too many appointments in a shot span , your account has been deactivated ",
+                )
 
-              return redirect("home")
-          else:
-            messages.success(request, "Cancelled successfully ")
+                return redirect("home")
+            else:
+                messages.success(request, "Cancelled successfully ")
         return redirect("view_appointments")
 
 
@@ -454,6 +513,7 @@ view_appointments = ViewAppointmentsView.as_view()
 # very simple . left this as FBV . doesnt fit in any generic CBVs and View CBV will just have more boilerplate
 @login_required(login_url="/login/")
 def reschedule(request, appointment_id):
+    """Simple Intermediary page to confirm rescheduling with user and set the Session"""
     change_appointment = get_object_or_404(Appointment, id=appointment_id)
     if request.method == "POST":
         if request.POST.get("checkschedule"):
@@ -469,6 +529,8 @@ def reschedule(request, appointment_id):
 
 
 class BookingHistoryView(LoginRequiredMixin, ListView):
+    """Allow the customer to view all their booking history , with appointments of all statuses"""
+
     model = Appointment
     template_name = "customer/booking_history.html"
     context_object_name = "appointments"
