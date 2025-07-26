@@ -1,321 +1,425 @@
 from datetime import datetime, time, timedelta
 
 from django.contrib import messages
+from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Permission, User
-from django.http import HttpResponse
-from django.shortcuts import redirect, render
+from django.core.cache import cache
+from django.core.exceptions import (MultipleObjectsReturned,
+                                    ObjectDoesNotExist, ValidationError)
+from django.core.paginator import Paginator
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.timezone import (get_current_timezone, localdate, localtime,
                                    make_aware)
+from django.views import View
+from django.views.generic import ListView, TemplateView
+from google.auth.exceptions import RefreshError
+from googleapiclient.errors import HttpError
 
-from main.models import Appointment, ProviderProfile , NotificationPreferences
-from main.utils import get_calendar_service, cancellation
+from main.calendar_client import GoogleCalendarClient
+from main.models import Appointment, NotificationPreferences, ProviderProfile
+from main.utils import cancellation, force_provider_calendar, handle_exception
 
-from .utils import (EmailRescheduledAppointment, check_appointment_exists,
-                    create_calendar_appointment, get_available_slots , EmailPendingAppointment,calculate_total_price, create_and_save_appointment, create_google_calendar_event,reschedule_google_event )
-
-from django.views.generic import ListView
-from django.contrib.auth.mixins import LoginRequiredMixin
 # Create your views here.
 from .forms import AppointmentRecurrenceForm
-from django.contrib.auth import logout
+from .utils import (EmailPendingAppointment, EmailRescheduledAppointment,
+                    calculate_total_price, change_and_save_appointment,
+                    check_appointment_exists, create_and_save_appointment)
 
 
+class CustomerDashboardView(LoginRequiredMixin, TemplateView):
+    login_url = "/login/"
+    template_name = "customer/customer_dashboard.html"
 
-@login_required(login_url="/login/")
-def customer_dashboard(request):
-    if request.method == "POST":
-        if request.POST.get("view_providers"):
-            return redirect("view_providers")
-        if request.POST.get("view_appointments"):
-            return redirect("view_appointments")
-        if request.POST.get("my_profile"):
-            return redirect("user_profile")
-        if request.POST.get("booking_history"):
-            return redirect("booking_history")
+    ACTION_MAPPING = {
+        "view_providers": "view_providers",
+        "view_appointments": "view_appointments",
+        "my_profile": "user_profile",
+        "booking_history": "booking_history",
+    }
 
-        if hasattr(request.user, 'providerprofile'):
-            if request.POST.get("provider_side"):
-                return redirect("provider_dashboard")
+    def post(self, request, *args, **kwargs):
+        for action_key, value in self.ACTION_MAPPING.items():
+            if request.POST.get(action_key):
+                return redirect(value)
+
+        return self.get(request, *args, **kwargs)
+
+
+customer_dashboard = CustomerDashboardView.as_view()
+
+
+class ListProvidersView(LoginRequiredMixin, ListView):
+    model = ProviderProfile
+    template_name = "customer/view_providers.html"
+    context_object_name = "providers"
+
+    def get_queryset(self):
+        query = self.request.GET.get("q")
+
+        if query:
+            try:
+
+                return ProviderProfile.objects.filter(
+                    user__username__icontains=query
+                ).exclude(user=self.request.user)
+            except Exception as e:
+                return handle_exception(e)
+
         else:
-            if request.POST.get("provider_side"):
-                return redirect("profile_creation")
+            return ProviderProfile.objects.exclude(user=self.request.user)
 
-    display = "Go to provider Dashboard" if hasattr(request.user, 'providerprofile') else "Become a Service Provider"
-    return render(request, "customer/customer_dashboard.html", {"user": request.user, "display": display})
-
-
-
-
-@login_required(login_url="/login/")
-def view_providers(request):
-    query = request.GET.get('q')
-    if query :
-        providers = ProviderProfile.objects.filter(user__username__icontains= query).exclude(user=request.user)
-    else:
-
-        providers = ProviderProfile.objects.exclude(user=request.user)
-
-    categories = ["doctor", "consultant", "therapist", "counsellor"]
-    if request.method == "POST":
+    def post(self, request, *args, **kwargs):
         messages.info(
             request, "You are being redirected to the service providers schedule"
         )
         return redirect("schedule", providerID=request.POST.get("book_appointment"))
 
-    return render(
-        request,
-        "customer/view_providers.html",
-        {"providers": providers, "categories": categories},
-    )
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(
+            **kwargs
+        )  # first get the context then add stuff to it  to pass to the template
+        context["categories"] = ["doctor", "consultant", "therapist", "counsellor"]
+        return context
 
 
-@login_required(login_url="/login/")
-def schedule(request, providerID):
+view_providers = ListProvidersView.as_view()
 
-    provider_profile = ProviderProfile.objects.get(id=providerID)
-    provider = provider_profile.user
-    slot_range = 1
 
-    if request.method == "POST":
+class ScheduleView(LoginRequiredMixin, View):
+    login_url = "/login/"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.provider_profile = get_object_or_404(
+            ProviderProfile, id=kwargs["providerID"]
+        )
+        self.provider = self.provider_profile.user
+        self.slot_range = 1
+        self.google_client = GoogleCalendarClient()
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        try:
+            self.available_slots = self.google_client.get_available_slots(
+                self.provider, self.slot_range
+            )
+        except RefreshError as re:
+            force_provider_calendar(self.provider)
+            return JsonResponse(
+                {
+                    "error": "refresh_token_expired",
+                    "message": "Provider's Google Calendar account has expired and must be renewed.",
+                },
+                status=400,
+            )
+        except HttpError as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+        return self.render_schedule(self.available_slots)
+
+    def post(self, request, *args, **kwargs):
         if request.POST.get("week"):
-            slot_range = 7
+            self.slot_range = 7
         elif request.POST.get("day"):
-            slot_range = 1
-        elif request.POST.get("slot_range"):
-            slot_range = int(request.POST.get("slot_range"))
-        
+            self.slot_range = 1
+        elif request.POST.get("slot_range"):  # hidden input
+            self.slot_range = int(request.POST.get("slot_range"))
 
-        available_slots = get_available_slots(provider, slot_range)
-
+        self.available_slots = self.google_client.get_available_slots(
+            self.provider, self.slot_range
+        )
 
         if request.POST.get("add_appointment"):
             index = int(request.POST.get("add_appointment"))
-            timeslot = available_slots[index]
+            self.timeslot = self.available_slots[index]
             request.session["timeslot_tuple"] = (
-                timeslot[0].isoformat(),
-                timeslot[1].isoformat(),
+                self.timeslot[0].isoformat(),
+                self.timeslot[1].isoformat(),
             )
-            
-            return redirect("add_appointment", providerUserID=provider.id)
 
-    else:
-        available_slots = get_available_slots(provider, slot_range)
+            return redirect("add_appointment", providerUserID=self.provider.id)
+        return self.render_schedule(self.available_slots)
 
-    return render(
-        request,
-        "customer/schedule.html",
-        {
-            "available_slots": available_slots,
-            "provider": provider,
-            "slot_range": slot_range,
-        },
-    )
-@login_required(login_url="/login/")
-def add_appointment(request, providerUserID):
-    mode = request.session.get("mode", "normal")
-    print(f"DEBUG : THE CURRENT MODE IS {mode}")
-    timeslot = request.session.get("timeslot_tuple", [])
+    def render_schedule(self, *args, **kwargs):
+        return render(
+            self.request,
+            "customer/schedule.html",
+            {
+                "available_slots": self.available_slots,
+                "provider": self.provider,
+                "slot_range": self.slot_range,
+            },
+        )
 
-    provider_user = User.objects.get(id=providerUserID)
-    provider = ProviderProfile.objects.get(user=provider_user)
-    customer = request.user
 
-    start_datetime = datetime.fromisoformat(timeslot[0])
-    end_datetime = datetime.fromisoformat(timeslot[1])
-    total_price = calculate_total_price(provider)
+schedule = ScheduleView.as_view()
 
-    print(f"DEBUG : THE CURRENT MODE IS {mode}")
-    if mode == "normal":
-        print(f"DEBUG : THE CURRENT MODE IS {mode}")
-        recurrence_form = AppointmentRecurrenceForm()
 
-        if not check_appointment_exists(customer, provider_user):
+class AddAppointmentView(LoginRequiredMixin, View):
+    def dispatch(self, request, *args, **kwargs):
+        self.mode = request.session.get("mode", "normal")
+        self.timeslot = request.session.get("timeslot_tuple", [])
+        self.provider_user = get_object_or_404(User, id=kwargs["providerUserID"])
+        self.provider = ProviderProfile.objects.get(user=self.provider_user)
+        self.customer = request.user
+        self.start_datetime = datetime.fromisoformat(self.timeslot[0])
+        self.end_datetime = datetime.fromisoformat(self.timeslot[1])
+        self.total_price = calculate_total_price(self.provider)
+        self.recurrence_form = AppointmentRecurrenceForm()
+        self.appointment = None
+        self.google_client = GoogleCalendarClient()
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        if self.mode == "normal":
+            return self.handle_normal_get(request, *args, **kwargs)
+        elif self.mode == "reschedule":
+            return self.handle_reschedule_get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if self.mode == "normal":
+            return self.handle_normal_post(request, *args, **kwargs)
+        elif self.mode == "reschedule":
+            return self.handle_reschedule_post(request, *args, **kwargs)
+
+    def handle_normal_get(self, request, *args, **kwargs):
+        self.recurrence_form = AppointmentRecurrenceForm()
+        if not check_appointment_exists(self.customer, self.provider_user):
             messages.warning(
                 request,
-                "You already have an appointment with this provider. Cancel that one first.",
+                " You already have an appointment with this provider , Cancel or complete thatone first",
             )
-            return redirect("view_providers")
+            return redirect("viewproviders")
 
-        if request.method == "POST":
-            print(f"DEBUG : THE CURRENT MODE IS {mode}")
-            recurrence_form = AppointmentRecurrenceForm(request.POST)
-            if request.POST.get("confirm"):
-                if recurrence_form.is_valid():
-                    recurrence_frequency = recurrence_form.cleaned_data["recurrence"]
-                    until_date = recurrence_form.cleaned_data["until_date"]
-                else:
-                    recurrence_frequency = None
-                    until_date = None
+        return self.render_template(request)
 
-                special_requests = request.POST.get("special_requests", "")
-
+    def handle_normal_post(self, request, *args, **kwargs):
+        self.recurrence_form = AppointmentRecurrenceForm(request.POST)
+        if request.POST.get("confirm"):
+            recurrence_frequency = None
+            until_date = None
+            if self.recurrence_form.is_valid():
+                recurrence_frequency = self.recurrence_form.cleaned_data["recurrence"]
+                until_date = self.recurrence_form.cleaned_data["until_date"]
+            self.total_price = calculate_total_price(
+                self.provider,
+                recurrence_frequency=recurrence_frequency,
+                until_date=until_date,
+            )
+            self.special_requests = request.POST.get("special_requests", " ")
+            try:
                 appointment = create_and_save_appointment(
-                    customer,
-                    provider_user,
-                    start_datetime,
-                    end_datetime,
-                    total_price,
-                    special_requests,
+                    self.customer,
+                    self.provider_user,
+                    self.start_datetime,
+                    self.end_datetime,
+                    self.total_price,
+                    self.special_requests,
                     recurrence_frequency,
                     until_date,
                 )
+            except Exception as e:
+                return handle_exception(e)
 
-                # Removed google calendar API integration from here to prevent ghost appointments 
-                if appointment.provider.notification_settings.preferences == "all":
-                    EmailPendingAppointment(
-                        request,
-                        customer,
-                        provider_user,
-                        start_datetime,
-                        end_datetime,
-                        provider_user.email,
-                        special_requests,
-                    )
+            if appointment.provider.notification_settings.preferences == "all":
+                EmailPendingAppointment(
+                    request,
+                    self.customer,
+                    self.provider_user,
+                    self.start_datetime,
+                    self.end_datetime,
+                    self.provider_user.email,
+                    self.special_requests,
+                )
+            messages.success(request, " Appointment Created Succesfully ")
+            return redirect("customer_dashboard")
+        elif request.POST.get("cancel"):
+            messages.info(request, "Appointment Was NOT created")
+            return redirect("customer_dashboard")
 
-                messages.success(request, "Appointment created successfully")
-                return redirect("customer_dashboard")
-
-            elif request.POST.get("cancel"):
-                messages.info(request, "Appointment was not created")
-                return redirect("customer_dashboard")
-
-    elif mode == "reschedule":
-        print(f"DEBUG : THE CURRENT MODE IS {mode}")
-        appointment = Appointment.objects.filter(customer=customer, provider=provider_user).first()
-        recurrence_form = AppointmentRecurrenceForm(initial={
-            "recurrence": appointment.recurrence_frequency,
-            "until_date": appointment.recurrence_until
-        })
-        
-        if not appointment:
-            messages.error(request, "No existing appointment found for rescheduling.")
-            return redirect("view_appointments")
-
-        if request.method == "POST":
-            print(f"DEBUG : THE CURRENT MODE IS {mode}")
-            recurrence_form = AppointmentRecurrenceForm(request.POST)
-            if recurrence_form.is_valid():
-                if recurrence_form.is_valid():
-                    recurrence_frequency = recurrence_form.cleaned_data["recurrence"]
-                    until_date = recurrence_form.cleaned_data["until_date"]
-                else:
-                    recurrence_frequency = appointment.recurrence_frequency
-                    until_date = appointment.recurrence_until
-
-            if request.POST.get("confirm"):
-                old_start = appointment.date_start
-                old_end = appointment.date_end
-
-                appointment.date_start = start_datetime
-                appointment.date_end = end_datetime
-                appointment.status = "rescheduled"
-                appointment.recurrence_frequency = recurrence_frequency
-                appointment.recurrence_until = until_date
-                appointment.special_requests = request.POST.get("special_requests", "")
-                appointment.save()
-
-                
-                if appointment.provider.notification_settings.preferences == "all":
-
-                    EmailRescheduledAppointment(
-                        request,
-                        customer,
-                        provider_user,
-                        localtime(old_start),
-                        localtime(old_end),
-                        localtime(appointment.date_start),
-                        localtime(appointment.date_end),
-                        provider_user.email,
-                        appointment.special_requests,
-                    )
-
-                request.session.pop("mode", None)
-                messages.success(request, "Appointment rescheduled successfully")
-                return redirect("view_appointments")
-
-            elif request.POST.get("cancel"):
-                messages.info(request, "Reschedule cancelled")
-                return redirect("view_appointments")
-
-    return render(
-        request,
-        "customer/add_appointment.html",
-        {
-            "start": start_datetime,
-            "end": end_datetime,
-            "form": recurrence_form,
-            "mode": mode,
-            "appointment": appointment if mode == "reschedule" else None,
-        },
-    )
-
-
-
-
-@login_required(login_url="/login/")
-def view_appointments(request):
-    query =  request.GET.get("q")
-    if query :
-        myappointments = (
-        Appointment.objects.filter(customer=request.user, provider__username__icontains=query)
-        .order_by("-date_added")
-        .all()
-        .exclude(status="rejected")
-        .exclude(status="cancelled").exclude(status="completed")
-    )
-    else:
-
-        myappointments = (
-            Appointment.objects.filter(customer=request.user)
-            .order_by("-date_added")
-            .all()
-            .exclude(status="rejected")
-            .exclude(status="cancelled").exclude(status="completed")
+    def handle_reschedule_get(self, request, *args, **kwargs):
+        self.appointment = Appointment.objects.filter(
+            customer=self.customer, provider=self.provider_user
+        ).first()
+        self.recurrence_form = AppointmentRecurrenceForm(
+            initial={
+                "recurrence": self.appointment.recurrence_frequency,
+                "until_date": self.appointment.recurrence_until,
+            }
         )
-    if request.method == "POST":
+        if not self.appointment:
+            messages.error(request, "No existing appointment found for recheduling ")
+            return redirect("view_appointments")
+        return self.render_template(request)
+
+    def handle_reschedule_post(self, request, *args, **kwargs):
+        self.recurrence_form = AppointmentRecurrenceForm(request.POST)
+        if self.recurrence_form.is_valid():
+            recurrence_frequency = self.recurrence_form.cleaned_data["recurrence"]
+            until_date = self.recurrence_form.cleaned_data["until_date"]
+
+        else:
+            recurrence_frequency = self.appointment.recurrence_frequency
+            until_date = self.appointment.recurrence_until
+
+        self.total_price = calculate_total_price(
+            self.appointment.provider.providerprofile,
+            recurrence_frequency=recurrence_frequency,
+            until_date=until_date,
+        )
+
+        if request.POST.get("confirm"):
+            self.appointment = Appointment.objects.filter(
+                customer=self.customer, provider=self.provider_user
+            ).first()
+            self.appointment = change_and_save_appointment(
+                request,
+                self.appointment,
+                recurrence_frequency,
+                until_date,
+                self.start_datetime,
+                self.end_datetime,
+                self.total_price,
+            )
+            request.session.pop("mode", None)
+            if self.appointment:
+                messages.success(request, " appointment reschedule successfully ")
+                return redirect("view_appointments")
+            else:
+                messages.error(request, "invalid stuff added")
+                return redirect("view_appointments")
+        if request.POST.get("cancel"):
+            messages.info(request, "reschedule ancelled")
+            return redirect("view_appoinments")
+
+    def render_template(self, request, *args, **kwargs):
+        return render(
+            request,
+            "customer/add_appointment.html",
+            {
+                "start": self.start_datetime,
+                "end": self.end_datetime,
+                "form": self.recurrence_form,
+                "mode": self.mode,
+                "appointment": self.appointment if self.mode == "reschedule" else None,
+            },
+        )
+
+
+add_appointment = AddAppointmentView.as_view()
+
+
+class ViewAppointmentsView(LoginRequiredMixin, View):
+    login_url = "/login/"
+
+    def get(self, request, *args, **kwargs):
+
+        self.myappointments = self.get_query(request, *args, **kwargs)
+        paginator = Paginator(self.myappointments, 10)
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
+        return render(
+            request,
+            "customer/view_appointments.html",
+            {"appointments": self.myappointments, "page_obj": page_obj},
+        )
+
+    def post(self, request, *args, **kwargs):
         if request.POST.get("reschedule"):
+            self.appointmentID = request.POST.get("reschedule")
+            return self.reschedule(request, *args, **kwargs)
+        elif request.POST.get("cancel"):
+            self.appointmentID = request.POST.get("cancel")
+            return self.cancel(request, *args, **kwargs)
+
+    def get_query(self, request, *args, **kwargs):
+
+        query = request.GET.get("q")
+        EXCLUDED_STATUES = ["rejected", "cancelled", "completed"]
+        if query:
+            return (
+                Appointment.objects.filter(
+                    customer=request.user, provider__username__icontains=query
+                )
+                .order_by("-date_added")
+                .all()
+                .exclude(status__in=EXCLUDED_STATUES)
+            )
+        else:
+
+            return (
+                Appointment.objects.filter(customer=request.user)
+                .order_by("-date_added")
+                .all()
+                .exclude(status__in=EXCLUDED_STATUES)
+            )
+
+    def reschedule(self, request, *args, **kwargs):
+        messages.warning(
+            request,
+            "This will change the status to Rescheduled but the event for now will remain in the calendar  because the provider will have to review the timings again ",
+        )
+
+        change_appointment = get_object_or_404(
+            Appointment, id=request.POST.get("reschedule")
+        )
+
+        if change_appointment.status != "accepted":
+            messages.error(
+                request, "sorry you cannot reschedule a non accepted appointment "
+            )
+            return redirect("view_appointments")
+        else:
+            return redirect("reschedule", appointment_id=self.appointmentID)
+
+    def cancel(self, request, *args, **kwargs):
+        calendar_client = GoogleCalendarClient()
+        appointment = get_object_or_404(Appointment, id=self.appointmentID)
+        count_cancel = cancellation(request, request.user, appointment)
+        if appointment.status == "accepted":
+            try:
+                service = calendar_client.get_calendar_service(appointment.provider)
+                service.events().delete(
+                    calendarId="primary", eventId=appointment.event_id
+                ).execute()
+
+            except RefreshError as re:
+                force_provider_calendar(appointment.provider)
+                return JsonResponse(
+                    {
+                        "error": "refresh_token_expired",
+                        "message": "Provider's Google Calendar account has expired and must be renewed.",
+                    },
+                    status=400,
+                )
+            except HttpError as e:
+                return JsonResponse({"error": str(e)}, status=400)
+
+        appointment.status = "cancelled"
+        appointment.save()
+        if count_cancel >= 3:
+            request.user.is_active = False
+            request.user.save()
+            logout(request)
             messages.warning(
                 request,
-                "This will change the status to Rescheduled but the event for now will remain in the calendar  because the provider will have to review the timings again ",
+                "You have cancelled too many appointments in a shot span , your account has been deactivated ",
             )
-            change_appointment = Appointment.objects.get(
-                id=request.POST.get("reschedule")
-            )
-            if change_appointment.status != "accepted":
-                messages.error(
-                    request, "sorry you cannot reschedule a non accepted appointment "
-                )
-                return redirect("view_appointments")
-            else:
-                return redirect(
-                    "reschedule", appointment_id=request.POST.get("reschedule")
-                )
-        if request.POST.get("cancel"):
-            appointment = Appointment.objects.get(id=request.POST.get("cancel"))
-            count_cancel = cancellation(request , request.user , appointment)
-            if appointment.status == "accepted":
-                service = get_calendar_service(appointment.provider)
-                service.events().delete(calendarId="primary" , eventId = appointment.event_id).execute()
-            appointment.status = "cancelled"
-            appointment.save()
-            if count_cancel >= 3 :
-                request.user.is_active = False
-                request.user.save()
-                logout(request)
-                messages.warning(request,"You have cancelled too many appointments in a shot span , your account has been deactivated ")
-                return redirect("home")
-            else:
-                messages.success(request, "Cancelled successfully ")
-                return redirect("view_appointments")
-    return render(
-        request, "customer/view_appointments.html", {"appointments": myappointments}
-    )
+            return redirect("home")
+        else:
+            messages.success(request, "Cancelled successfully ")
+            return redirect("view_appointments")
 
 
+view_appointments = ViewAppointmentsView.as_view()
+
+
+# very simple . left this as FBV . doesnt fit in any generic CBVs and View CBV will just have more boilerplate
 @login_required(login_url="/login/")
 def reschedule(request, appointment_id):
-    change_appointment = Appointment.objects.get(id=appointment_id)
+    change_appointment = get_object_or_404(Appointment, id=appointment_id)
     if request.method == "POST":
         if request.POST.get("checkschedule"):
             request.session["mode"] = "reschedule"
@@ -329,18 +433,19 @@ def reschedule(request, appointment_id):
     return render(request, "customer/reschedule.html")
 
 
-
-
-class BookingHistoryView(LoginRequiredMixin , ListView):
+class BookingHistoryView(LoginRequiredMixin, ListView):
     model = Appointment
-    template_name = "customer/bookinghistory.html"
+    template_name = "customer/booking_history.html"
     context_object_name = "appointments"
     ordering = ["-date_added"]
-    
+
+    paginate_by = 5
 
     def get_queryset(self):
 
-        return Appointment.objects.filter(customer=self.request.user).order_by("-date_added")
-    
+        return Appointment.objects.filter(customer=self.request.user).order_by(
+            "-date_added"
+        )
+
 
 booking_history = BookingHistoryView.as_view()
