@@ -90,10 +90,30 @@
     box-shadow: 0 4px 16px #ffb34744;
     outline: none;
   }
+  .profile-radio-group {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .profile-radio-group label {
+    margin-bottom: 0;
+    font-weight: 600;
+    color: #333;
+    letter-spacing: 0.2px;
+    cursor: pointer;
+  }
+  .profile-radio-group input[type="radio"] {
+    margin-right: 0.4em;
+    accent-color: #ff6a00;
+    transform: scale(1.2);
+    vertical-align: middle;
+  }
   @media (max-width: 767.98px) {
     .profile-title { font-size: 1.3rem; }
     .profile-section-title { font-size: 1.05rem; }
     .rounded-circle { width: 100px !important; height: 100px !important; }
+    .profile-radio-group { gap: 0.7rem; }
   }
 </style>
 
@@ -115,7 +135,13 @@
             <p><span class="profile-label">Current:</span> <span class="profile-value">{{ me.notification_settings.preferences }}</span></p>
             <form method="POST" class="mt-3 profile-form">
                 {% csrf_token %}
-                {{ form|crispy }}
+                <div class="profile-radio-group">
+                  {% for radio in form.preferences %}
+                    <label>
+                      {{ radio.tag }} {{ radio.choice_label }}
+                    </label>
+                  {% endfor %}
+                </div>
                 <button class="btn btn-outline-dark mt-2" type="submit" name="changenot" value="changenot">Update Preferences</button>
             </form>
         </div>
@@ -126,10 +152,6 @@
         <div class="card-body">
             <h4 class="profile-section-title">Customer Profile</h4>
             <p><span class="profile-label">Phone Number:</span> <span class="profile-value">{{ my_customer.phone_number }}</span></p>
-            <form method="POST" class="mt-3">
-                {% csrf_token %}
-                <button class="btn btn-danger" type="submit" name="delete_account" value="delete_account">Delete Account</button>
-            </form>
         </div>
     </div>
     {% endif %}
@@ -164,12 +186,16 @@
                     <form method="POST" class="mt-3">
                         {% csrf_token %}
                         <button class="btn btn-warning me-2 mb-2" type="submit" name="modify_profile" value="modify_profile">Change Details</button>
-                        <button class="btn btn-danger mb-2" type="submit" name="delete_account" value="delete_account">Delete Account</button>
                     </form>
                 </div>
             </div>
         </div>
+        
     </div>
     {% endif %}
+    <form class="form-group" method="POST" action="#">
+            <button class="btn btn-danger mb-2" type="submit" name="delete_account" value="delete_account">Delete Account</button>
+        </form>
 </div>
+
 {% endblock %}
