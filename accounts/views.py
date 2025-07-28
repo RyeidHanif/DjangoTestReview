@@ -8,6 +8,9 @@ from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.views import View
+from django.contrib.auth.mixins import LoginRequiredMixin
+
 
 from main.forms import ProviderForm
 from main.models import CustomerProfile, NotificationPreferences, ProviderProfile
@@ -19,6 +22,7 @@ from .forms import (
     SignUpForm,
 )
 from .tokens import account_activation_token
+from django.shortcuts import get_object_or_404
 
 
 # Create your views here.
@@ -51,7 +55,9 @@ def activateEmail(request, user, to_email):
         )
 
 
-def signup(request):
+
+
+class SignUp(View):
     '''
     Allow the user to signup using Django's Authentication System
     
@@ -60,23 +66,26 @@ def signup(request):
     since every user must be a customer .
     The user is then redirected to the homepage where they recieve a notification to verify their email 
     '''
-
-    if request.method == "POST":
+    def get(self ,request , *args , **kwargs):
+        suform = SignUpForm()
+        return render(request, "accounts/signup.html", {"form": suform})
+    
+    def post(self , request ,*args , **kwargs):
         suform = SignUpForm(request.POST)
         if suform.is_valid():
             user = suform.save(commit=False)
-            user.is_active = False
+            user.is_active = False 
             user.save()
             activateEmail(request, user, suform.cleaned_data.get("email"))
             phone_number = suform.cleaned_data["phone_number"]
             CustomerProfile.objects.create(user=user, phone_number=phone_number)
             return redirect("home")
-        else:
+        else :
             for error in list(suform.errors.values()):
                 messages.error(request, error)
+            return self.get(self, request , *args , **kwargs )
 
-    suform = SignUpForm()
-    return render(request, "accounts/signup.html", {"form": suform})
+signup = SignUp.as_view()
 
 
 
@@ -177,12 +186,13 @@ def user_profile(request):
                 request,
                 "All your data will be lost . Are you sure you wish to delete your account ? ",
             )
+            return redirect("delete_account")
         if request.POST.get("disconnect"):
             request.user.google_calendar_connected = False
             return redirect("home")
 
 
-            return redirect("delete_account")
+            
 
 
         if request.POST.get("change_pfp"):
@@ -208,6 +218,7 @@ def user_profile(request):
             "change_profile_form": change_profile_form,
         },
     )
+
 
 
 @login_required(login_url="/login/")
