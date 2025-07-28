@@ -3,10 +3,113 @@
 {% block title %} Customer Dashboard {% endblock %}
 
 {% block content %}
-<div class="container py-4">
-  <h1 class="mb-4">Service Providers by Category</h1>
+<style>
+  .providers-title {
+    font-size: 2.2rem;
+    font-weight: 900;
+    letter-spacing: 1.1px;
+    color: #fffbe8;
+    text-shadow: 0 4px 32px #000a, 0 1px 0 #fff, 0 0 2px #000;
+    margin-bottom: 2.2rem;
+    text-align: center;
+    animation: fadeInUp 1s both;
+  }
+  .category-title {
+    color: #ff6a00;
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: 0.7px;
+    margin-bottom: 1.2rem;
+    text-shadow: 0 2px 12px #ffd54f33;
+  }
+  .card {
+    border-radius: 1.5rem !important;
+    box-shadow: 0 8px 32px 0 rgba(255, 183, 77, 0.13), 0 2px 16px #ffb34722;
+    border: none;
+    overflow: hidden;
+    position: relative;
+    animation: fadeInUp 1s both;
+    background: rgba(255,255,255,0.97);
+    transition: transform 0.18s, box-shadow 0.18s;
+  }
+  .card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 16px 48px 0 #ffb34733, 0 2px 16px #ff174422;
+    z-index: 2;
+  }
+  .card-title {
+    font-weight: 700;
+    font-size: 1.18rem;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.7rem;
+    color: #222;
+    text-shadow: 0 1px 8px #ffd54f33;
+  }
+  .card-text, .card-text strong {
+    font-size: 1.08rem;
+    font-weight: 500;
+    color: #333;
+  }
+  .btn-success {
+    font-size: 1.08rem;
+    font-weight: 700;
+    border-radius: 1.1rem;
+    padding: 0.7rem 1.2rem;
+    background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+    border: none;
+    color: #fff;
+    box-shadow: 0 4px 16px #43e97b33;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.15s;
+    letter-spacing: 0.5px;
+  }
+  .btn-success:hover, .btn-success:focus {
+    background: linear-gradient(90deg, #38f9d7 0%, #43e97b 100%);
+    color: #fff;
+    box-shadow: 0 8px 32px #43e97b33;
+    transform: translateY(-2px) scale(1.03);
+  }
+  .input-group .form-control {
+    border-radius: 1.2rem 0 0 1.2rem !important;
+    font-size: 1.08rem;
+    padding: 0.7rem 1rem;
+    border: 1.5px solid #ffd54f55;
+    background: rgba(255,255,255,0.97);
+    color: #222;
+    box-shadow: 0 2px 8px #ffd54f11;
+    transition: border 0.2s, box-shadow 0.2s;
+  }
+  .input-group .form-control:focus {
+    border-color: #ff6a00;
+    box-shadow: 0 4px 16px #ffb34744;
+    outline: none;
+  }
+  .btn-outline-primary {
+    border-radius: 0 1.2rem 1.2rem 0 !important;
+    font-size: 1.08rem;
+    font-weight: 700;
+    border: 2px solid #ffd54f;
+    color: #ff6a00;
+    background: #fffbe8;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  }
+  .btn-outline-primary:hover, .btn-outline-primary:focus {
+    background: linear-gradient(90deg, #ffd54f 0%, #ffb347 100%);
+    color: #222;
+    box-shadow: 0 4px 16px #ffd54f44;
+    border-color: #ffb347;
+  }
+  @media (max-width: 991.98px) {
+    .providers-title { font-size: 1.4rem; }
+    .category-title { font-size: 1.1rem; }
+    .card-title { font-size: 1rem; }
+    .card-text, .card-text strong { font-size: 0.97rem; }
+  }
+</style>
 
- <!-- Search Form simple Html-->
+<div class="container py-4">
+  <h1 class="providers-title">Service Providers by Category</h1>
+
+  <!-- Search Form -->
   <form method="get" action="" class="mb-5">
     <div class="input-group">
       <input type="text" name="q" class="form-control" placeholder="Search providers by name..." value="{{ request.GET.q }}">
@@ -15,17 +118,16 @@
   </form>
 
   {% for category in categories %}
-    <h2 class="mb-3 text-primary">{{ category|title }}</h2>
+    <h2 class="category-title">{{ category|title }}</h2>
     <div class="row">
       {% for provider in providers %}
         {% if provider.service_category == category %}
           <div class="col-md-4 mb-4">
-            <div class="card h-100 shadow-sm">
+            <div class="card h-100 shadow-sm animate__animated animate__fadeInUp">
               <div class="card-body d-flex flex-column">
                 <h5 class="card-title">
-                
-                    {{ provider.user.username }}
-                
+                  <i class="bi bi-person-badge me-2" style="color:#ff6a00;"></i>
+                  <span style="color:#222;">{{ provider.user.username }}</span>
                 </h5>
                 <p class="card-text mb-1"><strong>Service:</strong> {{ provider.service_name }}</p>
                 <p class="card-text mb-1"><strong>Pricing:</strong> {{ provider.pricing_model|capfirst }}, {{ provider.duration_mins }} mins</p>
@@ -33,7 +135,7 @@
                 <form method="post" action="#" class="mt-auto">
                   {% csrf_token %}
                   <button type="submit" name="book_appointment" value="{{ provider.id }}" class="btn btn-success w-100">
-                    Book Appointment
+                    <i class="bi bi-calendar-plus"></i> Book Appointment
                   </button>
                 </form>
               </div>
@@ -43,8 +145,7 @@
       {% endfor %}
     </div>
   {% empty %}
-    <p>No providers found.</p>
+    <p class="text-center text-muted fs-5" style="color:#fffbe8 !important; text-shadow:0 2px 12px #000a;">No providers found.</p>
   {% endfor %}
 </div>
 {% endblock %}
-

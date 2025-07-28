@@ -13,54 +13,6 @@ from googleapiclient.errors import HttpError
 from main.models import Appointment, ProviderProfile
 
 
-def create_calendar_appointment(
-    start_date,
-    end_date,
-    summary,
-    attendee_email,
-    recurrence_frequency,
-    until_date,
-    appointment,
-):
-    event = {
-        "summary": summary,
-        "location": "My Office ",
-        "description": "Appointment",
-        "start": {
-            "dateTime": start_date,
-            "timeZone": "Asia/Karachi",
-        },
-        "end": {
-            "dateTime": end_date,
-            "timeZone": "Asia/Karachi",
-        },
-        "attendees": [],
-        "reminders": {
-            "useDefault": False,
-            "overrides": [
-                {"method": "email", "minutes": 24 * 60},
-                {"method": "email", "minutes": 20},
-                {"method": "popup", "minutes": 10},
-            ],
-        },
-    }
-    if recurrence_frequency not in [None, "NONE"] and until_date != None:
-
-        until_utc = datetime.combine(until_date, time.min).replace(tzinfo=timezone.utc)
-        until_str = until_utc.strftime("%Y%m%dT%H%M%SZ")
-        recur = f"RRULE:FREQ={recurrence_frequency};UNTIL={until_str}"
-        event["recurrence"] = [recur]
-
-    customer_pref = appointment.customer.notification_settings.preferences
-    provider_pref = appointment.provider.notification_settings.preferences
-
-    if customer_pref != "none":
-        event["attendees"].append({"email": attendee_email})
-
-    if provider_pref == "none":
-        event["reminders"] = {"useDefault": False, "overrides": []}
-
-    return event
 
 
 def EmailConfirmedAppointment(

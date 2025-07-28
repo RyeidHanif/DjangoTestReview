@@ -2,6 +2,7 @@ from django import forms
 
 
 class AvailabilityForm(forms.Form):
+    '''Form to allow the user to enter when they are not available '''
     cause = forms.CharField(max_length=100)
     start_date = forms.DateField(
         widget=forms.DateInput(attrs={"type": "date"}), required=True

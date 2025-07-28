@@ -2,26 +2,157 @@
 
 {% block title %} Customer Dashboard {% endblock %}
 
-
 {% block content %}
+<style>
+  .customer-dashboard-hero {
+    background: #232526;
+    border-radius: 2.2rem;
+    padding: 3.5rem 2rem 2.5rem 2rem;
+    box-shadow: 0 12px 48px 0 rgba(0,0,0,0.13), 0 1.5px 24px 0 rgba(0,0,0,0.08);
+    animation: fadeInHero 1.2s cubic-bezier(.77,0,.18,1) both;
+    text-align: center;
+    position: relative;
+    min-width: 340px;
+    max-width: 480px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  @keyframes fadeInHero {
+    from { opacity: 0; transform: translateY(-40px) scale(0.98);}
+    to { opacity: 1; transform: translateY(0) scale(1);}
+  }
+  .customer-dashboard-hero h1 {
+    font-size: 2.3rem;
+    font-weight: 800;
+    letter-spacing: 1.1px;
+    margin-bottom: 2.2rem;
+    color: #fffbe8;
+    text-shadow: 0 2px 24px #000a, 0 1px 0 #fff, 0 0 2px #000;
+    background: none;
+    -webkit-background-clip: unset;
+    -webkit-text-fill-color: unset;
+    background-clip: unset;
+    animation: none;
+  }
+  .dashboard-btn-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    align-items: stretch;
+    margin-top: 1.5rem;
+    width: 100%;
+    max-width: 350px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .dashboard-btn {
+    font-size: 1.18rem;
+    font-weight: 700;
+    padding: 1.1rem 0.5rem;
+    border-radius: 1.2rem;
+    box-shadow: 0 4px 24px #00000022;
+    border: none;
+    transition: 
+      background 0.18s, 
+      color 0.18s, 
+      box-shadow 0.18s, 
+      transform 0.18s;
+    letter-spacing: 0.5px;
+    outline: none;
+    width: 100%;
+    min-width: 180px;
+    cursor: pointer;
+    opacity: 0.97;
+    position: relative;
+    z-index: 1;
+    color: #232526;
+    background: #ffd54f;
+  }
+  .dashboard-btn:active {
+    transform: scale(0.97);
+  }
+  .dashboard-btn-primary {
+    background: #ffd54f;
+    color: #232526;
+  }
+  .dashboard-btn-primary:hover, .dashboard-btn-primary:focus {
+    background: #ffb347;
+    color: #232526;
+    box-shadow: 0 8px 32px #ffd54f33;
+  }
+  .dashboard-btn-success {
+    background: #43e97b;
+    color: #fff;
+  }
+  .dashboard-btn-success:hover, .dashboard-btn-success:focus {
+    background: #38f9d7;
+    color: #232526;
+    box-shadow: 0 8px 32px #43e97b33;
+  }
+  .dashboard-btn-dark {
+    background: #414345;
+    color: #ffd54f;
+  }
+  .dashboard-btn-dark:hover, .dashboard-btn-dark:focus {
+    background: #232526;
+    color: #ffd54f;
+    box-shadow: 0 8px 32px #23252633;
+  }
+  .dashboard-btn-outline-success {
+    background: #fff;
+    border: 2px solid #43e97b;
+    color: #43e97b;
+  }
+  .dashboard-btn-outline-success:hover, .dashboard-btn-outline-success:focus {
+    background: #43e97b;
+    color: #fff;
+    box-shadow: 0 8px 32px #43e97b33;
+  }
+  .dashboard-btn i {
+    margin-right: 0.5em;
+    font-size: 1.1em;
+    vertical-align: middle;
+  }
+  @media (max-width: 600px) {
+    .customer-dashboard-hero {
+      padding: 2.2rem 0.7rem 1.7rem 0.7rem;
+      min-width: unset;
+      max-width: 98vw;
+    }
+    .customer-dashboard-hero h1 {
+      font-size: 1.3rem;
+    }
+    .dashboard-btn-group {
+      max-width: 100vw;
+    }
+    .dashboard-btn {
+      font-size: 1.05rem;
+      padding: 0.9rem 0.3rem;
+    }
+  }
+</style>
 
-<div class="d-flex justify-content-center align-items-center vh-100">
-    <div class="text-align-center">
-        <h1>Welcome to the Customer Dashboard  {{user.username}} </h1>
-        <form class="form-group" method="POST" action="#">
-            {% csrf_token %}
-            <button class ="btn btn-primary" type="submit" name="view_providers" value = "viewproviders">View Providers</button>
-            <button class ="btn btn-success" type="submit" name="view_appointments" value = "viewappointments">View Appointments</button>
-            <button class ="btn btn-dark" type="submit" name="my_profile" value = "myprofile">My Profile</button>
-            <button class ="btn btn-dark" type="submit" name="booking_history" value = "bookinghistory">Booking History </button>
-            <button class="btn btn-outline-success" type="submit" name="provider_side" value="provider_Side">{{display}}</button>
-
-        </form>
-    </div>
+<div class="d-flex justify-content-center align-items-center" style="min-height: 90vh;">
+  <div class="customer-dashboard-hero">
+    <h1>Welcome to the Customer Dashboard<br><span style="font-size:1.2rem;font-weight:600;color:#ffd54f;text-shadow:0 2px 12px #000a;">{{ user.username }}</span></h1>
+    <form class="dashboard-btn-group" method="POST" action="#">
+      {% csrf_token %}
+      <button class="dashboard-btn dashboard-btn-primary" type="submit" name="view_providers" value="viewproviders">
+        <i class="bi bi-people-fill"></i>View Providers
+      </button>
+      <button class="dashboard-btn dashboard-btn-success" type="submit" name="view_appointments" value="viewappointments">
+        <i class="bi bi-calendar-check-fill"></i>View Appointments
+      </button>
+      <button class="dashboard-btn dashboard-btn-dark" type="submit" name="my_profile" value="myprofile">
+        <i class="bi bi-person-circle"></i>My Profile
+      </button>
+      <button class="dashboard-btn dashboard-btn-dark" type="submit" name="booking_history" value="bookinghistory">
+        <i class="bi bi-clock-history"></i>Booking History
+      </button>
+      <button class="dashboard-btn dashboard-btn-outline-success" type="submit" name="provider_side" value="provider_Side">
+        <i class="bi bi-arrow-repeat"></i>{{ display }}
+      </button>
+    </form>
+  </div>
 </div>
-
-
-
-
-
 {% endblock %}
