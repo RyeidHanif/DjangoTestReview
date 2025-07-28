@@ -5,6 +5,7 @@ import uuid
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.timezone import localtime
+from django.core.exceptions import ValidationError
 
 SERVICE_CHOICES = [
     ("doctor", "Doctor"),
@@ -114,8 +115,15 @@ class Appointment(models.Model):
     objects = ActiveAppointmentManager()
     all_objects = models.Manager()
 
+    def clean(self):
+        if self.status != "cancelled":
+            if self.bad_cancel or self.cancelled_at or self.cancelled_by:
+                raise ValidationError(
+                    "Cancellation fields can only be set if the appointment is cancelled."
+                )
+
     def __str__(self):
-        return f"Appointment by {self.customer.username} for {self.provider.username} on {localtime(self.date_start)}"
+        return f"Appointment by {self.customer.username} for {self.provider.username} on {self.date_start}"
 
 
 class AnalyticsApi(models.Model):
