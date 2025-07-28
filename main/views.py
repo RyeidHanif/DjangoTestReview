@@ -72,13 +72,7 @@ def redirectiondashboard(request):
 @login_required(login_url="/login/")
 def profile_creation(request):
     """
-    profile creation system which uses the provider form and parameter n to divide choices
-
-    user id and phone number are use from the session and then deleted
-    n is used to differentiate between users who want to be both and those
-    who want to be a provider
-    if n is given as "both" , then a customer profile for that user is also created
-    the user is then redirected to the login page
+    Uses the provider form to create a users provider profile when they wish to do so 
     """
 
     if request.method == "POST":

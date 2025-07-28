@@ -43,6 +43,7 @@ from .utils import (EmailCancelledAppointment, EmailConfirmedAppointment,
 
 
 class ProviderDashboardView(LoginRequiredMixin, TemplateView):
+    '''Main dashboard for a provider with buttons to redirect them to different places '''
     login_url = "/login/"
     template_name = "provider/provider_dashboard.html"
 
@@ -66,10 +67,12 @@ provider_dashboard = ProviderDashboardView.as_view()
 
 
 class ListAcceptedAppointmentsView(LoginRequiredMixin, View):
+    '''Allow the provider to see their accepted appointments and cancel or mark them as completed '''
 
     login_url = "/login/"
 
     def get(self, request, *args, **kwargs):
+        '''Allows the user to use a search bar to search for their appointments '''
         query = request.GET.get("q")
 
         if query:
@@ -94,6 +97,7 @@ class ListAcceptedAppointmentsView(LoginRequiredMixin, View):
         )
 
     def post(self, request, *args, **kwargs):
+        '''Uses the google Calendar Client to delete an appointment if cancelled  or mark as complete if the date has passed '''
         calendar_client = GoogleCalendarClient()
         if request.POST.get("cancel"):
             cancel_appointment = get_object_or_404(
@@ -158,9 +162,11 @@ view_my_appointments = ListAcceptedAppointmentsView.as_view()
 
 
 class ListPendingAppointmentsView(LoginRequiredMixin, View):
+    '''Allow the provider to see pending and rescheduled appointmnets which have not yet been accepted and allow them to be accepted or rejected '''
     login_url = "/login/"
 
     def get(self, request, *args, **kwargs):
+        '''Allow the user to use a search bar to get their appointments '''
         query = request.GET.get("q")
 
         if query:
@@ -184,6 +190,7 @@ class ListPendingAppointmentsView(LoginRequiredMixin, View):
         )
 
     def post(self, request, *args, **kwargs):
+        '''Allow the user to press either of 2 buttons to accept or reject the appointment '''
         if request.POST.get("reject"):
 
             appointment = get_object_or_404(Appointment, id=request.POST.get("reject"))
@@ -198,6 +205,8 @@ class ListPendingAppointmentsView(LoginRequiredMixin, View):
         return redirect("view_pending_appointments")
 
     def reject_appointment(self, request, appointment):
+        '''check whether the original appointment was pending or rescheduled . if rescheduled , it must be deleted '''
+        calendar_client = GoogleCalendarClient()
         if appointment.status == "pending":
             appointment.status = "rejected"
             if appointment.customer.notification_settings.preferences == "all":
@@ -212,7 +221,21 @@ class ListPendingAppointmentsView(LoginRequiredMixin, View):
             messages.success(request, " appointment rejected successfully")
             return redirect("view_pending_appointments")
         elif appointment.status == "rescheduled":
-            appointment.status = "accepted"
+            appointment.status = "cancelled"
+            try :
+                calendar_client.delete_event( appointment.provider , appointment.event_id)
+            except RefreshError as re:
+                force_provider_calendar(appointment.provider)
+                return JsonResponse(
+                    {
+                        "error": "refresh_token_expired",
+                        "message": "Your Google Calendar account has expired and must be renewed.",
+                    },
+                    status=400,
+                )
+            except HttpError as e:
+                return JsonResponse({"error": str(e)}, status=400)
+
             appointment.save()
             messages.info(request, "reschedule rejected successfully ")
             if appointment.customer.notification_settings.preferences == "all":
@@ -227,6 +250,7 @@ class ListPendingAppointmentsView(LoginRequiredMixin, View):
             return redirect("view_pending_appointments")
 
     def accept_appointment(self, request, appointment):
+        '''Accepts and creates  pending appointment changing its status to accepted  '''
         calendar_client = GoogleCalendarClient()
         if appointment.status == "pending":
             appointment.status = "accepted"
@@ -314,12 +338,14 @@ view_pending_appointments = ListPendingAppointmentsView.as_view()
 
 
 class MyAvailabilityView(LoginRequiredMixin, View):
+    '''Allows the provider to add a timeblock when they will not be available'''
     def get(self, request, *args, **kwargs):
         self.form = AvailabilityForm()
 
         return render(request, "provider/my_availability.html", {"form": self.form})
 
     def post(self, request, *args, **kwargs):
+        '''uses the availability form , formats it and creates an event for the provider '''
         calendar_client = GoogleCalendarClient()
         self.form = AvailabilityForm(request.POST)
         if self.form.is_valid():
@@ -361,6 +387,7 @@ my_availability = MyAvailabilityView.as_view()
 
 
 class ViewAnalytics(LoginRequiredMixin, View):
+    '''Allows the provider to view their analytics '''
     login_url = "/login/"
 
     def get(self, request, *args, **kwargs):

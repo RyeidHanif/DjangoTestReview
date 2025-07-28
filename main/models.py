@@ -29,11 +29,13 @@ default_end = datetime.time(17, 0, 0)
 
 
 class ActiveProviderManager(models.Manager):
+    '''Make sure that when we get objects , only those are queried with active users'''
     def get_queryset(self):
         return super().get_queryset().filter(user__is_active=True)
 
 
 class ActiveAppointmentManager(models.Manager):
+    '''Makes sure that when we get appointment objects , only those with active providers are queried '''
     def get_queryset(self):
         return (
             super()
@@ -75,7 +77,7 @@ class ProviderProfile(models.Model):
 
 class CustomerProfile(models.Model):
     """
-    model to get user data if they want to be a customer
+    model to get user data for customer profile
     """
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)

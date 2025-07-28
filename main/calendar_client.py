@@ -29,7 +29,9 @@ from .models import ProviderProfile, User
 
 
 class GoogleCalendarClient:
+    '''Inculcates all methods related to the google Calendar API to make accessing it much easier than before '''
     def __init__(self):
+        '''Sets some initial variables required by multiple methods '''
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
         self.clientID = os.getenv("client_id")
         self.clientSecret = os.getenv("client_secret")
@@ -66,6 +68,7 @@ class GoogleCalendarClient:
         return build("calendar", "v3", credentials=creds)
 
     def create_auth_url(self):
+        '''Creates the authorization url which the user is redirected to  when connecting to google calendar '''
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = (
             "1"  # tell google that no https , using http
         )
@@ -89,6 +92,7 @@ class GoogleCalendarClient:
         return auth_url
 
     def get_available_slots(self, provider, slot_range):
+        '''Gets a provider's available slots for either a day or a week  using a freebusy query '''
 
         service = self.get_calendar_service(provider)
         tz = get_current_timezone()
@@ -163,6 +167,7 @@ class GoogleCalendarClient:
         recurrence_frequency,
         until_date,
     ):
+        '''Creates a calendar appointment by sending the appoinment details to the google. calendar API '''
         event = {
             "summary": summary,
             "location": "My Office ",
@@ -202,6 +207,8 @@ class GoogleCalendarClient:
     def reschedule_google_event(
         self, user, event_id, new_start, new_end, recurrence_frequency, recurrence_until
     ):
+        '''Allows the user to reschedule an event by first getting an event from google calendar then changing its details '''
+    
         service = self.get_calendar_service(user)
         event = service.events().get(calendarId="primary", eventId=event_id).execute()
         event["start"]["dateTime"] = new_start
@@ -233,6 +240,7 @@ class GoogleCalendarClient:
         recurrence_frequency,
         until_date,
     ):
+        '''Uses he Create Appointment method to create an appoinmtnet '''
         event_body = self.create_calendar_appointment(
             timeslot[0],
             timeslot[1],
@@ -249,6 +257,7 @@ class GoogleCalendarClient:
         )
 
     def google_calendar_callback(self, request):
+        '''Allows google calendar API to redirect the user to this url , then gets the user credentials '''
         flow = Flow.from_client_secrets_file(  # load google auth client credentils
             "credentials.json",
             scopes=[
@@ -276,12 +285,14 @@ class GoogleCalendarClient:
         messages.success(request, "Your Google Calendar is successfully connected!")
 
     def delete_event(self, user, event_id):
+        '''Deletes an event in the google calendar '''
         service = self.get_calendar_service(user)
         service.events().delete(calendarId="primary", eventId=event_id).execute()
 
     def create_availability_block(
         self, request, user, cause, start_datetime_iso, end_datetime_iso
     ):
+        '''Allows a provider to create timeslots where no other appointment can be created '''
         service = self.get_calendar_service(user)
         event = {
             "summary": "Unavailable",

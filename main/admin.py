@@ -21,6 +21,8 @@ from main.calendar_client import GoogleCalendarClient
 
 
 class ProviderProfileAdmin(admin.ModelAdmin):
+    '''Allows for Admin users to be able to see more information on each provider profile and show their available slots for the day '''
+
     actions = ["show_available_slots"]
     list_display= ["user", "service_category", "service_name", "rate", "duration_mins"]
     list_filter =["service_category"]
@@ -29,6 +31,7 @@ class ProviderProfileAdmin(admin.ModelAdmin):
 
     @admin.action(description="Show available slots for today (for 1 selected provider)")
     def show_available_slots(self, request, queryset):
+        '''Uses the available slots method of the google calendar client to get a provider's available slots for the day '''
         if queryset.count() != 1:
             self.message_user(request, "Please select exactly one provider.", level='error')
             return
@@ -54,12 +57,27 @@ class ProviderProfileAdmin(admin.ModelAdmin):
 
 
 class CustomerProfileAdmin(admin.ModelAdmin):
+    '''Displays extra information for each customer profile on the main dashboard '''
     list_display = ["user", "phone_number"]
 
 
 
 
 class AppointmentAdmin(admin.ModelAdmin):
+    '''
+    Add extra information and actions for each appointments
+
+    - Order by the starting date of the appointment 
+    -displays extra information on the ain dashboard wtih list_display 
+    - change the  empty value placeholder 
+    - add and group more fields when admin opens that admin model in the dashboard 
+    - add a radio choice field  for status of an appointment 
+    - alow appointment to be searched using the provider's email
+    - allow the list of appoinmtnets to be filtered by status and/or provider 
+    - add 2 actions : 
+    1. mark an appointment as accepted 
+    2. send reminder emails to all the users the admin selected 
+    '''
     date_hierarchy = "date_start"
     list_display = ["provider", "customer", "date_start", "date_end"]
     empty_value_display = "-empty-"
@@ -97,17 +115,12 @@ class AppointmentAdmin(admin.ModelAdmin):
 
             )
         self.message_user(request, f"{queryset.count()} reminders sent.")
-    
-    @admin.action(description= "Export Appointment objects as JSON ")
-    def export_as_json(self, request, queryset):
-        response = HttpResponse(content_type="application/json")
-        serializers.serialize("json", queryset, stream=response)
-        return response
-
+   
 
 
 
 class NotificationPreferencesAdmin(admin.ModelAdmin):
+    '''Add extra information for notification preferenes '''
     radio_fields = {"preferences": admin.HORIZONTAL}
     list_display = ["user", "preferences"]
     list_filter = ["preferences"]

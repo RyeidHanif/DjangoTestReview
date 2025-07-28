@@ -29,6 +29,7 @@ load_dotenv()
 
 
 def cancellation(request, user, appointment):
+    '''Checks whether a useer has cancelled 3 or more appointments withint the last 30 days '''
     cutoff_date = now() - timedelta(days=30)
     appointment_date = appointment.date_start.astimezone(get_current_timezone())
     appointment.cancelled_by = user
@@ -47,6 +48,7 @@ def cancellation(request, user, appointment):
 
 
 def force_provider_calendar(provider):
+    '''Once the refresh token of a provider expired, forces the provider to reconnect to thecalendar '''
     profile = ProviderProfile.objects.get(user=provider)
     profile.google_access_token = None
     profile.google_refresh_token = None
