@@ -11,9 +11,11 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
+
 
 # Load environment variables from the .env file
 load_dotenv()
@@ -39,6 +41,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     "accounts",
+    'jazzmin',
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -51,7 +54,15 @@ INSTALLED_APPS = [
     "customer",
     "provider",
     "api",
+    "rest_framework",
+    'drf_spectacular',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+   
 ]
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -61,6 +72,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+     "allauth.account.middleware.AccountMiddleware",
+
 ]
 
 ROOT_URLCONF = "mysite.urls"
@@ -75,10 +88,22 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                'django.template.context_processors.request',
             ],
         },
     },
 ]
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    }
+}
+
 
 WSGI_APPLICATION = "mysite.wsgi.application"
 
@@ -116,7 +141,13 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    
+}
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
@@ -157,13 +188,101 @@ EMAIL_USE_TLS = True
 PASSWORD_RESET_TIMEOUT = 14400  # how long the email is valid
 
 
-STATIC_URL = "static/" # The static folder ill use to  load static files onto the page
-MEDIA_URL= "/media/" # the url prefix for serving uploaded media 
+STATIC_URL = "static/"  # The static folder ill use to  load static files onto the page
+MEDIA_URL = "/media/"  # the url prefix for serving uploaded media
 
 
-MEDIA_ROOT = os.path.join(BASE_DIR , "media") # the actual folder to which django writes the images to 
+
+MEDIA_ROOT = os.path.join(
+    BASE_DIR, "media"
+)  # the actual folder to which django writes the images to
 
 
-STATICFILES_DIRS = [BASE_DIR / "static"] # tells django where to look for static files during dev
+STATICFILES_DIRS = [
+    BASE_DIR / "static"
+]  # tells django where to look for static files during dev
 
-STATIC_ROOT =  os.path.join(BASE_DIR, "staticfiles") # django collects all static files into this folder when we do collect static for prod 
+STATIC_ROOT = os.path.join(
+    BASE_DIR, "staticfiles"
+)  # django collects all static files into this folder when we do collect static for prod
+
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=20),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=100),
+}
+
+
+
+
+AUTHENTICATION_BACKENDS = [
+    
+    # Needed to login by username in Django admin, regardless of `allauth`
+    'django.contrib.auth.backends.ModelBackend',
+    # `allauth` specific authentication methods, such as login by email
+    'allauth.account.auth_backends.AuthenticationBackend',
+    
+]
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        # For each OAuth based provider, either add a ``SocialApp``
+        # (``socialaccount`` app) containing the required client
+        # credentials, or list them here:
+        'APP': {
+            'client_id': os.getenv("client_id"),
+            'secret': os.getenv("client_secret"),
+            'key': ''
+        },
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+    }
+}
+
+
+SOCIALACCOUNT_LOGIN_ON_GET = True
+ACCOUNT_LOGOUT_REDIRECT_URL = '/'
+
+
+ACCOUNT_LOGIN_METHODS = {'email'} # login by email
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
+ACCOUNT_UNIQUE_EMAIL = True
+SOCIALACCOUNT_AUTO_SIGNUP = True  # auto create user if no match
+
+# This is the magic:
+SOCIALACCOUNT_ADAPTER = 'allauth.account.adapter.DefaultAccountAdapter'
+SOCIALACCOUNT_ADAPTER = 'accounts.adapter.SocialAccountAdapter'
+
+
+
+JAZZMIN_UI_TWEAKS = {
+   
+    "dark_mode_theme": "darkly",
+}
+
+
+JAZZMIN_SETTINGS = {
+
+
+
+    "topmenu_links": [
+        
+        {
+            "name": "Analytics",
+            "url": "admin-analytics",  
+        },
+    ]
+   
+}
+
+
+APPEND_SLASH = True
+
+
+
+

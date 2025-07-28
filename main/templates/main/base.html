@@ -7,38 +7,129 @@
   <title>{% block title %}{% endblock %}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
     integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
   <style>
     body {
-      background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
       min-height: 100vh;
+      background: linear-gradient(120deg, #ffef8b 0%, #ffb347 40%, #ff6a00 80%, #ff1744 100%);
+      background-size: 200% 200%;
+      animation: gradientMove 12s ease-in-out infinite;
+      font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
       background-attachment: fixed;
-      background-size: cover;
-      animation: bgFade 15s ease-in-out infinite alternate;
+      background-repeat: no-repeat;
     }
 
-    @keyframes bgFade {
-      0% {
-        background-position: 0% 50%;
-      }
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
 
-      100% {
-        background-position: 100% 50%;
+    .navbar {
+      background: rgba(24, 24, 32, 0.92) !important;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+      backdrop-filter: blur(6px);
+      border-bottom: 1.5px solid rgba(255,255,255,0.07);
+      transition: background 0.4s;
+    }
+
+    .navbar-brand, .nav-link, .nav-item form button {
+      color: #f8f9fa !important;
+      text-shadow: 0 1px 8px rgba(0,0,0,0.12);
+      transition: color 0.2s, text-shadow 0.2s;
+    }
+
+    .navbar-brand {
+      font-weight: 700;
+      letter-spacing: 1px;
+      font-size: 1.35rem;
+      text-transform: uppercase;
+      padding-right: 1.5rem;
+    }
+
+    .nav-link, .nav-item form button {
+      font-size: 1.08rem;
+      font-weight: 500;
+      margin-right: 0.5rem;
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+      box-shadow: none;
+      position: relative;
+    }
+
+    .nav-link.active, .nav-link:hover, .nav-link:focus,
+    .nav-item form button:hover, .nav-item form button:focus {
+      color: #ffd54f !important;
+      background: rgba(255,255,255,0.07);
+      box-shadow: 0 2px 12px 0 rgba(255, 213, 79, 0.12);
+      text-shadow: 0 2px 12px #ffb30044;
+      outline: none;
+    }
+
+    .nav-item form {
+      display: inline-flex;
+      align-items: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    .nav-item {
+      margin-right: 0.2rem;
+    }
+
+    .alert {
+      border-radius: 0.7rem;
+      box-shadow: 0 2px 16px 0 rgba(255, 183, 77, 0.13);
+      animation: fadeInAlert 0.7s;
+    }
+
+    @keyframes fadeInAlert {
+      from { opacity: 0; transform: translateY(-10px);}
+      to { opacity: 1; transform: translateY(0);}
+    }
+
+    .container-fluid {
+      margin-top: 2.5rem;
+      animation: fadeInMain 1.2s;
+    }
+
+    @keyframes fadeInMain {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Responsive tweaks */
+    @media (max-width: 991.98px) {
+      .navbar-nav {
+        background: rgba(24, 24, 32, 0.97);
+        border-radius: 0.5rem;
+        margin-top: 0.5rem;
+        padding: 0.5rem 0.5rem;
+      }
+      .nav-link, .nav-item form button {
+        margin-bottom: 0.3rem;
       }
     }
   </style>
 </head>
 
 <body>
-  <nav class="navbar navbar-expand-lg bg-dark navbar-dark">
+  <nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container-fluid">
       <a class="navbar-brand" href="{% url 'home' %}">Home</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
         aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
+  
       <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav">
-          {% if  not user.is_authenticated %}
+        <ul class="navbar-nav ms-auto">
+          {% if not user.is_authenticated %}
           <li class="nav-item">
             <a class="nav-link active" aria-current="page" href="{% url 'login' %}">Login</a>
           </li>
@@ -46,15 +137,23 @@
             <a class="nav-link" href="{% url 'signup' %}">Signup</a>
           </li>
           {% endif %}
+
           <li class="nav-item">
             <a class="nav-link" href="{% url 'redirectiondashboard' %}">Dashboard</a>
           </li>
-          {% if request.user.is_authenticated and request.user.is_superuser %}
+
+          {% if user.is_authenticated and user.is_superuser %}
           <li class="nav-item">
             <a class="nav-link" href="/admin/">Admin</a>
           </li>
+          {% endif %}
+
+          {% if user.is_authenticated %}
           <li class="nav-item">
-            <a class="nav-link" href="/admin_dashboard/">Admin Analysis</a>
+            <form method="POST" action="{% url 'account_logout' %}">
+              {% csrf_token %}
+              <button type="submit">Logout</button>
+            </form>
           </li>
           {% endif %}
         </ul>
@@ -72,13 +171,6 @@
     {% endfor %}
   </div>
   {% endif %}
-
-  <div style="position: fixed; bottom: 10px; right: 10px; z-index: 1030;">
-    <form class="form-group" action="{% url 'logout' %}" method="POST">
-      {% csrf_token %}
-      <button class="btn btn-danger" type="submit">Logout</button>
-    </form>
-  </div>
 
   <div class="container-fluid">
     {% block content %}{% endblock %}

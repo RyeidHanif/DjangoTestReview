@@ -3,12 +3,161 @@
 {% block title %}Admin Dashboard{% endblock %}
 
 {% block content %}
+<style>
+  .dashboard-title {
+    font-size: 2.7rem;
+    font-weight: 900;
+    letter-spacing: 1.2px;
+    background: linear-gradient(90deg, #ffd54f 20%, #ff6a00 60%, #ff1744 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 2px 24px #ffb30033, 0 1px 0 #ff6a00;
+    animation: textGlow 2.5s ease-in-out infinite alternate;
+    margin-bottom: 2.2rem;
+  }
+  @keyframes textGlow {
+    0% { text-shadow: 0 2px 24px #ffb30033, 0 1px 0 #ff6a00; }
+    100% { text-shadow: 0 6px 36px #ff174433, 0 2px 0 #ffd54f; }
+  }
+  .card {
+    border-radius: 1.5rem !important;
+    box-shadow: 0 8px 32px 0 rgba(255, 183, 77, 0.13), 0 2px 16px #ffb34722;
+    border: none;
+    overflow: hidden;
+    position: relative;
+    animation: fadeInUp 1s both;
+  }
+  .card .card-title {
+    font-weight: 700;
+    font-size: 1.25rem;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.7rem;
+    text-shadow: 0 1px 8px #ffd54f33;
+  }
+  .card .card-text {
+    font-size: 1.4rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 8px #ffb30022;
+  }
+  .bg-success {
+    background: linear-gradient(120deg, #43e97b 0%, #38f9d7 100%) !important;
+    color: #fff !important;
+  }
+  .bg-primary {
+    background: linear-gradient(120deg, #36d1c4 0%, #5b86e5 100%) !important;
+    color: #fff !important;
+  }
+  .bg-dark {
+    background: linear-gradient(120deg, #232526 0%, #414345 100%) !important;
+    color: #ffd54f !important;
+  }
+  .card {
+    transition: transform 0.22s cubic-bezier(.77,0,.18,1), box-shadow 0.22s;
+  }
+  .card:hover {
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 16px 48px 0 #ffb34733, 0 2px 16px #ff174422;
+    z-index: 2;
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(40px);}
+    to { opacity: 1; transform: translateY(0);}
+  }
+  .list-group-item {
+    border-radius: 0.7rem !important;
+    margin-bottom: 0.3rem;
+    background: rgba(255,255,255,0.92);
+    font-weight: 500;
+    color: #333;
+    box-shadow: 0 2px 8px #ffd54f11;
+    transition: background 0.2s, color 0.2s;
+  }
+  .list-group-item .badge {
+    font-size: 1.05rem;
+    font-weight: 600;
+    border-radius: 0.7rem;
+    padding: 0.5em 1em;
+    box-shadow: 0 1px 6px #ffb34722;
+  }
+  .list-group-item:hover {
+    background: #fffbe8;
+    color: #ff6a00;
+  }
+  .table {
+    background: rgba(255,255,255,0.97);
+    border-radius: 1.2rem;
+    overflow: hidden;
+    box-shadow: 0 4px 24px #ffb34722;
+    animation: fadeInUp 1.2s 0.2s both;
+  }
+  .table thead {
+    background: linear-gradient(90deg, #ffd54f 0%, #ff6a00 100%);
+    color: #222;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    font-size: 1.1rem;
+  }
+  .table-bordered > :not(caption) > * > * {
+    border-width: 1.5px;
+    border-color: #ffd54f55;
+  }
+  .table-hover tbody tr:hover {
+    background: #fffbe8 !important;
+    color: #ff6a00 !important;
+    transition: background 0.2s, color 0.2s;
+  }
+  .btn-warning, .btn-danger, .btn-info {
+    font-weight: 600;
+    border-radius: 0.6rem;
+    box-shadow: 0 1px 6px #ffb34722;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  }
+  .btn-warning:hover, .btn-danger:hover, .btn-info:hover {
+    box-shadow: 0 2px 12px #ffb34744;
+    opacity: 0.93;
+  }
+  .pagination {
+    margin-top: 2rem;
+    text-align: center;
+    animation: fadeInUp 1.2s 0.3s both;
+  }
+  .pagination .step-links a {
+    color: #ff6a00;
+    font-weight: 600;
+    margin: 0 0.3em;
+    padding: 0.4em 1em;
+    border-radius: 0.5em;
+    background: rgba(255,255,255,0.85);
+    box-shadow: 0 1px 6px #ffd54f22;
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s;
+  }
+  .pagination .step-links a:hover {
+    background: #ffd54f;
+    color: #222;
+  }
+  .pagination .current {
+    color: #ff6a00;
+    font-weight: 700;
+    margin: 0 0.7em;
+  }
+  /* Responsive tweaks */
+  @media (max-width: 991.98px) {
+    .dashboard-title { font-size: 2rem; }
+    .table { font-size: 0.97rem; }
+    .card .card-title { font-size: 1.1rem; }
+    .card .card-text { font-size: 1.1rem; }
+  }
+</style>
+
 <div class="container py-4">
-    <h1 class="mb-4 text-center">Admin Dashboard</h1>
+    <h1 class="dashboard-title text-center">Admin Dashboard</h1>
 
     <div class="row mb-4">
         <div class="col-md-4">
-            <div class="card text-white bg-success">
+            <div class="card text-white bg-success animate__animated animate__fadeInUp">
                 <div class="card-body">
                     <h5 class="card-title">Total Revenue</h5>
                     <p class="card-text">Rs. {{ revenue }}</p>
@@ -16,7 +165,7 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card text-white bg-primary">
+            <div class="card text-white bg-primary animate__animated animate__fadeInUp animate__delay-1s">
                 <div class="card-body">
                     <h5 class="card-title">Admin Revenue (5%)</h5>
                     <p class="card-text">Rs. {{ myrevenue }}</p>
@@ -24,7 +173,7 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card text-white bg-dark">
+            <div class="card text-white bg-dark animate__animated animate__fadeInUp animate__delay-2s">
                 <div class="card-body">
                     <h5 class="card-title">Total Appointments</h5>
                     <p class="card-text">{{ total_appointments }}</p>
@@ -34,7 +183,7 @@
     </div>
 
     <div class="mb-4">
-        <h4>Appointment Status Breakdown</h4>
+        <h4 class="mb-2" style="color:#ff6a00;font-weight:700;">Appointment Status Breakdown</h4>
         <ul class="list-group">
             {% for status, count in statuses.items %}
             <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -45,8 +194,8 @@
         </ul>
     </div>
 
-       <div class="mb-4">
-        <h4>Categories In order of popularity </h4>
+    <div class="mb-4">
+        <h4 class="mb-2" style="color:#ff6a00;font-weight:700;">Categories In Order of Popularity</h4>
         <ul class="list-group">
             {% for category , count  in categories.items %}
             <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -58,7 +207,7 @@
     </div>
 
     <div class="mb-4">
-        <h4>Providers by Popularity</h4>
+        <h4 class="mb-2" style="color:#ff6a00;font-weight:700;">Providers by Popularity</h4>
         <ul class="list-group">
             {% for provider, count in provider_dict.items %}
             <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -72,7 +221,7 @@
     </div>
 
     <div class="mb-5">
-        <h4>All Users</h4>
+        <h4 class="mb-2" style="color:#ff6a00;font-weight:700;">All Users</h4>
         <table class="table table-bordered table-hover">
             <thead class="table-dark">
                 <tr>
@@ -87,7 +236,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for user in users %}
+                {% for user in page_obj %}
                 <tr>
                     <td>{{ forloop.counter }}</td>
                     <td>{{ user.username }}</td>
@@ -128,6 +277,23 @@
                 {% endfor %}
             </tbody>
         </table>
+    </div>
+    <div class="pagination">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page=1">&laquo; first</a>
+            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
     </div>
 </div>
 {% endblock %}
