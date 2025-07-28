@@ -19,24 +19,25 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
-
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework_simplejwt.views import (TokenObtainPairView,
                                             TokenRefreshView)
-from drf_spectacular.views import  SpectacularAPIView, SpectacularSwaggerView
+
 from main.views import admin_dashboard_analytics
 
-
 urlpatterns = [
-    path("admin/analytics/", admin.site.admin_view(admin_dashboard_analytics), name="admin-analytics"),
+    path(
+        "admin/analytics/",
+        admin.site.admin_view(admin_dashboard_analytics),
+        name="admin-analytics",
+    ),
     path("admin/", admin.site.urls),
-
     path("", include("django.contrib.auth.urls")),  # django's default login and logout
     path("", include("main.urls")),
     path("", include("accounts.urls")),
     path("", include("customer.urls")),
     path("", include("provider.urls")),
-
-    path('accounts/', include('allauth.urls')),
+    path("accounts/", include("allauth.urls")),
 ]
 
 
@@ -49,11 +50,11 @@ urlpatterns += [
 ]
 
 
-
 urlpatterns += [
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
-   
-    path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
+    path(
+        "api/docs/",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="swagger-ui",
+    ),
 ]
-
-

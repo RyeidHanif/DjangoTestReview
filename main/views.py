@@ -8,24 +8,19 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Permission, User
 from django.core.paginator import Paginator
-
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.cache import cache_page
 from django.views.generic import ListView, TemplateView
-
 from dotenv import load_dotenv
-
 from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.errors import HttpError
 
-
-from .forms import ProviderForm , CreateCustomerProfileForm
+from .forms import CreateCustomerProfileForm, ProviderForm
 from .models import (Appointment, CustomerProfile, NotificationPreferences,
                      ProviderProfile, User)
 
@@ -40,10 +35,10 @@ from .models import (Appointment, CustomerProfile, NotificationPreferences,
 # Create your views here.
 
 
-
 @method_decorator(cache_page(60 * 5), name="dispatch")
 class Home(TemplateView):
     template_name = "main/home.html"
+
 
 class Home(TemplateView):
     template_name = "main/home.html"
@@ -64,15 +59,15 @@ def redirectiondashboard(request):
         return redirect("customer_dashboard")
     elif hasattr(user, "providerprofile"):
         return redirect("connect_to_calendar")
-    else :
-        messages.info(request , "you must first create atleast a customer profile")
+    else:
+        messages.info(request, "you must first create atleast a customer profile")
         return redirect("create_customer_profile")
 
 
 @login_required(login_url="/login/")
 def profile_creation(request):
     """
-    Uses the provider form to create a users provider profile when they wish to do so 
+    Uses the provider form to create a users provider profile when they wish to do so
     """
 
     if request.method == "POST":
@@ -142,7 +137,6 @@ def oauth2callback(request):
     return redirect("provider_dashboard")
 
 
-
 @method_decorator(cache_page(60 * 5), name="dispatch")
 class CancellationPolicy(TemplateView):
     """
@@ -156,7 +150,7 @@ cancellation_policy = CancellationPolicy.as_view()
 
 
 @method_decorator(staff_member_required, name="dispatch")
-class AdminDashboardView(LoginRequiredMixin , View):
+class AdminDashboardView(LoginRequiredMixin, View):
     """
     Provides Analytics data for staff members and admins
 
@@ -293,8 +287,8 @@ def create_customer_profile(request):
         form = CreateCustomerProfileForm(request.POST)
         if form.is_valid():
             phone_number = form.cleaned_data["phone_number"]
-            CustomerProfile.objects.create(user = request.user , phone_number = phone_number)
-            messages.success(request , "Customer profile created successfully ")
+            CustomerProfile.objects.create(user=request.user, phone_number=phone_number)
+            messages.success(request, "Customer profile created successfully ")
             return redirect("redirectiondashboard")
     form = CreateCustomerProfileForm()
-    return render(request, "main/create_customer_profile.html", {"form":form})
+    return render(request, "main/create_customer_profile.html", {"form": form})

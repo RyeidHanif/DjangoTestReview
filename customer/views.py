@@ -11,27 +11,17 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.timezone import localdate, make_aware
 from django.views import View
 from django.views.generic import ListView, TemplateView
-
 from google.auth.exceptions import RefreshError
 from googleapiclient.errors import HttpError
 
 from main.calendar_client import GoogleCalendarClient
 from main.models import Appointment, NotificationPreferences, ProviderProfile
-from main.utils import (
-    cancellation,
-    force_provider_calendar,
-    handle_exception,
-)
+from main.utils import cancellation, force_provider_calendar, handle_exception
 
 from .forms import AppointmentRecurrenceForm
-from .utils import (
-    EmailPendingAppointment,
-    EmailRescheduledAppointment,
-    calculate_total_price,
-    change_and_save_appointment,
-    check_appointment_exists,
-    create_and_save_appointment,
-)
+from .utils import (EmailPendingAppointment, EmailRescheduledAppointment,
+                    calculate_total_price, change_and_save_appointment,
+                    check_appointment_exists, create_and_save_appointment)
 
 
 class CustomerDashboardView(LoginRequiredMixin, TemplateView):
@@ -90,13 +80,16 @@ class ListProvidersView(LoginRequiredMixin, ListView):
             try:
 
                 return ProviderProfile.objects.filter(
-                    user__username__icontains=query, google_calendar_connected=True,
+                    user__username__icontains=query,
+                    google_calendar_connected=True,
                 ).exclude(user=self.request.user)
             except Exception as e:
                 return handle_exception(e)
 
         else:
-            return ProviderProfile.objects.filter(google_calendar_connected=True ).exclude(user=self.request.user)
+            return ProviderProfile.objects.filter(
+                google_calendar_connected=True
+            ).exclude(user=self.request.user)
 
     def post(self, request, *args, **kwargs):
         messages.info(

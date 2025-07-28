@@ -13,8 +13,6 @@ from googleapiclient.errors import HttpError
 from main.models import Appointment, ProviderProfile
 
 
-
-
 def EmailConfirmedAppointment(
     request,
     customer,

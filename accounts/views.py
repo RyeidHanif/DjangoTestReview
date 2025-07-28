@@ -1,35 +1,30 @@
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMessage
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views import View
-from django.contrib.auth.mixins import LoginRequiredMixin
-
 
 from main.forms import ProviderForm
-from main.models import CustomerProfile, NotificationPreferences, ProviderProfile
+from main.models import (CustomerProfile, NotificationPreferences,
+                         ProviderProfile)
 
-from .forms import (
-    ChangeNotificationPreferencesForm,
-    ProfilePhotoForm,
-    SetPasswordForm,
-    SignUpForm,
-)
+from .forms import (ChangeNotificationPreferencesForm, ProfilePhotoForm,
+                    SetPasswordForm, SignUpForm)
 from .tokens import account_activation_token
-from django.shortcuts import get_object_or_404
 
 
 # Create your views here.
 def activateEmail(request, user, to_email):
-    '''
+    """
     Sends The Verification Email to the user after forming the redirect url
-    '''
+    """
     mail_subject = "Activate your user account."
     message = render_to_string(
         "accounts/template_activate_account.html",
@@ -55,44 +50,43 @@ def activateEmail(request, user, to_email):
         )
 
 
-
-
 class SignUp(View):
-    '''
+    """
     Allow the user to signup using Django's Authentication System
-    
-    The SignupForm is a model form with  an added field of phone number 
-    The Customer profile of the user is created here , immediately after signup 
+
+    The SignupForm is a model form with  an added field of phone number
+    The Customer profile of the user is created here , immediately after signup
     since every user must be a customer .
-    The user is then redirected to the homepage where they recieve a notification to verify their email 
-    '''
-    def get(self ,request , *args , **kwargs):
+    The user is then redirected to the homepage where they recieve a notification to verify their email
+    """
+
+    def get(self, request, *args, **kwargs):
         suform = SignUpForm()
         return render(request, "accounts/signup.html", {"form": suform})
-    
-    def post(self , request ,*args , **kwargs):
+
+    def post(self, request, *args, **kwargs):
         suform = SignUpForm(request.POST)
         if suform.is_valid():
             user = suform.save(commit=False)
-            user.is_active = False 
+            user.is_active = False
             user.save()
             activateEmail(request, user, suform.cleaned_data.get("email"))
             phone_number = suform.cleaned_data["phone_number"]
             CustomerProfile.objects.create(user=user, phone_number=phone_number)
             return redirect("home")
-        else :
+        else:
             for error in list(suform.errors.values()):
                 messages.error(request, error)
-            return self.get(self, request , *args , **kwargs )
+            return self.get(self, request, *args, **kwargs)
+
 
 signup = SignUp.as_view()
 
 
-
 def activate(request, uidb64, token):
-    '''
-    Verifies the user email , Creates the Notification Preferences object for the user and logs them in 
-    '''
+    """
+    Verifies the user email , Creates the Notification Preferences object for the user and logs them in
+    """
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
@@ -108,17 +102,16 @@ def activate(request, uidb64, token):
         )
         print("User logged in:", user)
         print("Is Authenticated:", user.is_authenticated)
-        user.backend =  'django.contrib.auth.backends.ModelBackend'
+        user.backend = "django.contrib.auth.backends.ModelBackend"
         login(request, user)
         print("User logged in:", request.user)
         print("Is Authenticated:", request.user.is_authenticated)
         print("Session ID:", request.session.session_key)
         print("Creating notification preferences ")
-        create , _ = NotificationPreferences.objects.get_or_create(user=user)
+        create, _ = NotificationPreferences.objects.get_or_create(user=user)
         print("Created")
         print("Redirecting to customer dqshboard")
         return redirect("customer_dashboard")
-
 
     else:
         messages.error(request, "Activation link is invalid!")
@@ -128,8 +121,8 @@ def activate(request, uidb64, token):
 
 @login_required(login_url="/login/")
 def password_change(request):
-    '''
-    Allows the user to change their password using a form '''
+    """
+    Allows the user to change their password using a form"""
     user = request.user
     if request.method == "POST":
         form = SetPasswordForm(user, request.POST)
@@ -147,19 +140,19 @@ def password_change(request):
 
 @login_required(login_url="/login/")
 def user_profile(request):
-    '''
+    """
     Allows the user to view and change their profile .
-    
+
     The following details of each user are showng :
-    - username 
+    - username
     -email
     - phone number
-    - customer profile details 
-    - provider profile details 
-    - profile picture 
-    - option to change or delete profile photo 
-    - option to modify profile which leads to another page 
-    '''
+    - customer profile details
+    - provider profile details
+    - profile picture
+    - option to change or delete profile photo
+    - option to modify profile which leads to another page
+    """
     me = User.objects.get(id=request.user.id)
     my_provider_profile = ProviderProfile.objects.filter(user=me).first()
     my_customer_profile = CustomerProfile.objects.filter(user=me).first()
@@ -191,10 +184,6 @@ def user_profile(request):
             request.user.google_calendar_connected = False
             return redirect("home")
 
-
-            
-
-
         if request.POST.get("change_pfp"):
             if change_profile_form.is_valid():
                 change_profile_form.save()
@@ -220,12 +209,11 @@ def user_profile(request):
     )
 
 
-
 @login_required(login_url="/login/")
 def modify_profile(request):
-    '''
-    Uses a form to allow the user to changed whatever details they want in their profile and submit them 
-    '''
+    """
+    Uses a form to allow the user to changed whatever details they want in their profile and submit them
+    """
     provider_profile = ProviderProfile.objects.filter(user=request.user).first()
     if request.method == "POST":
         form = ProviderForm(request.POST, instance=provider_profile)
@@ -246,9 +234,9 @@ def modify_profile(request):
 
 @login_required(login_url="/login/")
 def delete_account(request):
-    '''
-    Allows the user to delete their account 
-    '''
+    """
+    Allows the user to delete their account
+    """
     if request.method == "POST":
         request.user.delete()
 
