@@ -16,6 +16,8 @@ This application is designed to support both server-rendered views and a complet
 * Real-time availability checks based on provider’s Google Calendar and defined working hours
 * Ability to reschedule or cancel appointments with email notifications
 * Appointment recurrence support with price calculation based on fixed/hourly model
+* Google Calendar and normal Email reminders
+* Notification settings to either recieve all , some or no notifications 
 * Robust provider dashboard:
 
   * Accept or reject new/rescheduled appointments
