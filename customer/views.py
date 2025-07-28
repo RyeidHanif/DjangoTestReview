@@ -90,13 +90,13 @@ class ListProvidersView(LoginRequiredMixin, ListView):
             try:
 
                 return ProviderProfile.objects.filter(
-                    user__username__icontains=query
+                    user__username__icontains=query, google_calendar_connected=True,
                 ).exclude(user=self.request.user)
             except Exception as e:
                 return handle_exception(e)
 
         else:
-            return ProviderProfile.objects.exclude(user=self.request.user)
+            return ProviderProfile.objects.filter(google_calendar_connected=True ).exclude(user=self.request.user)
 
     def post(self, request, *args, **kwargs):
         messages.info(

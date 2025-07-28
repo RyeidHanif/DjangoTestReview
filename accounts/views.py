@@ -177,6 +177,9 @@ def user_profile(request):
                 request,
                 "All your data will be lost . Are you sure you wish to delete your account ? ",
             )
+        if request.POST.get("disconnect"):
+            request.user.google_calendar_connected = False
+            return redirect("home")
 
 
             return redirect("delete_account")
