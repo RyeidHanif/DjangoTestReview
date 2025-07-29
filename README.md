@@ -36,6 +36,9 @@ This application is designed to support both server-rendered views and a complet
 * Paginated and searchable lists for both customers and providers
 * Heavily customized Django Admin dashboard for internal admin operations
 * DRF Spectacular-based API schema generation and live documentation at `/api/docs`
+* PostgreSQL DB setup
+*  CI/CD using GitHub Actions
+*   90%+ test coverage via pytest
 
 ---
 
@@ -142,9 +145,20 @@ python manage.py migrate
 python manage.py runserver
 ```
 
+### 8. (optional) conduct formatting , linting and testing 
+
+Use tox to create separate, isolated  environments which run isort , black , flake8 and pytest on the code 
+with the following command 
+
+```bash
+tox 
+```
+
+
 
 ## API Authentication & Token Handling
-
+The API itself is meant to be used by other applications if required to mainly get data about their accounts 
+CRUD appointment operations are not currently suppored with the API .
 This project supports JWT-based token authentication with access and refresh tokens.
 
 * `POST /api/signup`
@@ -183,15 +197,13 @@ The full list of available endpoints is documented using `drf-spectacular` at:
 ```
 
 
-* `/api/providers/available/slots` – \[placeholder]
-* `/api/appointments/create/` – \[placeholder]
-* `/api/appointments/reschedule/` – \[placeholder]
-* `/api/appointments/history/` – \[placeholder]
-* `/api/analytics/provider/` – \[placeholder]
-* `/api/customer/delete/` – \[placeholder]
-* `/api/provider/block-availability/` – \[placeholder]
-* `/api/calendar/reconnect/` – \[placeholder]
-* `/api/notifications/settings/` – \[placeholder]
+* `/api/user_profile/` – Access Provider's profile with all their details e.g service_category , name , buffer , start/end time .
+* `/api/provider_appointments/` – Allows an authenticated user with a provider profile to access their appointments 
+* `/api/customer_appointments/` – Allows an authenticated user to access their appointments ( Every User must be atleast a customer by design)
+* `/api/provider_availability/<int:providerID>` – An Authenticated User can access a service provider's available slots in the duration spanning from 1 day to 1 week 
+* `/api/provider_analytics/` – An Authenticated User  with a provider profile can access their analytics i.e their appointments , related customers , revenue 
+* `/api/view_providers/` – An Authenticated User Can view the names and details of all providers 
+
 
 ---
 
@@ -202,6 +214,17 @@ The full list of available endpoints is documented using `drf-spectacular` at:
 * All critical queries are optimized using `select_related` or `prefetch_related` for performance.
 * Static-heavy views are cached with appropriate headers to minimize server load.
 * The Django Admin dashboard has been customized extensively for backend management and monitoring but is not exposed as a public feature.
+
+---
+
+## Github Workflow 
+
+* Used in this case for linting , formatting and testing the code
+* Isort is responsible for sorting the  imports in alphabetical order
+* flake8 for reporting formatting problems
+* black to format the code
+* pytest to test the code
+
 
 ---
 
