@@ -56,7 +56,7 @@ class ProviderProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone_number = models.CharField(max_length=13)
     service_category = models.CharField(choices=SERVICE_CHOICES)
-    service_name = models.CharField(max_length=20)
+    service_name = models.CharField(max_length=50)
     pricing_model = models.CharField(
         choices=[("hourly", "Hourly"), ("fixed", "Fixed")], default="fixed"
     )
