@@ -114,8 +114,8 @@ Set up a PostgreSQL database manually or using tools like pgAdmin. Then configur
 
 ```ini
 SECRET_KEY = your_app_secret_key
-USER = your_db_user
-PASSWORD = db_password
+POSTGRES_USER = your_db_user
+POSTGRES_PASSWORD = db_password
 EMAIL_HOST_PASSWORD = email_host_password
 BASE_URL=http://127.0.0.1:8000/
 ```
