@@ -23,6 +23,12 @@ from googleapiclient.errors import HttpError
 
 from main.models import Appointment, ProviderProfile
 
+from dotenv import load_dotenv
+
+# Load environment variables from the .env file
+load_dotenv()
+
+
 # Local app imports
 from .forms import ProviderForm
 from .models import ProviderProfile, User
@@ -36,6 +42,7 @@ class GoogleCalendarClient:
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
         self.clientID = os.getenv("client_id")
         self.clientSecret = os.getenv("client_secret")
+        self.base_url = os.getenv("BASE_URL")
 
     def get_calendar_service(self, user):
         """function to load user credentials and refresh them if required
@@ -82,7 +89,7 @@ class GoogleCalendarClient:
                 "https://www.googleapis.com/auth/userinfo.email",
                 "https://www.googleapis.com/auth/userinfo.profile",
             ],
-            redirect_uri="http://127.0.0.1:8000/google/oauth2callback/",
+            redirect_uri=f"{self.base_url}google/oauth2callback/",
         )
         auth_url, _ = flow.authorization_url(
             access_type="offline",  # need it even when user is offline
@@ -267,7 +274,7 @@ class GoogleCalendarClient:
                 "https://www.googleapis.com/auth/userinfo.email",
                 "https://www.googleapis.com/auth/userinfo.profile",
             ],
-            redirect_uri="http://127.0.0.1:8000/google/oauth2callback/",
+            redirect_uri=f"{self.base_url}google/oauth2callback/",
         )
 
         flow.fetch_token(
