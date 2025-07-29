@@ -113,11 +113,11 @@ pip install -r requirements.txt
 Set up a PostgreSQL database manually or using tools like pgAdmin. Then configure your `.env` file with:
 
 ```ini
-DB_NAME=yourdbname
-DB_USER=yourdbuser
-DB_PASSWORD=yourdbpassword
-DB_HOST=localhost
-DB_PORT=5432
+SECRET_KEY = your_app_secret_key
+USER = your_db_user
+PASSWORD = db_password
+EMAIL_HOST_PASSWORD = email_host_password
+BASE_URL=http://127.0.0.1:8000/
 ```
 
 ### 5. Add Google API Credentials
@@ -125,8 +125,8 @@ DB_PORT=5432
 Create OAuth 2.0 credentials from the Google Developer Console and add them to your `.env`:
 
 ```ini
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
+client_id = your google client id 
+client_secret = your google client secret
 ```
 
 ### 6. Apply Migrations
