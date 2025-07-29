@@ -77,7 +77,7 @@ class SignUp(View):
         else:
             for error in list(suform.errors.values()):
                 messages.error(request, error)
-            return self.get(self, request, *args, **kwargs)
+            return self.get(request, *args, **kwargs)
 
 
 signup = SignUp.as_view()
@@ -181,8 +181,10 @@ def user_profile(request):
             )
             return redirect("delete_account")
         if request.POST.get("disconnect"):
-            request.user.google_calendar_connected = False
+            request.user.providerprofile.google_calendar_connected = False
+            request.user.providerprofile.save()
             return redirect("home")
+
 
         if request.POST.get("change_pfp"):
             if change_profile_form.is_valid():

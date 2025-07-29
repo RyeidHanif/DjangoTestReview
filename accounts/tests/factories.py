@@ -1,12 +1,12 @@
 from datetime import datetime, time
 
 import factory
-import pytest
 from django.contrib.auth.models import User
 from django.utils import timezone
 from faker import Faker
 
-from main.models import ProviderProfile
+from main.models import (Appointment, CustomerProfile, NotificationPreferences,
+                         ProviderProfile)
 
 faker = Faker()
 
@@ -26,6 +26,13 @@ class UserFactory(factory.django.DjangoModelFactory):
         "set_password", "password123"
     )  # hashes the password as django stores it hashed
     is_active = True  # my Object managers require user to be active
+
+    @factory.post_generation
+    def password(self, create, extracted, **kwargs):
+        raw_password = extracted or "password123"
+        self.set_password(raw_password)
+        if create:
+            self.save()
 
 
 class ProviderProfileFactory(factory.django.DjangoModelFactory):
@@ -48,3 +55,47 @@ class ProviderProfileFactory(factory.django.DjangoModelFactory):
     rate = 100.0
     buffer = 15
     profile_photo = None
+
+
+class CustomerProfileFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = CustomerProfile
+
+    user = factory.SubFactory(UserFactory)
+    phone_number = factory.LazyFunction(lambda: faker.phone_number()[:13])
+
+
+class AppointmentFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Appointment
+        exclude = ("provider_profile", "customer_profile")
+
+    provider_profile = factory.SubFactory(ProviderProfileFactory, user__is_active=True)
+    customer_profile = factory.SubFactory(CustomerProfileFactory, user__is_active=True)
+    provider = factory.SelfAttribute("provider_profile.user")
+    customer = factory.SelfAttribute("customer_profile.user")
+
+    date_start = timezone.make_aware(
+        datetime(2025, 7, 28, 10, 0, 0), timezone.get_current_timezone()
+    )
+    date_end = timezone.make_aware(
+        datetime(2025, 7, 28, 11, 0, 0), timezone.get_current_timezone()
+    )
+    date_added = factory.LazyFunction(timezone.now)
+    status = "pending"
+    event_id = None
+    total_price = 3000
+    special_requests = "None"
+    recurrence_frequency = None
+    recurrence_until = None
+    cancelled_by = None
+    cancelled_at = None
+    bad_cancel = False
+
+
+class NotificationPreferencesFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = NotificationPreferences
+
+    user = factory.SubFactory(UserFactory)
+    preferences = "all"
