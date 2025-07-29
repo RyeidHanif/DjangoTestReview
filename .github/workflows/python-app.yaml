@@ -28,6 +28,7 @@ jobs:
           --health-retries 5
 
     env:
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
       POSTGRES_DB: appointmentdb
       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
