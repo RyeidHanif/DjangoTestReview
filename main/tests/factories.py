@@ -26,6 +26,12 @@ class UserFactory(factory.django.DjangoModelFactory):
         "set_password", "password123"
     )  # hashes the password as django stores it hashed
     is_active = True  # my Object managers require user to be active
+    @factory.post_generation
+    def password(self, create, extracted, **kwargs):
+        raw_password = extracted or "password123"
+        self.set_password(raw_password)
+        if create:
+            self.save()
 
 
 class ProviderProfileFactory(factory.django.DjangoModelFactory):

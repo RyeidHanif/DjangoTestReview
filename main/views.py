@@ -34,12 +34,6 @@ from .models import (Appointment, CustomerProfile, NotificationPreferences,
 
 # Create your views here.
 
-
-@method_decorator(cache_page(60 * 5), name="dispatch")
-class Home(TemplateView):
-    template_name = "main/home.html"
-
-
 class Home(TemplateView):
     template_name = "main/home.html"
 
