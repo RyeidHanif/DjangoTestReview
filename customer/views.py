@@ -299,6 +299,9 @@ class AddAppointmentView(LoginRequiredMixin, View):
         self.appointment = Appointment.objects.filter(
             customer=self.customer, provider=self.provider_user
         ).first()
+        if not self.appointment:
+            messages.error(request, "No existing appointment found for recheduling ")
+            return redirect("view_appointments")
         self.recurrence_form = AppointmentRecurrenceForm(
             initial={
                 "recurrence": self.appointment.recurrence_frequency,
@@ -306,9 +309,7 @@ class AddAppointmentView(LoginRequiredMixin, View):
             },
             appointment_date=self.start_datetime,
         )
-        if not self.appointment:
-            messages.error(request, "No existing appointment found for recheduling ")
-            return redirect("view_appointments")
+        
         return self.render_template(request)
 
     def handle_reschedule_post(self, request, *args, **kwargs):
@@ -360,7 +361,7 @@ class AddAppointmentView(LoginRequiredMixin, View):
                 return redirect("view_appointments")
         if request.POST.get("cancel"):
             messages.info(request, "reschedule ancelled")
-            return redirect("view_appoinments")
+            return redirect("view_appointments")
 
     def render_template(self, request, *args, **kwargs):
         return render(

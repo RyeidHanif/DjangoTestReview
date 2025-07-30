@@ -19,6 +19,8 @@ def check_appointment_exists(customer, provider):
     """
     Used to check if an appointment exists between a customer and a provider which is currently in the works
     this is done to prevent one customer from having multiple simultaneous appointments with the same provider
+    return False if appointment Exists 
+    return True if appointment does not Exist
     """
     return not Appointment.objects.filter(
         customer=customer,
