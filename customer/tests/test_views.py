@@ -83,6 +83,7 @@ class TestListProvidersView:
         assert "providers" in response.context 
         assert user not in response.context["providers"]
     
+    @pytest.mark.django_db(transaction=True, reset_sequences=True)
     def test_post_redirect(self , mock_get_slots ,client , create_user_details):
 
         tz = timezone.get_current_timezone()
@@ -189,6 +190,7 @@ class TestScheduleView:
         assert response.context["slot_range"] == 1
     
     @patch("main.calendar_client.GoogleCalendarClient.get_available_slots")
+    @pytest.mark.django_db(transaction=True, reset_sequences=True)
     def test_post_add_appointment(self, mock_calendar_slots , client,  create_user_details):
         user = create_user_details
         mock_calendar_slots.return_value = [
