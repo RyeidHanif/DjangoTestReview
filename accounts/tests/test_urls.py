@@ -1,6 +1,7 @@
-from django.urls import resolve
-from accounts import views
 import pytest
+from django.urls import resolve
+
+from accounts import views
 
 
 def test_signup_url_resolves():

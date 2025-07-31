@@ -13,6 +13,7 @@ from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.utils.timezone import (activate, get_current_timezone, localdate,
                                    localtime, make_aware, now)
+from dotenv import load_dotenv
 from google.auth.exceptions import RefreshError
 # Third-party (Google API libs)
 from google.auth.transport.requests import Request
@@ -22,8 +23,6 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 from main.models import Appointment, ProviderProfile
-
-from dotenv import load_dotenv
 
 # Load environment variables from the .env file
 load_dotenv()

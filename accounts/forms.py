@@ -1,9 +1,9 @@
 from django import forms
 from django.contrib.auth.forms import SetPasswordForm, UserCreationForm
 from django.contrib.auth.models import User
+from django.forms.widgets import FileInput
 
 from main.models import NotificationPreferences, ProviderProfile
-from django.forms.widgets import FileInput
 
 NOTIFICATION_CHOICES = [("all", "All"), ("reminders", "Reminders"), ("none", "None")]
 
@@ -47,5 +47,5 @@ class ProfilePhotoForm(forms.ModelForm):
         model = ProviderProfile
         fields = ["profile_photo"]
         widgets = {
-            'profile_photo': FileInput(attrs={'class': 'form-control'}),
+            "profile_photo": FileInput(attrs={"class": "form-control"}),
         }

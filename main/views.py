@@ -34,6 +34,7 @@ from .models import (Appointment, CustomerProfile, NotificationPreferences,
 
 # Create your views here.
 
+
 class Home(TemplateView):
     template_name = "main/home.html"
 

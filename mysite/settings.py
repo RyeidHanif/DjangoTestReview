@@ -36,7 +36,6 @@ DEBUG = True
 ALLOWED_HOSTS = ["*", "testserver", "localhost", "accounts.google.com"]
 
 
-
 # Application definition
 
 INSTALLED_APPS = [

@@ -28,7 +28,10 @@ class TestProviderForm:
         "key,value",
         [
             ("service_category", "banana"),
-            ("service_name", "shalalalaalalalalalaalalufdhhhhhhhhhiiighjfvnjkndjhfffdhhjdhdjhvjhfhvhjfvgfjhvfjhbvhjbfhjbjhjkhjvbhjvbhvbhjdhjjgfhjgjf"),
+            (
+                "service_name",
+                "shalalalaalalalalalaalalufdhhhhhhhhhiiighjfvnjkndjhfffdhhjdhdjhvjhfhvhjfvgfjhvfjhbvhjbfhjbjhjkhjvbhjvbhvbhjdhjjgfhjgjf",
+            ),
             ("pricing_model", "opensource"),
             ("duration_mins", ""),
             ("start_time", "2900"),

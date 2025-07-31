@@ -185,7 +185,6 @@ def user_profile(request):
             request.user.providerprofile.save()
             return redirect("home")
 
-
         if request.POST.get("change_pfp"):
             if change_profile_form.is_valid():
                 change_profile_form.save()

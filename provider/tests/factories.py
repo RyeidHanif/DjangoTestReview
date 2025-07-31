@@ -27,7 +27,8 @@ class UserFactory(factory.django.DjangoModelFactory):
     )  # hashes the password as django stores it hashed
     is_active = True  # my Object managers require user to be active
     is_superuser = False
-    is_staff = False 
+    is_staff = False
+
     @factory.post_generation
     def password(self, create, extracted, **kwargs):
         raw_password = extracted or "password123"

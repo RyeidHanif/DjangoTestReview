@@ -1,34 +1,31 @@
-import pytest
-from .factories import UserFactory , ProviderProfileFactory , CustomerProfileFactory , AppointmentFactory , NotificationPreferencesFactory
-from main.models import ProviderProfile , CustomerProfile , Appointment , NotificationPreferences
-
-from django.urls import reverse
-from django.contrib.auth.models import User
-from django.http import HttpResponseRedirect
-      
-from unittest.mock import patch, MagicMock, ANY 
-from django.contrib.messages import get_messages
-
-
-from django.utils import timezone 
 from datetime import datetime
+from unittest.mock import ANY, MagicMock, patch
+
+import pytest
+from django.contrib.auth.models import User
+from django.contrib.messages import get_messages
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.http import JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse
+from django.urls import reverse
+from django.utils import timezone
 
+from main.models import (Appointment, CustomerProfile, NotificationPreferences,
+                         ProviderProfile)
 
+from .factories import (AppointmentFactory, CustomerProfileFactory,
+                        NotificationPreferencesFactory, ProviderProfileFactory,
+                        UserFactory)
 
 
 @pytest.mark.django_db
 class TestRedirectionDashboard:
 
-    
-
-    def test_unauthenticated_get(self , client):
+    def test_unauthenticated_get(self, client):
         response = client.get(reverse("redirectiondashboard"), follow=True)
         assert response.status_code == 200
         redirection = "/login/?next=/redirectiondashboard/"
-        assert (redirection , 302) in response.redirect_chain
-    
+        assert (redirection, 302) in response.redirect_chain
+
     @pytest.mark.parametrize(
         "has_provider, has_customer, expected_redirect",
         [
@@ -36,7 +33,7 @@ class TestRedirectionDashboard:
             (True, False, "connect_to_calendar"),
             (False, True, "customer_dashboard"),
             (False, False, "create_customer_profile"),
-        ]
+        ],
     )
     def test_authenticated_redirection(
         self, client, db, has_provider, has_customer, expected_redirect
@@ -53,70 +50,63 @@ class TestRedirectionDashboard:
         assert (reverse(expected_redirect), 302) in response.redirect_chain
 
 
-    
-
-@pytest.mark.django_db 
+@pytest.mark.django_db
 class TestProfileCreation:
-    data={
-            "service_category": "doctor",
-            "service_name": "Basic Trim",
-            "pricing_model": "hourly",  # or 'fixed'
-            "duration_mins": 45,
-            "start_time": "10:00",
-            "end_time": "18:00",
-            "rate": 1500,
-            "buffer": 15,
-            "profile_photo": ""
-              
-        }
+    data = {
+        "service_category": "doctor",
+        "service_name": "Basic Trim",
+        "pricing_model": "hourly",  # or 'fixed'
+        "duration_mins": 45,
+        "start_time": "10:00",
+        "end_time": "18:00",
+        "rate": 1500,
+        "buffer": 15,
+        "profile_photo": "",
+    }
+
     @pytest.fixture
     def create_user(db):
         user = UserFactory()
         customer_profile = CustomerProfileFactory(user=user)
-        return user 
+        return user
 
-    
-    def test_unauthenticated_get(self , client , create_user):
+    def test_unauthenticated_get(self, client, create_user):
         response = client.get(reverse("profile_creation"), follow=True)
-        assert response.status_code == 200 
+        assert response.status_code == 200
         redirection = reverse("login") + "?next=/create_profile/"
-        assert (redirection , 302) in response.redirect_chain
-    
-    def test_authenticated_get(self , client , create_user):
+        assert (redirection, 302) in response.redirect_chain
+
+    def test_authenticated_get(self, client, create_user):
         user = create_user
         client.force_login(user)
         response = client.get(reverse("profile_creation"))
-        assert response.status_code == 200 
+        assert response.status_code == 200
         template_names = [t.name for t in response.templates]
-        assert "main/profile_creation.html" in template_names 
-        assert "form" in response.context 
-    
-    def test_provider_profile_already_created_post(self , client , create_user):
+        assert "main/profile_creation.html" in template_names
+        assert "form" in response.context
+
+    def test_provider_profile_already_created_post(self, client, create_user):
         user = create_user
         provider_profile = ProviderProfileFactory(user=user)
 
         client.force_login(user)
-        response = client.post(
-        reverse("profile_creation"),
-        data=self.data,
-        follow=True
-    )
+        response = client.post(reverse("profile_creation"), data=self.data, follow=True)
 
         assert response.status_code == 200
         redirection = reverse("provider_dashboard")
-        assert (redirection , 302) in response.redirect_chain 
-    
-    def test_provider_profile_not_created_post(self , client , create_user):
+        assert (redirection, 302) in response.redirect_chain
+
+    def test_provider_profile_not_created_post(self, client, create_user):
         user = create_user
         client.force_login(user)
-        response = client.post(reverse("profile_creation"), data=self.data , follow=True)
-        assert response.status_code == 200 
-        redirection =  reverse("redirectiondashboard")
-        assert (redirection , 302) in  response.redirect_chain 
+        response = client.post(reverse("profile_creation"), data=self.data, follow=True)
+        assert response.status_code == 200
+        redirection = reverse("redirectiondashboard")
+        assert (redirection, 302) in response.redirect_chain
 
         assert user.providerprofile.phone_number == user.customerprofile.phone_number
 
-        
+
 @pytest.mark.django_db
 class TestConnectToCalendar:
     @pytest.fixture
@@ -124,28 +114,28 @@ class TestConnectToCalendar:
         user = UserFactory()
         provider_profile = ProviderProfileFactory(user=user)
         customer_profile = CustomerProfileFactory(user=user)
-        return user 
-    
+        return user
 
-    def test_unauthenticated_get(self , client ):
+    def test_unauthenticated_get(self, client):
         response = client.get(reverse("connect_to_calendar"), follow=True)
-        assert response.status_code == 200 
+        assert response.status_code == 200
         redirection = reverse("login") + "?next=/connect_calendar"
-        assert (redirection , 302) in response.redirect_chain 
-    
+        assert (redirection, 302) in response.redirect_chain
 
-    def test_authenticated_get_calendar_connected(self , client , create_user):
+    def test_authenticated_get_calendar_connected(self, client, create_user):
         user = create_user
-        user.providerprofile.google_calendar_connected= True
+        user.providerprofile.google_calendar_connected = True
         user.providerprofile.save()
         client.force_login(user)
-        response = client.get(reverse("connect_to_calendar"), follow = True)
-        assert response.status_code  == 200 
+        response = client.get(reverse("connect_to_calendar"), follow=True)
+        assert response.status_code == 200
         redirection = reverse("provider_dashboard")
-        assert (redirection , 302) in response.redirect_chain  
+        assert (redirection, 302) in response.redirect_chain
 
     @patch("main.views.redirect")
-    def test_authenticated_calendar_not_connected_post(self, mock_redirect, client, create_user):
+    def test_authenticated_calendar_not_connected_post(
+        self, mock_redirect, client, create_user
+    ):
         user = create_user
         client.force_login(user)
 
@@ -158,29 +148,28 @@ class TestConnectToCalendar:
         # This is now real so status_code and redirect_chain work
         assert response.status_code == 302
         mock_redirect.assert_called_with("connect_google")
-        
-    def test_authenticated_get_calendar_not_connected(self , client , create_user):
+
+    def test_authenticated_get_calendar_not_connected(self, client, create_user):
         user = create_user
         client.force_login(user)
         response = client.get(reverse("connect_to_calendar"))
         assert response.status_code == 200
         template_names = [t.name for t in response.templates]
-        assert "main/connect_to_calendar.html" in template_names 
-
+        assert "main/connect_to_calendar.html" in template_names
 
 
 @pytest.mark.django_db
 class TestAdminDashboardView:
 
     @pytest.fixture
-    def create_normal_user( db):
+    def create_normal_user(db):
         user = UserFactory()
         ProviderProfileFactory(user=user)
         CustomerProfileFactory(user=user)
         return user  # <-- Return user
 
     @pytest.fixture
-    def create_admin_user( db):
+    def create_admin_user(db):
         user = UserFactory(is_staff=True, is_superuser=True)
         ProviderProfileFactory(user=user)
         CustomerProfileFactory(user=user)
@@ -225,27 +214,34 @@ class TestAdminDashboardView:
         template_names = [t.name for t in response.templates]
         assert "main/admin_dashboard.html" in template_names
         assert item in response.context
-    
-    def test_admin_post_toggle_active(self , client , create_admin_user, create_normal_user):
+
+    def test_admin_post_toggle_active(
+        self, client, create_admin_user, create_normal_user
+    ):
         user = create_admin_user
         other_user = create_normal_user
-        assert other_user.is_active == True 
+        assert other_user.is_active == True
 
         client.force_login(user)
-        response = client.post(reverse("admin-analytics"), data={"toggle_active": other_user.id })
-        assert response.status_code == 200 
+        response = client.post(
+            reverse("admin-analytics"), data={"toggle_active": other_user.id}
+        )
+        assert response.status_code == 200
         check_other_user = User.objects.get(id=other_user.id)
-        assert check_other_user.is_active == False 
-    
-    def test_admin_post_delete_user(self , client , create_admin_user ,create_normal_user):
-        user= create_admin_user
+        assert check_other_user.is_active == False
+
+    def test_admin_post_delete_user(
+        self, client, create_admin_user, create_normal_user
+    ):
+        user = create_admin_user
         other_user = create_normal_user
 
         client.force_login(user)
-        response = client.post(reverse("admin-analytics"), data={"delete": other_user.id})
-        assert response.status_code == 200 
-        
-       
+        response = client.post(
+            reverse("admin-analytics"), data={"delete": other_user.id}
+        )
+        assert response.status_code == 200
+
         with pytest.raises(User.DoesNotExist):
             User.objects.get(id=other_user.id)
 
@@ -253,14 +249,14 @@ class TestAdminDashboardView:
 @pytest.mark.django_db
 class TestViewCustomerProfile:
     @pytest.fixture
-    def create_normal_user( db):
+    def create_normal_user(db):
         user = UserFactory()
         ProviderProfileFactory(user=user)
         CustomerProfileFactory(user=user)
         return user  # <-- Return user
 
     @pytest.fixture
-    def create_admin_user( db):
+    def create_admin_user(db):
         user = UserFactory(is_staff=True, is_superuser=True)
         ProviderProfileFactory(user=user)
         CustomerProfileFactory(user=user)
@@ -268,7 +264,10 @@ class TestViewCustomerProfile:
 
     def test_unauthenticated_get(self, client, create_normal_user):
         other_user = create_normal_user
-        response = client.get(reverse("view_customer_profile", kwargs={"userID": other_user.id}), follow=True)
+        response = client.get(
+            reverse("view_customer_profile", kwargs={"userID": other_user.id}),
+            follow=True,
+        )
         assert response.status_code == 200
         # Django admin login URL includes trailing slash and "admin/login/"
         redirection = f"/admin/login/?next=/view_customer_profile/{other_user.id}"
@@ -278,45 +277,42 @@ class TestViewCustomerProfile:
         other_user = create_normal_user
         user = create_normal_user
         client.force_login(user)
-        response = client.get(reverse("view_customer_profile", kwargs={"userID": other_user.id}), follow=True)
+        response = client.get(
+            reverse("view_customer_profile", kwargs={"userID": other_user.id}),
+            follow=True,
+        )
         assert response.status_code == 200
         redirection = f"/admin/login/?next=/view_customer_profile/{other_user.id}"
         assert (redirection, 302) in response.redirect_chain
 
-    
-    def test_authenticated_admin_get(self , client , create_admin_user , create_normal_user):
+    def test_authenticated_admin_get(
+        self, client, create_admin_user, create_normal_user
+    ):
         other_user = create_normal_user
         user = create_admin_user
         client.force_login(user)
-        response = client.get(reverse("view_customer_profile", kwargs={"userID": other_user.id}))
-        assert response.status_code == 200 
+        response = client.get(
+            reverse("view_customer_profile", kwargs={"userID": other_user.id})
+        )
+        assert response.status_code == 200
         template_names = [t.name for t in response.templates]
-        assert "main/view_customer_profile.html" in template_names 
-        assert "user" in response.context 
-        assert "user_customer_profile" in response.context 
-        assert "appointments_customer" in response.context 
-    
-
-
-        
-
-
-        
-
-
+        assert "main/view_customer_profile.html" in template_names
+        assert "user" in response.context
+        assert "user_customer_profile" in response.context
+        assert "appointments_customer" in response.context
 
 
 @pytest.mark.django_db
 class TestViewProviderProfile:
     @pytest.fixture
-    def create_normal_user( db):
+    def create_normal_user(db):
         user = UserFactory()
         ProviderProfileFactory(user=user)
         CustomerProfileFactory(user=user)
         return user  # <-- Return user
 
     @pytest.fixture
-    def create_admin_user( db):
+    def create_admin_user(db):
         user = UserFactory(is_staff=True, is_superuser=True)
         ProviderProfileFactory(user=user)
         CustomerProfileFactory(user=user)
@@ -324,7 +320,10 @@ class TestViewProviderProfile:
 
     def test_unauthenticated_get(self, client, create_normal_user):
         other_user = create_normal_user
-        response = client.get(reverse("view_provider_profile", kwargs={"userID": other_user.id}), follow=True)
+        response = client.get(
+            reverse("view_provider_profile", kwargs={"userID": other_user.id}),
+            follow=True,
+        )
         assert response.status_code == 200
         # Django admin login URL includes trailing slash and "admin/login/"
         redirection = f"/admin/login/?next=/view_provider_profile/{other_user.id}"
@@ -334,24 +333,30 @@ class TestViewProviderProfile:
         other_user = create_normal_user
         user = create_normal_user
         client.force_login(user)
-        response = client.get(reverse("view_provider_profile", kwargs={"userID": other_user.id}), follow=True)
+        response = client.get(
+            reverse("view_provider_profile", kwargs={"userID": other_user.id}),
+            follow=True,
+        )
         assert response.status_code == 200
         redirection = f"/admin/login/?next=/view_provider_profile/{other_user.id}"
         assert (redirection, 302) in response.redirect_chain
 
-    
-    def test_authenticated_admin_get(self , client , create_admin_user , create_normal_user):
+    def test_authenticated_admin_get(
+        self, client, create_admin_user, create_normal_user
+    ):
         other_user = create_normal_user
         user = create_admin_user
         client.force_login(user)
-        response = client.get(reverse("view_provider_profile", kwargs={"userID": other_user.id}))
-        assert response.status_code == 200 
+        response = client.get(
+            reverse("view_provider_profile", kwargs={"userID": other_user.id})
+        )
+        assert response.status_code == 200
         template_names = [t.name for t in response.templates]
-        assert "main/view_provider_profile.html" in template_names 
-        assert "user" in response.context 
-        assert "user_provider_profile" in response.context 
-        assert "appointments_provider" in response.context 
-    
+        assert "main/view_provider_profile.html" in template_names
+        assert "user" in response.context
+        assert "user_provider_profile" in response.context
+        assert "appointments_provider" in response.context
+
 
 @pytest.mark.django_db
 class TestCreateCustomerProfileView:
@@ -361,29 +366,27 @@ class TestCreateCustomerProfileView:
         customer_profile = CustomerProfileFactory(user=user)
         provider_profile = ProviderProfileFactory(user=user)
         return user
-    
-    
-    def test_authenticated_get(self, client , create_user):
+
+    def test_authenticated_get(self, client, create_user):
         user = create_user
         client.force_login(user)
         response = client.get(reverse("create_customer_profile"))
-        assert response.status_code ==200 
+        assert response.status_code == 200
         template_names = [t.name for t in response.templates]
-        assert "main/create_customer_profile.html" in template_names 
-        assert "form" in response.context 
-
+        assert "main/create_customer_profile.html" in template_names
+        assert "form" in response.context
 
 
 @pytest.mark.django_db
 class TestConnectGoogle:
-    
+
     @patch("main.views.GoogleCalendarClient")
     def test_connect_google_success(self, mock_client, client):
         mock_instance = mock_client.return_value
         mock_instance.create_auth_url.return_value = "http://fake-auth-url.com"
 
         response = client.get(reverse("connect_google"))
-        
+
         assert response.status_code == 302
         assert response.url == "http://fake-auth-url.com"
         mock_instance.create_auth_url.assert_called_once()
@@ -396,8 +399,7 @@ class TestConnectGoogle:
         response = client.get(reverse("connect_google"))
 
         assert response.status_code == 400
-     
-    
+
 
 @pytest.mark.django_db
 class TestOAuth2Callback:
@@ -424,7 +426,9 @@ class TestOAuth2Callback:
         user = create_provider_user
         client.force_login(user)
         mock_instance = mock_client.return_value
-        mock_instance.google_calendar_callback.side_effect = Exception("Callback failed")
+        mock_instance.google_calendar_callback.side_effect = Exception(
+            "Callback failed"
+        )
 
         response = client.get(reverse("oauth2callback"))
 

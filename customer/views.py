@@ -309,7 +309,7 @@ class AddAppointmentView(LoginRequiredMixin, View):
             },
             appointment_date=self.start_datetime,
         )
-        
+
         return self.render_template(request)
 
     def handle_reschedule_post(self, request, *args, **kwargs):

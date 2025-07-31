@@ -1,19 +1,24 @@
-import pytest
 from datetime import timedelta
+
+import pytest
 from django.utils.timezone import now
-from main.utils import cancellation
+
 from main.models import Appointment
-from .factories import UserFactory , ProviderProfileFactory , AppointmentFactory, CustomerProfileFactory
+from main.utils import cancellation
+
+from .factories import (AppointmentFactory, CustomerProfileFactory,
+                        ProviderProfileFactory, UserFactory)
 
 
 @pytest.mark.django_db
 class TestCancellationUtils:
     @pytest.fixture
     def create_user(db):
-        user= UserFactory()
+        user = UserFactory()
         ProviderProfileFactory(user=user)
         CustomerProfileFactory(user=user)
-        return user 
+        return user
+
     def test_good_cancel_does_not_increase_bad_count(self, create_user):
         user = create_user
         appointment = AppointmentFactory(
@@ -87,7 +92,7 @@ class TestCancellationUtils:
 
     def test_cancelled_by_and_cancelled_at_are_set_correctly(self, create_user):
         user = create_user
-        appointment =AppointmentFactory(
+        appointment = AppointmentFactory(
             customer=user,
             date_start=now() + timedelta(hours=3),
             status="cancelled",
