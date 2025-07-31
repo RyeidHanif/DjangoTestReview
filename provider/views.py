@@ -112,8 +112,9 @@ class ListAcceptedAppointmentsView(LoginRequiredMixin, View):
                 return JsonResponse({"error": str(e)}, status=400)
 
             cancel_appointment.save()
-            if customer.notification_settings.preferences == "all":
-                EmailCancelledAppointment(request, customer, provider, to_email)
+            if hasattr(customer, "notification_settings") and customer.notification_settings.preferences == "all":
+                 EmailCancelledAppointment(request, customer, provider, to_email)
+
 
             if not request.user.is_superuser:
                 count_cancel = cancellation(request, request.user, cancel_appointment)
@@ -198,7 +199,7 @@ class ListPendingAppointmentsView(LoginRequiredMixin, View):
         calendar_client = GoogleCalendarClient()
         if appointment.status == "pending":
             appointment.status = "rejected"
-            if appointment.customer.notification_settings.preferences == "all":
+            if appointment.customer.notification_settings.preferences == "all" and hasattr(appointment.customer, 'notification_settings'):
                 EmailDeclinedAppointment(
                     request,
                     appointment.customer,
@@ -227,7 +228,7 @@ class ListPendingAppointmentsView(LoginRequiredMixin, View):
 
             appointment.save()
             messages.info(request, "reschedule rejected successfully ")
-            if appointment.customer.notification_settings.preferences == "all":
+            if appointment.customer.notification_settings.preferences == "all" and hasattr(appointment.customer , "notification_settings"):
                 EmailRescheduleDeclined(
                     request,
                     appointment.customer,
@@ -275,7 +276,7 @@ class ListPendingAppointmentsView(LoginRequiredMixin, View):
 
             appointment.event_id = event["id"]
             appointment.save()
-            if appointment.customer.notification_settings.preferences == "all":
+            if hasattr(appointment.customer , "notification_settings") and appointment.customer.notification_settings.preferences == "all":
                 EmailConfirmedAppointment(
                     request,
                     appointment.customer,
@@ -309,7 +310,7 @@ class ListPendingAppointmentsView(LoginRequiredMixin, View):
                 )
             except HttpError as e:
                 return JsonResponse({"error": str(e)}, status=400)
-            if appointment.customer.notification_settings.preferences == "all":
+            if appointment.customer.notification_settings.preferences == "all" and hasattr(appointment.customer , "notification_settings"):
                 SendEmailRescheduleAccepted(
                     request,
                     appointment.customer,
