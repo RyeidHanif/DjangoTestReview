@@ -4,23 +4,11 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-
 from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db.models import Q
-# Create your views here.
-from django.shortcuts import redirect, render
-from django.utils.timezone import (activate, get_current_timezone, localdate,
-                                   localtime, make_aware, now)
-from django.views import View
-from django.views.generic import ListView
-
-from logging_conf import logger
-from main.models import Appointment, NotificationPreferences, ProviderProfile
-from main.utils import cancellation
-
-from django.core.paginator import Paginator
 from django.http import JsonResponse
+# Create your views here.
 # Create your views here.
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.timezone import (activate, get_current_timezone, localdate,
@@ -35,7 +23,6 @@ from main.calendar_client import GoogleCalendarClient
 from main.models import Appointment, NotificationPreferences, ProviderProfile
 from main.utils import cancellation, force_provider_calendar
 
-
 from .forms import AvailabilityForm, SendNoteForm
 from .utils import (EmailCancelledAppointment, EmailConfirmedAppointment,
                     EmailDeclinedAppointment, EmailRescheduleDeclined,
@@ -43,7 +30,8 @@ from .utils import (EmailCancelledAppointment, EmailConfirmedAppointment,
 
 
 class ProviderDashboardView(LoginRequiredMixin, TemplateView):
-    '''Main dashboard for a provider with buttons to redirect them to different places '''
+    """Main dashboard for a provider with buttons to redirect them to different places"""
+
     login_url = "/login/"
     template_name = "provider/provider_dashboard.html"
 
@@ -53,7 +41,7 @@ class ProviderDashboardView(LoginRequiredMixin, TemplateView):
         "view_my_appointments": "view_my_appointments",
         "view_pending_appointments": "view_pending_appointments",
         "my_availability": "my_availability",
-        "customer_side":"customer_dashboard",
+        "customer_side": "customer_dashboard",
     }
 
     def post(self, request, *args, **kwargs):
@@ -67,12 +55,12 @@ provider_dashboard = ProviderDashboardView.as_view()
 
 
 class ListAcceptedAppointmentsView(LoginRequiredMixin, View):
-    '''Allow the provider to see their accepted appointments and cancel or mark them as completed '''
+    """Allow the provider to see their accepted appointments and cancel or mark them as completed"""
 
     login_url = "/login/"
 
     def get(self, request, *args, **kwargs):
-        '''Allows the user to use a search bar to search for their appointments '''
+        """Allows the user to use a search bar to search for their appointments"""
         query = request.GET.get("q")
 
         if query:
@@ -97,7 +85,7 @@ class ListAcceptedAppointmentsView(LoginRequiredMixin, View):
         )
 
     def post(self, request, *args, **kwargs):
-        '''Uses the google Calendar Client to delete an appointment if cancelled  or mark as complete if the date has passed '''
+        """Uses the google Calendar Client to delete an appointment if cancelled  or mark as complete if the date has passed"""
         calendar_client = GoogleCalendarClient()
         if request.POST.get("cancel"):
             cancel_appointment = get_object_or_404(
@@ -124,11 +112,14 @@ class ListAcceptedAppointmentsView(LoginRequiredMixin, View):
                 return JsonResponse({"error": str(e)}, status=400)
 
             cancel_appointment.save()
-            if customer.notification_settings.preferences == "all":
+            if (
+                hasattr(customer, "notification_settings")
+                and customer.notification_settings.preferences == "all"
+            ):
                 EmailCancelledAppointment(request, customer, provider, to_email)
 
             if not request.user.is_superuser:
-                count_cancel = cancellation(request , request.user, cancel_appointment)
+                count_cancel = cancellation(request, request.user, cancel_appointment)
                 if count_cancel >= 3:
                     request.user.is_active = False
                     request.user.save()
@@ -162,11 +153,12 @@ view_my_appointments = ListAcceptedAppointmentsView.as_view()
 
 
 class ListPendingAppointmentsView(LoginRequiredMixin, View):
-    '''Allow the provider to see pending and rescheduled appointmnets which have not yet been accepted and allow them to be accepted or rejected '''
+    """Allow the provider to see pending and rescheduled appointmnets which have not yet been accepted and allow them to be accepted or rejected"""
+
     login_url = "/login/"
 
     def get(self, request, *args, **kwargs):
-        '''Allow the user to use a search bar to get their appointments '''
+        """Allow the user to use a search bar to get their appointments"""
         query = request.GET.get("q")
 
         if query:
@@ -190,7 +182,7 @@ class ListPendingAppointmentsView(LoginRequiredMixin, View):
         )
 
     def post(self, request, *args, **kwargs):
-        '''Allow the user to press either of 2 buttons to accept or reject the appointment '''
+        """Allow the user to press either of 2 buttons to accept or reject the appointment"""
         if request.POST.get("reject"):
 
             appointment = get_object_or_404(Appointment, id=request.POST.get("reject"))
@@ -205,11 +197,14 @@ class ListPendingAppointmentsView(LoginRequiredMixin, View):
         return redirect("view_pending_appointments")
 
     def reject_appointment(self, request, appointment):
-        '''check whether the original appointment was pending or rescheduled . if rescheduled , it must be deleted '''
+        """check whether the original appointment was pending or rescheduled . if rescheduled , it must be deleted"""
         calendar_client = GoogleCalendarClient()
         if appointment.status == "pending":
             appointment.status = "rejected"
-            if appointment.customer.notification_settings.preferences == "all":
+            if (
+                appointment.customer.notification_settings.preferences == "all"
+                and hasattr(appointment.customer, "notification_settings")
+            ):
                 EmailDeclinedAppointment(
                     request,
                     appointment.customer,
@@ -222,8 +217,8 @@ class ListPendingAppointmentsView(LoginRequiredMixin, View):
             return redirect("view_pending_appointments")
         elif appointment.status == "rescheduled":
             appointment.status = "cancelled"
-            try :
-                calendar_client.delete_event( appointment.provider , appointment.event_id)
+            try:
+                calendar_client.delete_event(appointment.provider, appointment.event_id)
             except RefreshError as re:
                 force_provider_calendar(appointment.provider)
                 return JsonResponse(
@@ -238,7 +233,10 @@ class ListPendingAppointmentsView(LoginRequiredMixin, View):
 
             appointment.save()
             messages.info(request, "reschedule rejected successfully ")
-            if appointment.customer.notification_settings.preferences == "all":
+            if (
+                appointment.customer.notification_settings.preferences == "all"
+                and hasattr(appointment.customer, "notification_settings")
+            ):
                 EmailRescheduleDeclined(
                     request,
                     appointment.customer,
@@ -250,7 +248,7 @@ class ListPendingAppointmentsView(LoginRequiredMixin, View):
             return redirect("view_pending_appointments")
 
     def accept_appointment(self, request, appointment):
-        '''Accepts and creates  pending appointment changing its status to accepted  '''
+        """Accepts and creates  pending appointment changing its status to accepted"""
         calendar_client = GoogleCalendarClient()
         if appointment.status == "pending":
             appointment.status = "accepted"
@@ -286,7 +284,10 @@ class ListPendingAppointmentsView(LoginRequiredMixin, View):
 
             appointment.event_id = event["id"]
             appointment.save()
-            if appointment.customer.notification_settings.preferences == "all":
+            if (
+                hasattr(appointment.customer, "notification_settings")
+                and appointment.customer.notification_settings.preferences == "all"
+            ):
                 EmailConfirmedAppointment(
                     request,
                     appointment.customer,
@@ -320,7 +321,10 @@ class ListPendingAppointmentsView(LoginRequiredMixin, View):
                 )
             except HttpError as e:
                 return JsonResponse({"error": str(e)}, status=400)
-            if appointment.customer.notification_settings.preferences == "all":
+            if (
+                appointment.customer.notification_settings.preferences == "all"
+                and hasattr(appointment.customer, "notification_settings")
+            ):
                 SendEmailRescheduleAccepted(
                     request,
                     appointment.customer,
@@ -329,7 +333,7 @@ class ListPendingAppointmentsView(LoginRequiredMixin, View):
                     appointment.date_end,
                     appointment.customer.email,
                 )
-                appointment.save()
+            appointment.save()
             messages.success(request, "Reschedule Accepted and will happen ")
             return redirect("view_pending_appointments")
 
@@ -338,14 +342,15 @@ view_pending_appointments = ListPendingAppointmentsView.as_view()
 
 
 class MyAvailabilityView(LoginRequiredMixin, View):
-    '''Allows the provider to add a timeblock when they will not be available'''
+    """Allows the provider to add a timeblock when they will not be available"""
+
     def get(self, request, *args, **kwargs):
         self.form = AvailabilityForm()
 
         return render(request, "provider/my_availability.html", {"form": self.form})
 
     def post(self, request, *args, **kwargs):
-        '''uses the availability form , formats it and creates an event for the provider '''
+        """uses the availability form , formats it and creates an event for the provider"""
         calendar_client = GoogleCalendarClient()
         self.form = AvailabilityForm(request.POST)
         if self.form.is_valid():
@@ -387,7 +392,8 @@ my_availability = MyAvailabilityView.as_view()
 
 
 class ViewAnalytics(LoginRequiredMixin, View):
-    '''Allows the provider to view their analytics '''
+    """Allows the provider to view their analytics"""
+
     login_url = "/login/"
 
     def get(self, request, *args, **kwargs):
@@ -422,9 +428,7 @@ class ViewAnalytics(LoginRequiredMixin, View):
             percentage_statuses_dict[key] = percentage
         return render(
             request,
-
             "provider/view_analytics.html",
-
             {
                 "customers": customers,
                 "appointments": myappointments,
@@ -437,4 +441,3 @@ class ViewAnalytics(LoginRequiredMixin, View):
 
 
 view_analytics = ViewAnalytics.as_view()
-

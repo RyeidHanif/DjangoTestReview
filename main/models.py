@@ -3,6 +3,7 @@ import datetime
 import uuid
 
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.timezone import localtime
 
@@ -29,13 +30,15 @@ default_end = datetime.time(17, 0, 0)
 
 
 class ActiveProviderManager(models.Manager):
-    '''Make sure that when we get objects , only those are queried with active users'''
+    """Make sure that when we get objects , only those are queried with active users"""
+
     def get_queryset(self):
         return super().get_queryset().filter(user__is_active=True)
 
 
 class ActiveAppointmentManager(models.Manager):
-    '''Makes sure that when we get appointment objects , only those with active providers are queried '''
+    """Makes sure that when we get appointment objects , only those with active providers are queried"""
+
     def get_queryset(self):
         return (
             super()
@@ -53,7 +56,7 @@ class ProviderProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone_number = models.CharField(max_length=13)
     service_category = models.CharField(choices=SERVICE_CHOICES)
-    service_name = models.CharField(max_length=20)
+    service_name = models.CharField(max_length=50)
     pricing_model = models.CharField(
         choices=[("hourly", "Hourly"), ("fixed", "Fixed")], default="fixed"
     )
@@ -107,15 +110,24 @@ class Appointment(models.Model):
     special_requests = models.TextField(default="None")
     recurrence_frequency = models.CharField(max_length=10, null=True, blank=True)
     recurrence_until = models.DateField(blank=True, null=True)
-    cancelled_by = models.ForeignKey(User , default=None , blank= True , null = True, on_delete = models.CASCADE)
-    cancelled_at = models.DateTimeField(blank=True , null=True)
+    cancelled_by = models.ForeignKey(
+        User, default=None, blank=True, null=True, on_delete=models.CASCADE
+    )
+    cancelled_at = models.DateTimeField(blank=True, null=True)
     bad_cancel = models.BooleanField(default=False)
 
     objects = ActiveAppointmentManager()
     all_objects = models.Manager()
 
+    def clean(self):
+        if self.status != "cancelled":
+            if self.bad_cancel or self.cancelled_at or self.cancelled_by:
+                raise ValidationError(
+                    "Cancellation fields can only be set if the appointment is cancelled."
+                )
+
     def __str__(self):
-        return f"Appointment by {self.customer.username} for {self.provider.username} on {localtime(self.date_start)}"
+        return f"Appointment by {self.customer.username} for {self.provider.username} on {self.date_start}"
 
 
 class AnalyticsApi(models.Model):
@@ -142,12 +154,9 @@ class NotificationPreferences(models.Model):
     preferences : the actual user choice , defaulting to all
     """
 
-
     user = models.OneToOneField(
         User, related_name="notification_settings", on_delete=models.CASCADE
     )
     preferences = models.CharField(
         max_length=11, choices=NOTIFICATION_CHOICES, default="all"
     )
-
-

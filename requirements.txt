@@ -12,3 +12,13 @@ djangorestframework-simplejwt
 drf-spectacular
 django-allauth[socialaccount]
 django-jazzmin
+pytest
+pytest-django 
+factory_boy 
+Faker
+pytest-cov
+psycopg2-binary
+google-auth
+google-auth-oauthlib
+google-api-python-client
+pytest-xdist

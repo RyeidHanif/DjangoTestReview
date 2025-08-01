@@ -6,18 +6,11 @@ from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
-from django.utils.timezone import (
-    activate,
-    get_current_timezone,
-    localdate,
-    localtime,
-    make_aware,
-    now,
-)
+from django.utils.timezone import (activate, get_current_timezone, localdate,
+                                   localtime, make_aware, now)
 from googleapiclient.errors import HttpError
 
 from main.models import Appointment, ProviderProfile
-
 
 activate("Asia/Karachi")
 
@@ -26,6 +19,8 @@ def check_appointment_exists(customer, provider):
     """
     Used to check if an appointment exists between a customer and a provider which is currently in the works
     this is done to prevent one customer from having multiple simultaneous appointments with the same provider
+    return False if appointment Exists
+    return True if appointment does not Exist
     """
     return not Appointment.objects.filter(
         customer=customer,
