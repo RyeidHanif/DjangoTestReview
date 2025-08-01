@@ -14,10 +14,16 @@ from main.models import (Appointment, CustomerProfile, NotificationPreferences,
 from .factories import (AppointmentFactory, CustomerProfileFactory,
                         NotificationPreferencesFactory, ProviderProfileFactory,
                         UserFactory)
+from datetime import date
+import calendar
+
+
+
 
 
 @pytest.mark.django_db
 class TestCheckAppointmentExistsUtility:
+    
     @pytest.fixture
     def create_users(db):
         provider = UserFactory()
@@ -54,6 +60,16 @@ class TestCheckAppointmentExistsUtility:
 
 @pytest.mark.django_db
 class TestCalculateTotalPrice:
+    def add_months(self, source_date, months):
+        """
+        Adds the specified number of months to a date.
+        Handles month overflow and varying month lengths.
+        """
+        month = source_date.month - 1 + months
+        year = source_date.year + month // 12
+        month = month % 12 + 1
+        day = min(source_date.day, calendar.monthrange(year, month)[1])
+        return date(year, month, day)
     @pytest.fixture
     def create_users_fixed(db):
         provider = UserFactory()
@@ -138,6 +154,7 @@ class TestCalculateTotalPrice:
         )
         assert price == expected_price
 
+    
     @pytest.mark.parametrize(
         "recurrence, months_delta, expected_occurrences",
         [
@@ -146,18 +163,17 @@ class TestCalculateTotalPrice:
             ("MONTHLY", 2, 3),
         ],
     )
-    def test_total_price_monthly(
-        self, create_users_fixed, recurrence, months_delta, expected_occurrences
-    ):
+    def test_total_price_monthly(self, create_users_fixed, recurrence, months_delta, expected_occurrences):
         provider, customer = create_users_fixed
-        now = timezone.now()
-        until_date = now + timezone.timedelta(days=months_delta * 30)  # approximation
-        until_date = until_date.date()
+        now = timezone.now().date()
+        until_date = self.add_months(now, months_delta)
 
         expected_price = provider.providerprofile.rate * expected_occurrences
+
         price = calculate_total_price(
             provider=provider.providerprofile,
             recurrence_frequency=recurrence,
             until_date=until_date,
         )
+
         assert price == expected_price

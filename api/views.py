@@ -113,7 +113,7 @@ class CustomerAppointments(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
 
-        return Appointment.objects.filter(provider=user)
+        return Appointment.objects.filter(customer=user)
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -239,7 +239,7 @@ class APIViewProviders(generics.ListAPIView):
     serializer_class = ViewAllProvidersSerializer
 
     def get_queryset(self):
-        return ProviderProfile.objects.all()
+        return ProviderProfile.objects.all().exclude(user=self.request.user)
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
