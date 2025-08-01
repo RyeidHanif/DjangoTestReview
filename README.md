@@ -38,7 +38,7 @@ This application is designed to support both server-rendered views and a complet
 * DRF Spectacular-based API schema generation and live documentation at `/api/docs`
 * PostgreSQL DB setup
 *  CI/CD using GitHub Actions
-*   90%+ test coverage via pytest
+*   93%  test coverage via pytest
 
 ---
 
@@ -154,6 +154,17 @@ with the following command
 tox 
 ```
 
+### 9. Separate Testing 
+
+Use the following  Command  to test the whole code 
+```bash
+pytest
+```
+Use The following Comand to test the code and give you coverage analysis 
+
+```bash
+pytest --cov
+```
 
 
 ## API Authentication & Token Handling
