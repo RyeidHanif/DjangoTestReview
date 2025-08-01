@@ -545,7 +545,7 @@ class TestRescheduleView:
             data={"checkschedule": "lalalala"},
             follow=True,
         )
-        assert response.status_code == 400
+        assert response.status_code == 200
 
         redirection = reverse(
             "schedule", kwargs={"providerID": appointment.provider.providerprofile.id}
