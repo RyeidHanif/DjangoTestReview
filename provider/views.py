@@ -333,7 +333,7 @@ class ListPendingAppointmentsView(LoginRequiredMixin, View):
                     appointment.date_end,
                     appointment.customer.email,
                 )
-                appointment.save()
+            appointment.save()
             messages.success(request, "Reschedule Accepted and will happen ")
             return redirect("view_pending_appointments")
 
